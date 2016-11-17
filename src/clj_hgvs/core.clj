@@ -28,7 +28,7 @@
 
 (def ^:private mutation-re #"^([\d_\-\+\*\?]+)([a-zA-Z]+)?(>|del|dup|ins|inv|con|fs|ext)([a-zA-Z]+)$")
 
-(defn- parse-mutation
+(defn- parse-mutation*
   [s]
   (let [[_ numbering ref type alt] (re-find mutation-re s)]
     {:numbering numbering
@@ -46,14 +46,25 @@
      :ref ref
      :alt alt}))
 
+(defn- parse-mutation
+  [s kind]
+  ((cond
+    (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) parse-mutation*
+    (= kind :protein) parse-protein-mutation)
+   s))
+
+(defn hgvs
+  [transcript kind mutation & mutations]
+  {:transcript transcript
+   :kind kind
+   :mutations (cond
+                (map? mutation) (cons mutation mutations)
+                (string? mutation) (map #(parse-mutation % kind) (split-mutations mutation)))})
+
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 
 (defn parse
   [s]
-  (let [[_ transcript kind mutations] (re-find hgvs-re s)]
-    {:transcript transcript
-     :kind (->kind-keyword kind)
-     :mutations (map (if (= kind "p")
-                       parse-protein-mutation
-                       parse-mutation)
-                     (split-mutations mutations))}))
+  (let [[_ transcript kind mutations] (re-find hgvs-re s)
+        kind-k (->kind-keyword kind)]
+    (hgvs transcript kind-k mutations)))
