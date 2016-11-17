@@ -1,5 +1,5 @@
 (defproject clj-hgvs "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+  :description "HGVS library for Clojure(Script)"
   :url "http://example.com/FIXME"
   :dependencies [[org.clojure/clojure "1.8.0"]]
   :plugins [[lein-cljsbuild "1.1.4"]
