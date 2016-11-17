@@ -1,4 +1,13 @@
 (defproject clj-hgvs "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
-  :dependencies [[org.clojure/clojure "1.8.0"]])
+  :dependencies [[org.clojure/clojure "1.8.0"]]
+  :plugins [[lein-cljsbuild "1.1.4"]
+            [lein-doo "0.1.7"]]
+  :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.9.293"]]}}
+  :cljsbuild {:builds {:test {:source-paths ["src" "test"]
+                              :compiler {:output-to "target/testable.js"
+                                         :output-dir "target"
+                                         :main clj-hgvs.runner
+                                         :optimizations :simple}}}}
+  :doo {:build "test"})

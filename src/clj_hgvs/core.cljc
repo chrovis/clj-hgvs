@@ -1,5 +1,5 @@
 (ns clj-hgvs.core
-  (:refer-clojure :exclude [format])
+  #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.string :as string]))
 
 (defn- ->mutation-type-keyword
