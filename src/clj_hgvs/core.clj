@@ -1,4 +1,5 @@
 (ns clj-hgvs.core
+  (:refer-clojure :exclude [format])
   (:require [clojure.string :as string]))
 
 (defn- ->mutation-type-keyword
@@ -12,6 +13,17 @@
     "fs" :frame-shift
     "ext" :extension))
 
+(defn- ->mutation-str
+  [k]
+  (case k
+    :substitution ">"
+    :deletion "del"
+    :insertion "ins"
+    :inversion "inv"
+    :conversion "con"
+    :frame-shift "fs"
+    :extension "ext"))
+
 (defn- ->kind-keyword
   [s]
   (case s
@@ -22,11 +34,22 @@
     "r" :rna
     "p" :protein))
 
+(defn- ->kind-str
+  [k]
+  (case k
+    :genome "g"
+    :mitochondria "m"
+    :coding-dna "c"
+    :non-coding-dna "n"
+    :rna "r"
+    :protein"p"))
+
 (defn- split-mutations
   [s]
   (map #(string/replace % #"[\[\]]" "") (string/split s #";")))
 
-(def ^:private mutation-re #"^([\d_\-\+\*\?]+)([a-zA-Z]+)?(>|del|dup|ins|inv|con|fs|ext)([a-zA-Z]+)$")
+(def ^:private mutation-re
+  #"^([\d_\-\+\*\?]+)([a-zA-Z]+)?(>|del|dup|ins|inv|con|fs|ext)([a-zA-Z]+)$")
 
 (defn- parse-mutation*
   [s]
@@ -68,3 +91,40 @@
   (let [[_ transcript kind mutations] (re-find hgvs-re s)
         kind-k (->kind-keyword kind)]
     (hgvs transcript kind-k mutations)))
+
+(defn- format-transcript
+  [transcript]
+  (if transcript
+    (str transcript ":")))
+
+(defn- format-kind
+  [kind]
+  (str (->kind-str kind) "."))
+
+(defn- format-mutation*
+  [{:keys [numbering type ref alt]}]
+  (string/join [numbering ref (->mutation-str type) alt]))
+
+(defn- format-protein-mutation
+  [{:keys [numbering ref alt]}]
+  (str ref numbering alt))
+
+(defn- format-mutation
+  [mutation kind]
+  ((cond
+    (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) format-mutation*
+    (= kind :protein) format-protein-mutation)
+   mutation))
+
+(defn- format-mutations
+  [mutations kind]
+  (let [multi? (> (count mutations) 1)]
+    (apply str (flatten [(if multi? "[")
+                         (string/join ";" (map #(format-mutation % kind) mutations))
+                         (if multi? "]")]))))
+
+(defn format
+  [hgvs]
+  (apply str [(format-transcript (:transcript hgvs))
+              (format-kind (:kind hgvs))
+              (format-mutations (:mutations hgvs) (:kind hgvs))]))
