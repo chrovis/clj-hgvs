@@ -49,7 +49,7 @@
   (map #(string/replace % #"[\[\]]" "") (string/split s #";")))
 
 (def ^:private mutation-re
-  #"^([\d_\-\+\*\?]+)([a-zA-Z]+)?(>|del|dup|ins|inv|con|fs|ext)([a-zA-Z]+)$")
+  #"^([\d_\-\+\*\?]+)([a-zA-Z]+)?(>|del|dup|ins|inv|con|fs|ext)([a-zA-Z]+)?$")
 
 (defn- parse-mutation*
   [s]
