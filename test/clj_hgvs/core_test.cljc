@@ -41,11 +41,11 @@
     (is (= (hgvs/hgvs "NM_005228.3" :coding-dna {:numbering "2361", :type :substitution, :ref "G", :alt "A"})
            hgvs1m))
     (is (= (hgvs/hgvs nil :genome {:numbering "2376", :type :substitution, :ref "A", :alt "C"}
-                                  {:numbering "3012", :type :substitution, :ref "G", :alt "A"})
+                                  {:numbering "3103", :type :deletion, :ref nil, :alt nil})
            hgvs3m)))
   (testing "allows mutation string"
     (is (= (hgvs/hgvs "NM_005228.3" :coding-dna "2361G>A") hgvs1m))
-    (is (= (hgvs/hgvs nil :genome "[2376A>C;3013del]") hgvs3m))))
+    (is (= (hgvs/hgvs nil :genome "[2376A>C;3103del]") hgvs3m))))
 
 (deftest parse-test
   (testing "returns HGVS map"
