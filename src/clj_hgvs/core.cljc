@@ -8,10 +8,13 @@
     ">" :substitution
     "del" :deletion
     "ins" :insertion
+    "delins" :indel
     "inv" :inversion
     "con" :conversion
     "fs" :frame-shift
-    "ext" :extension))
+    "ext" :extension
+    "=" :unchanged
+    "dup" :duplication))
 
 (defn- ->mutation-str
   [k]
@@ -19,10 +22,13 @@
     :substitution ">"
     :deletion "del"
     :insertion "ins"
+    :indel "delins"
     :inversion "inv"
     :conversion "con"
     :frame-shift "fs"
-    :extension "ext"))
+    :extension "ext"
+    :unchanged "="
+    :duplication "dup"))
 
 (defn- ->kind-keyword
   [s]
@@ -59,15 +65,21 @@
      :ref ref
      :alt alt}))
 
-(def ^:private protein-mutation-re #"^([a-zA-Z]+)(\d+)([a-zA-Z]+)$")
+;; del: p.Cys76_Glu79del (TODO)
+;; fs: Arg123LysfsTer34
+;; ext: p.Met1ext-5, p.Ter110GlnextTer17
+
+(def ^:private protein-mutation-re
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(=|del|dup|ins|delins)?([A-Z](?:[a-z]{2})?)?(?:(fs|ext)(.+)?)?$")
 
 (defn- parse-protein-mutation
   [s]
-  (let [[_ ref numbering alt] (re-find protein-mutation-re s)]
+  (let [[_ ref numbering type1 alt type2 rest*] (re-find protein-mutation-re s)]
     {:numbering numbering
-     :type :substitution
+     :type (->mutation-type-keyword (or type1 type2 ">"))
      :ref ref
-     :alt alt}))
+     :alt alt
+     :rest rest*}))
 
 (defn- parse-mutation
   [s kind]
@@ -106,8 +118,15 @@
   (string/join [numbering ref (->mutation-str type) alt]))
 
 (defn- format-protein-mutation
-  [{:keys [numbering ref alt]}]
-  (str ref numbering alt))
+  [{:keys [numbering type ref alt rest]}]
+  (string/join [ref
+                numbering
+                (if (#{:unchanged :deletion :insertion :indel} type)
+                  (->mutation-str type))
+                alt
+                (if (#{:frame-shift :extension} type)
+                  (->mutation-str type))
+                rest]))
 
 (defn- format-mutation
   [mutation kind]

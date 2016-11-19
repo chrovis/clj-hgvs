@@ -26,15 +26,15 @@
 
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
 (def hgvs6m {:transcript "NP_005219.2", :kind :protein,
-             :mutations '({:numbering "858", :type :substitution, :ref "Leu", :alt "Arg"})})
+             :mutations '({:numbering "858", :type :substitution, :ref "Leu", :alt "Arg", :rest nil})})
 
 (def hgvs7s "NP_001096.1:p.Arg258=")
 (def hgvs7m {:transcript "NP_001096.1", :kind :protein,
-             :mutations '({:numbering "258", :type :unchanged, :ref "Arg", :alt nil})})
+             :mutations '({:numbering "258", :type :unchanged, :ref "Arg", :alt nil, :rest nil})})
 
 (def hgvs8s "NP_001005735.1:p.Leu344Trpfs")
 (def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
-             :mutations '({:numbering "344", :type :frame-shift, :ref "Leu", :alt "Trp"})})
+             :mutations '({:numbering "344", :type :frame-shift, :ref "Leu", :alt "Trp", :rest nil})})
 
 (deftest hgvs-test
   (testing "allows mutation maps"
