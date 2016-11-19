@@ -94,7 +94,7 @@
    :kind kind
    :mutations (cond
                 (map? mutation) (cons mutation mutations)
-                (string? mutation) (map #(parse-mutation % kind) (split-mutations mutation)))})
+                (string? mutation) (mapv #(parse-mutation % kind) (split-mutations mutation)))})
 
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 

@@ -5,36 +5,36 @@
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m {:transcript "NM_005228.3", :kind :coding-dna,
-             :mutations '({:numbering "2361", :type :substitution, :ref "G", :alt "A"})})
+             :mutations [{:numbering "2361", :type :substitution, :ref "G", :alt "A"}]})
 
 (def hgvs2s "c.2361G>A")
 (def hgvs2m {:transcript nil, :kind :coding-dna,
-             :mutations '({:numbering "2361", :type :substitution, :ref "G", :alt "A"})})
+             :mutations [{:numbering "2361", :type :substitution, :ref "G", :alt "A"}]})
 
 (def hgvs3s "g.[2376A>C;3103del]")
 (def hgvs3m {:transcript nil, :kind :genome,
-             :mutations '({:numbering "2376", :type :substitution, :ref "A", :alt "C"},
-                          {:numbering "3103", :type :deletion, :ref nil, :alt nil})})
+             :mutations [{:numbering "2376", :type :substitution, :ref "A", :alt "C"},
+                         {:numbering "3103", :type :deletion, :ref nil, :alt nil}]})
 
 (def hgvs4s "NC_000022.11:g.28703511delA")
 (def hgvs4m {:transcript "NC_000022.11", :kind :genome,
-             :mutations '({:numbering "28703511", :type :deletion, :ref nil, :alt "A"})})
+             :mutations [{:numbering "28703511", :type :deletion, :ref nil, :alt "A"}]})
 
 (def hgvs5s "NM_004380.2:c.86-1G>T")
 (def hgvs5m {:transcript "NM_004380.2", :kind :coding-dna,
-             :mutations '({:numbering "86-1", :type :substitution, :ref "G", :alt "T"})})
+             :mutations [{:numbering "86-1", :type :substitution, :ref "G", :alt "T"}]})
 
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
 (def hgvs6m {:transcript "NP_005219.2", :kind :protein,
-             :mutations '({:numbering "858", :type :substitution, :ref "Leu", :alt "Arg", :rest nil})})
+             :mutations [{:numbering "858", :type :substitution, :ref "Leu", :alt "Arg", :rest nil}]})
 
 (def hgvs7s "NP_001096.1:p.Arg258=")
 (def hgvs7m {:transcript "NP_001096.1", :kind :protein,
-             :mutations '({:numbering "258", :type :unchanged, :ref "Arg", :alt nil, :rest nil})})
+             :mutations [{:numbering "258", :type :unchanged, :ref "Arg", :alt nil, :rest nil}]})
 
 (def hgvs8s "NP_001005735.1:p.Leu344Trpfs")
 (def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
-             :mutations '({:numbering "344", :type :frame-shift, :ref "Leu", :alt "Trp", :rest nil})})
+             :mutations [{:numbering "344", :type :frame-shift, :ref "Leu", :alt "Trp", :rest nil}]})
 
 (deftest hgvs-test
   (testing "allows mutation maps"
