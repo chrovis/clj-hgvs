@@ -116,8 +116,14 @@
   [s]
   (map #(string/replace % #"[\[\]]" "") (string/split s #";")))
 
+;; dup: g.123_345dup
+;; ins: g.123_124insAGC
+;; inv: g.123_345inv
+;; con: g.123_345con888_1110 (TODO)
+;; delins: g.123_127delinsAG
+
 (def ^:private mutation-re
-  #"^([\d_\-\+\*\?]+)([a-zA-Z]+)?(>|del|dup|ins|inv|con|fs|ext)([a-zA-Z]+)?$")
+  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
 
 (defn- parse-mutation*
   [s]
@@ -128,6 +134,7 @@
      :alt alt}))
 
 ;; del: p.Cys76_Glu79del (TODO)
+;; ins: p.Lys23_Leu24insArgSerGln (TODO)
 ;; fs: Arg123LysfsTer34
 ;; ext: p.Met1ext-5, p.Ter110GlnextTer17
 
