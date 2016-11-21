@@ -50,6 +50,68 @@
     :rna "r"
     :protein"p"))
 
+(def short-amino-acids
+  ["A"
+   "R"
+   "N"
+   "D"
+   "C"
+   "Q"
+   "E"
+   "G"
+   "H"
+   "I"
+   "L"
+   "K"
+   "M"
+   "F"
+   "P"
+   "S"
+   "T"
+   "W"
+   "Y"
+   "V"])
+
+(def long-amino-acids
+  ["Ala"
+   "Arg"
+   "Asn"
+   "Asp"
+   "Cys"
+   "Gln"
+   "Glu"
+   "Gly"
+   "His"
+   "Ile"
+   "Leu"
+   "Lys"
+   "Met"
+   "Phe"
+   "Pro"
+   "Ser"
+   "Thr"
+   "Trp"
+   "Tyr"
+   "Val"])
+
+(def ^:private short-long-amino-acid-map
+  (zipmap short-amino-acids long-amino-acids))
+
+(def ^:private long-short-amino-acid-map
+  (zipmap long-amino-acids short-amino-acids))
+
+(defn ->long-amino-acid
+  [s]
+  (if ((set long-amino-acids) s)
+    s
+    (get short-long-amino-acid-map s)))
+
+(defn ->short-amino-acid
+  [s]
+  (if ((set short-amino-acids) s)
+    s
+    (get long-short-amino-acid-map s)))
+
 (defn- split-mutations
   [s]
   (map #(string/replace % #"[\[\]]" "") (string/split s #";")))

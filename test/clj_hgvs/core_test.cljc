@@ -36,6 +36,26 @@
 (def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
              :mutations [{:numbering "344", :type :frame-shift, :ref "Leu", :alt "Trp", :rest nil}]})
 
+(deftest ->long-amino-acid-test
+  (testing "converts a short amino acid to a long one"
+    (is (= (hgvs/->long-amino-acid "S") "Ser")))
+  (testing "returns itself when a long amino acid is passed"
+    (is (= (hgvs/->long-amino-acid "Ser") "Ser")))
+  (testing "returns nil when an illegal string is passed"
+    (is (nil? (hgvs/->long-amino-acid "Foo")))
+    (is (nil? (hgvs/->long-amino-acid "")))
+    (is (nil? (hgvs/->long-amino-acid nil)))))
+
+(deftest ->short-amino-acid-test
+  (testing "converts a long amino acid to a short one"
+    (is (= (hgvs/->short-amino-acid "Ser") "S")))
+  (testing "returns itself when a short amino acid is passed"
+    (is (= (hgvs/->short-amino-acid "S") "S")))
+  (testing "returns nil when an illegal string is passed"
+    (is (nil? (hgvs/->short-amino-acid "Z")))
+    (is (nil? (hgvs/->short-amino-acid "")))
+    (is (nil? (hgvs/->short-amino-acid nil)))))
+
 (deftest hgvs-test
   (testing "allows mutation maps"
     (is (= (hgvs/hgvs "NM_005228.3" :coding-dna {:numbering "2361", :type :substitution, :ref "G", :alt "A"})
