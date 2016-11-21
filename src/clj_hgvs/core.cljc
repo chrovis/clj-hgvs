@@ -143,7 +143,7 @@
      :alt (->long-amino-acid alt)
      :rest rest*}))
 
-(defn- parse-mutation
+(defn parse-mutation
   [s kind]
   ((cond
     (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) parse-mutation*
@@ -194,22 +194,22 @@
                   (->mutation-str type))
                 rest]))
 
-(defn- format-mutation
-  [mutation kind opts]
+(defn format-mutation
+  [mutation kind & opts]
   ((cond
     (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) format-mutation*
     (= kind :protein) #(format-protein-mutation % opts))
    mutation))
 
-(defn- format-mutations
-  [mutations kind opts]
+(defn format-mutations
+  [mutations kind & opts]
   (let [multi? (> (count mutations) 1)]
     (apply str (flatten [(if multi? "[")
-                         (string/join ";" (map #(format-mutation % kind opts) mutations))
+                         (string/join ";" (map #(apply format-mutation % kind opts) mutations))
                          (if multi? "]")]))))
 
 (defn format
   [hgvs & opts]
   (apply str [(format-transcript (:transcript hgvs))
               (format-kind (:kind hgvs))
-              (format-mutations (:mutations hgvs) (:kind hgvs) opts)]))
+              (apply format-mutations (:mutations hgvs) (:kind hgvs) opts)]))
