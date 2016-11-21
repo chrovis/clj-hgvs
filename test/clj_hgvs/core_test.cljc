@@ -25,6 +25,7 @@
              :mutations [{:numbering "86-1", :type :substitution, :ref "G", :alt "T"}]})
 
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
+(def hgvs6ss "NP_005219.2:p.L858R")
 (def hgvs6m {:transcript "NP_005219.2", :kind :protein,
              :mutations [{:numbering "858", :type :substitution, :ref "Leu", :alt "Arg", :rest nil}]})
 
@@ -75,6 +76,7 @@
     (is (= (hgvs/parse hgvs4s) hgvs4m))
     (is (= (hgvs/parse hgvs5s) hgvs5m))
     (is (= (hgvs/parse hgvs6s) hgvs6m))
+    (is (= (hgvs/parse hgvs6ss) hgvs6m))
     (is (= (hgvs/parse hgvs7s) hgvs7m))
     (is (= (hgvs/parse hgvs8s) hgvs8m)))
   (testing "throws Exception when an illegal HGVS is passed"
@@ -94,5 +96,6 @@
     (is (= (hgvs/format hgvs4m) hgvs4s))
     (is (= (hgvs/format hgvs5m) hgvs5s))
     (is (= (hgvs/format hgvs6m) hgvs6s))
+    (is (= (hgvs/format hgvs6m :amino-acid-format :short) hgvs6ss))
     (is (= (hgvs/format hgvs7m) hgvs7s))
     (is (= (hgvs/format hgvs8m) hgvs8s))))

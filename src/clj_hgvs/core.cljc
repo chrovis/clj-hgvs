@@ -139,8 +139,8 @@
   (let [[_ ref numbering type1 alt type2 rest*] (re-find protein-mutation-re s)]
     {:numbering numbering
      :type (->mutation-type-keyword (or type1 type2 ">"))
-     :ref ref
-     :alt alt
+     :ref (->long-amino-acid ref)
+     :alt (->long-amino-acid alt)
      :rest rest*}))
 
 (defn- parse-mutation
@@ -180,32 +180,36 @@
   (string/join [numbering ref (->mutation-str type) alt]))
 
 (defn- format-protein-mutation
-  [{:keys [numbering type ref alt rest]}]
-  (string/join [ref
+  [{:keys [numbering type ref alt rest]} {:keys [amino-acid-format]
+                                          :or {amino-acid-format :long}}]
+  {:pre [(#{:short :long} amino-acid-format)]}
+  (string/join [(cond-> ref
+                  (= amino-acid-format :short) ->short-amino-acid)
                 numbering
                 (if (#{:unchanged :deletion :insertion :indel} type)
                   (->mutation-str type))
-                alt
+                (cond-> alt
+                  (= amino-acid-format :short) ->short-amino-acid)
                 (if (#{:frame-shift :extension} type)
                   (->mutation-str type))
                 rest]))
 
 (defn- format-mutation
-  [mutation kind]
+  [mutation kind opts]
   ((cond
     (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) format-mutation*
-    (= kind :protein) format-protein-mutation)
+    (= kind :protein) #(format-protein-mutation % opts))
    mutation))
 
 (defn- format-mutations
-  [mutations kind]
+  [mutations kind opts]
   (let [multi? (> (count mutations) 1)]
     (apply str (flatten [(if multi? "[")
-                         (string/join ";" (map #(format-mutation % kind) mutations))
+                         (string/join ";" (map #(format-mutation % kind opts) mutations))
                          (if multi? "]")]))))
 
 (defn format
-  [hgvs]
+  [hgvs & opts]
   (apply str [(format-transcript (:transcript hgvs))
               (format-kind (:kind hgvs))
-              (format-mutations (:mutations hgvs) (:kind hgvs))]))
+              (format-mutations (:mutations hgvs) (:kind hgvs) opts)]))
