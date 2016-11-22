@@ -1,34 +1,7 @@
 (ns clj-hgvs.core
   #?(:clj (:refer-clojure :exclude [format]))
-  (:require [clojure.string :as string]))
-
-(defn- ->mutation-type-keyword
-  [s]
-  (case s
-    ">" :substitution
-    "del" :deletion
-    "ins" :insertion
-    "delins" :indel
-    "inv" :inversion
-    "con" :conversion
-    "fs" :frame-shift
-    "ext" :extension
-    "=" :unchanged
-    "dup" :duplication))
-
-(defn- ->mutation-str
-  [k]
-  (case k
-    :substitution ">"
-    :deletion "del"
-    :insertion "ins"
-    :indel "delins"
-    :inversion "inv"
-    :conversion "con"
-    :frame-shift "fs"
-    :extension "ext"
-    :unchanged "="
-    :duplication "dup"))
+  (:require [clojure.string :as string]
+            [clj-hgvs.mutation :as mut]))
 
 (defn- ->kind-keyword
   [s]
@@ -50,112 +23,9 @@
     :rna "r"
     :protein"p"))
 
-(def short-amino-acids
-  ["A"
-   "R"
-   "N"
-   "D"
-   "C"
-   "Q"
-   "E"
-   "G"
-   "H"
-   "I"
-   "L"
-   "K"
-   "M"
-   "F"
-   "P"
-   "S"
-   "T"
-   "W"
-   "Y"
-   "V"])
-
-(def long-amino-acids
-  ["Ala"
-   "Arg"
-   "Asn"
-   "Asp"
-   "Cys"
-   "Gln"
-   "Glu"
-   "Gly"
-   "His"
-   "Ile"
-   "Leu"
-   "Lys"
-   "Met"
-   "Phe"
-   "Pro"
-   "Ser"
-   "Thr"
-   "Trp"
-   "Tyr"
-   "Val"])
-
-(def ^:private short-long-amino-acid-map
-  (zipmap short-amino-acids long-amino-acids))
-
-(def ^:private long-short-amino-acid-map
-  (zipmap long-amino-acids short-amino-acids))
-
-(defn ->long-amino-acid
-  [s]
-  (if ((set long-amino-acids) s)
-    s
-    (get short-long-amino-acid-map s)))
-
-(defn ->short-amino-acid
-  [s]
-  (if ((set short-amino-acids) s)
-    s
-    (get long-short-amino-acid-map s)))
-
 (defn- split-mutations
   [s]
   (map #(string/replace % #"[\[\]]" "") (string/split s #";")))
-
-;; dup: g.123_345dup
-;; ins: g.123_124insAGC
-;; inv: g.123_345inv
-;; con: g.123_345con888_1110 (TODO)
-;; delins: g.123_127delinsAG
-
-(def ^:private mutation-re
-  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
-
-(defn- parse-mutation*
-  [s]
-  (let [[_ numbering ref type alt] (re-find mutation-re s)]
-    {:numbering numbering
-     :type (->mutation-type-keyword type)
-     :ref ref
-     :alt alt}))
-
-;; del: p.Cys76_Glu79del (TODO)
-;; ins: p.Lys23_Leu24insArgSerGln (TODO)
-;; fs: Arg123LysfsTer34
-;; ext: p.Met1ext-5, p.Ter110GlnextTer17
-
-(def ^:private protein-mutation-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(=|del|dup|ins|delins)?([A-Z](?:[a-z]{2})?)?(?:(fs|ext)(.+)?)?$")
-
-(defn- parse-protein-mutation
-  [s]
-  (let [[_ ref numbering type1 alt type2 rest*] (re-find protein-mutation-re s)]
-    {:numbering numbering
-     :type (->mutation-type-keyword (or type1 type2 ">"))
-     :ref (->long-amino-acid ref)
-     :alt (->long-amino-acid alt)
-     :rest rest*}))
-
-(defn parse-mutation
-  [s kind]
-  ((cond
-    (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) parse-mutation*
-    (= kind :protein) parse-protein-mutation)
-   s))
 
 (defn hgvs
   [transcript kind mutation & mutations]
@@ -163,7 +33,7 @@
    :kind kind
    :mutations (cond
                 (map? mutation) (cons mutation mutations)
-                (string? mutation) (mapv #(parse-mutation % kind) (split-mutations mutation)))})
+                (string? mutation) (mapv #(mut/parse % kind) (split-mutations mutation)))})
 
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 
@@ -182,41 +52,15 @@
   [kind]
   (str (->kind-str kind) "."))
 
-(defn- format-mutation*
-  [{:keys [numbering type ref alt]}]
-  (string/join [numbering ref (->mutation-str type) alt]))
-
-(defn- format-protein-mutation
-  [{:keys [numbering type ref alt rest]} {:keys [amino-acid-format]
-                                          :or {amino-acid-format :long}}]
-  {:pre [(#{:short :long} amino-acid-format)]}
-  (string/join [(cond-> ref
-                  (= amino-acid-format :short) ->short-amino-acid)
-                numbering
-                (if (#{:unchanged :deletion :insertion :indel} type)
-                  (->mutation-str type))
-                (cond-> alt
-                  (= amino-acid-format :short) ->short-amino-acid)
-                (if (#{:frame-shift :extension} type)
-                  (->mutation-str type))
-                rest]))
-
-(defn format-mutation
-  [mutation kind & opts]
-  ((cond
-    (#{:genome :mitochondria :coding-dna :non-coding-dna :rna} kind) format-mutation*
-    (= kind :protein) #(format-protein-mutation % opts))
-   mutation))
-
 (defn format-mutations
-  [mutations kind & opts]
+  [mutations & opts]
   (let [multi? (> (count mutations) 1)]
     (apply str (flatten [(if multi? "[")
-                         (string/join ";" (map #(apply format-mutation % kind opts) mutations))
+                         (string/join ";" (map #(mut/format % opts) mutations))
                          (if multi? "]")]))))
 
 (defn format
   [hgvs & opts]
   (apply str [(format-transcript (:transcript hgvs))
               (format-kind (:kind hgvs))
-              (apply format-mutations (:mutations hgvs) (:kind hgvs) opts)]))
+              (apply format-mutations (:mutations hgvs) opts)]))

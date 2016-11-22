@@ -1,68 +1,90 @@
 (ns clj-hgvs.core-test
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest is testing]])
-            [clj-hgvs.core :as hgvs]))
+            [clj-hgvs.core :as hgvs]
+            [clj-hgvs.mutation :as mut]))
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m {:transcript "NM_005228.3", :kind :coding-dna,
-             :mutations [{:numbering "2361", :type :substitution, :ref "G", :alt "A"}]})
+             :mutations [(mut/map->CodingDNAMutation {:numbering "2361",
+                                                      :type :substitution,
+                                                      :ref "G",
+                                                      :alt "A"})]})
 
 (def hgvs2s "c.2361G>A")
 (def hgvs2m {:transcript nil, :kind :coding-dna,
-             :mutations [{:numbering "2361", :type :substitution, :ref "G", :alt "A"}]})
+             :mutations [(mut/map->CodingDNAMutation {:numbering "2361",
+                                                      :type :substitution,
+                                                      :ref "G",
+                                                      :alt "A"})]})
 
 (def hgvs3s "g.[2376A>C;3103del]")
 (def hgvs3m {:transcript nil, :kind :genome,
-             :mutations [{:numbering "2376", :type :substitution, :ref "A", :alt "C"},
-                         {:numbering "3103", :type :deletion, :ref nil, :alt nil}]})
+             :mutations [(mut/map->GenomeMutation {:numbering "2376",
+                                                   :type :substitution,
+                                                   :ref "A",
+                                                   :alt "C"}),
+                         (mut/map->GenomeMutation {:numbering "3103",
+                                                   :type :deletion,
+                                                   :ref nil,
+                                                   :alt nil})]})
 
 (def hgvs4s "NC_000022.11:g.28703511delA")
 (def hgvs4m {:transcript "NC_000022.11", :kind :genome,
-             :mutations [{:numbering "28703511", :type :deletion, :ref nil, :alt "A"}]})
+             :mutations [(mut/map->GenomeMutation {:numbering "28703511",
+                                                   :type :deletion,
+                                                   :ref nil,
+                                                   :alt "A"})]})
 
 (def hgvs5s "NM_004380.2:c.86-1G>T")
 (def hgvs5m {:transcript "NM_004380.2", :kind :coding-dna,
-             :mutations [{:numbering "86-1", :type :substitution, :ref "G", :alt "T"}]})
+             :mutations [(mut/map->CodingDNAMutation {:numbering "86-1",
+                                                      :type :substitution,
+                                                      :ref "G",
+                                                      :alt "T"})]})
 
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
 (def hgvs6ss "NP_005219.2:p.L858R")
 (def hgvs6m {:transcript "NP_005219.2", :kind :protein,
-             :mutations [{:numbering "858", :type :substitution, :ref "Leu", :alt "Arg", :rest nil}]})
+             :mutations [(mut/map->ProteinMutation {:numbering "858",
+                                                    :type :substitution,
+                                                    :ref "Leu",
+                                                    :alt "Arg",
+                                                    :rest nil})]})
 
 (def hgvs7s "NP_001096.1:p.Arg258=")
 (def hgvs7m {:transcript "NP_001096.1", :kind :protein,
-             :mutations [{:numbering "258", :type :unchanged, :ref "Arg", :alt nil, :rest nil}]})
+             :mutations [(mut/map->ProteinMutation {:numbering "258",
+                                                    :type :unchanged,
+                                                    :ref "Arg",
+                                                    :alt nil,
+                                                    :rest nil})]})
 
 (def hgvs8s "NP_001005735.1:p.Leu344Trpfs")
 (def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
-             :mutations [{:numbering "344", :type :frame-shift, :ref "Leu", :alt "Trp", :rest nil}]})
-
-(deftest ->long-amino-acid-test
-  (testing "converts a short amino acid to a long one"
-    (is (= (hgvs/->long-amino-acid "S") "Ser")))
-  (testing "returns itself when a long amino acid is passed"
-    (is (= (hgvs/->long-amino-acid "Ser") "Ser")))
-  (testing "returns nil when an illegal string is passed"
-    (is (nil? (hgvs/->long-amino-acid "Foo")))
-    (is (nil? (hgvs/->long-amino-acid "")))
-    (is (nil? (hgvs/->long-amino-acid nil)))))
-
-(deftest ->short-amino-acid-test
-  (testing "converts a long amino acid to a short one"
-    (is (= (hgvs/->short-amino-acid "Ser") "S")))
-  (testing "returns itself when a short amino acid is passed"
-    (is (= (hgvs/->short-amino-acid "S") "S")))
-  (testing "returns nil when an illegal string is passed"
-    (is (nil? (hgvs/->short-amino-acid "Z")))
-    (is (nil? (hgvs/->short-amino-acid "")))
-    (is (nil? (hgvs/->short-amino-acid nil)))))
+             :mutations [(mut/map->ProteinMutation {:numbering "344",
+                                                    :type :frame-shift,
+                                                    :ref "Leu",
+                                                    :alt "Trp",
+                                                    :rest nil})]})
 
 (deftest hgvs-test
   (testing "allows mutation maps"
-    (is (= (hgvs/hgvs "NM_005228.3" :coding-dna {:numbering "2361", :type :substitution, :ref "G", :alt "A"})
+    (is (= (hgvs/hgvs "NM_005228.3" :coding-dna
+                      (mut/map->CodingDNAMutation {:numbering "2361",
+                                                   :type :substitution,
+                                                   :ref "G",
+                                                   :alt "A"}))
            hgvs1m))
-    (is (= (hgvs/hgvs nil :genome {:numbering "2376", :type :substitution, :ref "A", :alt "C"}
-                                  {:numbering "3103", :type :deletion, :ref nil, :alt nil})
+    (is (= (hgvs/hgvs nil :genome
+                      (mut/map->GenomeMutation {:numbering "2376",
+                                                :type :substitution,
+                                                :ref "A",
+                                                :alt "C"})
+                      (mut/map->GenomeMutation {:numbering "3103",
+                                                :type :deletion,
+                                                :ref nil,
+                                                :alt nil}))
            hgvs3m)))
   (testing "allows mutation string"
     (is (= (hgvs/hgvs "NM_005228.3" :coding-dna "2361G>A") hgvs1m))
