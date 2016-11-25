@@ -5,18 +5,18 @@
             [clj-hgvs.mutation :as mut]))
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
-(def hgvs1m {:transcript "NM_005228.3", :kind :coding-dna,
-             :mutations [(mut/map->CodingDNAMutation {:numbering "2361",
-                                                      :type :substitution,
-                                                      :ref "G",
-                                                      :alt "A"})]})
+(def hgvs1m {:transcript "NM_005228.3", :kind :cdna,
+             :mutations [(mut/map->CDNAMutation {:numbering "2361",
+                                                 :type :substitution,
+                                                 :ref "G",
+                                                 :alt "A"})]})
 
 (def hgvs2s "c.2361G>A")
-(def hgvs2m {:transcript nil, :kind :coding-dna,
-             :mutations [(mut/map->CodingDNAMutation {:numbering "2361",
-                                                      :type :substitution,
-                                                      :ref "G",
-                                                      :alt "A"})]})
+(def hgvs2m {:transcript nil, :kind :cdna,
+             :mutations [(mut/map->CDNAMutation {:numbering "2361",
+                                                 :type :substitution,
+                                                 :ref "G",
+                                                 :alt "A"})]})
 
 (def hgvs3s "g.[2376A>C;3103del]")
 (def hgvs3m {:transcript nil, :kind :genome,
@@ -37,44 +37,39 @@
                                                    :alt "A"})]})
 
 (def hgvs5s "NM_004380.2:c.86-1G>T")
-(def hgvs5m {:transcript "NM_004380.2", :kind :coding-dna,
-             :mutations [(mut/map->CodingDNAMutation {:numbering "86-1",
-                                                      :type :substitution,
-                                                      :ref "G",
-                                                      :alt "T"})]})
+(def hgvs5m {:transcript "NM_004380.2", :kind :cdna,
+             :mutations [(mut/map->CDNAMutation {:numbering "86-1",
+                                                 :type :substitution,
+                                                 :ref "G",
+                                                 :alt "T"})]})
 
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
 (def hgvs6ss "NP_005219.2:p.L858R")
 (def hgvs6m {:transcript "NP_005219.2", :kind :protein,
-             :mutations [(mut/map->ProteinMutation {:numbering "858",
-                                                    :type :substitution,
-                                                    :ref "Leu",
-                                                    :alt "Arg",
-                                                    :rest nil})]})
+             :mutations [(mut/map->ProteinSubstitution {:coord {:amino-acid "Leu"
+                                                                :position 858}
+                                                        :alt "Arg"})]})
 
 (def hgvs7s "NP_001096.1:p.Arg258=")
 (def hgvs7m {:transcript "NP_001096.1", :kind :protein,
-             :mutations [(mut/map->ProteinMutation {:numbering "258",
-                                                    :type :unchanged,
-                                                    :ref "Arg",
-                                                    :alt nil,
-                                                    :rest nil})]})
+             :mutations [(mut/map->ProteinSubstitution {:coord {:amino-acid "Arg"
+                                                                :position 258}
+                                                        :alt "Arg"})]})
 
 (def hgvs8s "NP_001005735.1:p.Leu344Trpfs")
 (def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
-             :mutations [(mut/map->ProteinMutation {:numbering "344",
-                                                    :type :frame-shift,
-                                                    :ref "Leu",
-                                                    :alt "Trp",
-                                                    :rest nil})]})
+             :mutations [(mut/map->ProteinFrameShift {:coord {:amino-acid "Leu"
+                                                              :position 344}
+                                                      :alt "Trp"
+                                                      :new-site nil})]})
 
 (deftest hgvs-test
   (testing "allows mutation maps"
-    (is (= (hgvs/hgvs "NM_005228.3" :coding-dna
-                      (mut/map->CodingDNAMutation {:numbering "2361",
-                                                   :type :substitution,
-                                                   :ref "G",
-                                                   :alt "A"}))
+    (is (= (hgvs/hgvs "NM_005228.3" :cdna
+                      (mut/map->CDNAMutation {:numbering "2361",
+                                              :type :substitution,
+                                              :ref "G",
+                                              :alt "A"}))
            hgvs1m))
     (is (= (hgvs/hgvs nil :genome
                       (mut/map->GenomeMutation {:numbering "2376",
@@ -87,7 +82,7 @@
                                                 :alt nil}))
            hgvs3m)))
   (testing "allows mutation string"
-    (is (= (hgvs/hgvs "NM_005228.3" :coding-dna "2361G>A") hgvs1m))
+    (is (= (hgvs/hgvs "NM_005228.3" :cdna "2361G>A") hgvs1m))
     (is (= (hgvs/hgvs nil :genome "[2376A>C;3103del]") hgvs3m))))
 
 (deftest parse-test

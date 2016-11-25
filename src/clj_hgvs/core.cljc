@@ -8,8 +8,8 @@
   (case s
     "g" :genome
     "m" :mitochondria
-    "c" :coding-dna
-    "n" :non-coding-dna
+    "c" :cdna
+    "n" :ncdna
     "r" :rna
     "p" :protein))
 
@@ -18,10 +18,20 @@
   (case k
     :genome "g"
     :mitochondria "m"
-    :coding-dna "c"
-    :non-coding-dna "n"
+    :cdna "c"
+    :ncdna "n"
     :rna "r"
     :protein"p"))
+
+(defn- mutation-parser
+  [kind]
+  (case kind
+    :genome mut/parse-genome
+    :mitochondria mut/parse-mitochondria
+    :cdna mut/parse-cdna
+    :ncdna mut/parse-ncdna
+    :rna mut/parse-rna
+    :protein mut/parse-protein))
 
 (defn- split-mutations
   [s]
@@ -33,7 +43,7 @@
    :kind kind
    :mutations (cond
                 (map? mutation) (cons mutation mutations)
-                (string? mutation) (mapv #(mut/parse % kind) (split-mutations mutation)))})
+                (string? mutation) (mapv (mutation-parser kind) (split-mutations mutation)))})
 
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 
@@ -53,10 +63,12 @@
   (str (->kind-str kind) "."))
 
 (defn format-mutations
-  [mutations & opts]
+  [mutations & {:keys [amino-acid-format] :or {amino-acid-format :long}}]
   (let [multi? (> (count mutations) 1)]
     (apply str (flatten [(if multi? "[")
-                         (string/join ";" (map #(mut/format % opts) mutations))
+                         (->> mutations
+                              (map #(mut/format % {:amino-acid-format amino-acid-format}))
+                              (string/join ";"))
                          (if multi? "]")]))))
 
 (defn format
