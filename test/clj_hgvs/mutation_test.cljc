@@ -1,6 +1,7 @@
 (ns clj-hgvs.mutation-test
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest is testing]])
+            [clj-hgvs.coordinate :as coord]
             [clj-hgvs.mutation :as mut]))
 
 (deftest ->long-amino-acid-test
@@ -25,26 +26,18 @@
 
 ;;; Protein mutations
 
-(deftest format-protein-coord-test
-  (testing "returns a coord string"
-    (is (= (mut/format-protein-coord {:amino-acid "Ala", :position 3} :long) "Ala3"))
-    (is (= (mut/format-protein-coord {:amino-acid "Ala", :position 3} :short) "A3"))))
-
-(deftest parse-protein-coord-test
-  (testing "returns a coord map"
-    (is (= (mut/parse-protein-coord "Ala3") {:amino-acid "Ala", :position 3}))
-    (is (= (mut/parse-protein-coord "A3") {:amino-acid "Ala", :position 3}))))
-
 ;;; Protein - substitution
 
 (def protein-substitution1s "Arg54Ser")
 (def protein-substitution1ss "R54S")
-(def protein-substitution1 (mut/map->ProteinSubstitution {:coord {:amino-acid "Arg", :position 54}
+(def protein-substitution1 (mut/map->ProteinSubstitution {:ref "Arg"
+                                                          :coord (coord/->ProteinCoordinate 54)
                                                           :alt "Ser"}))
 
 (def protein-substitution2s "Cys123=")
 (def protein-substitution2ss "C123=")
-(def protein-substitution2 (mut/map->ProteinSubstitution {:coord {:amino-acid "Cys", :position 123}
+(def protein-substitution2 (mut/map->ProteinSubstitution {:ref "Cys"
+                                                          :coord (coord/->ProteinCoordinate 123)
                                                           :alt "Cys"}))
 
 (deftest format-protein-substitution-test
@@ -65,13 +58,17 @@
 
 (def protein-deletion1s "Ala3del")
 (def protein-deletion1ss "A3del")
-(def protein-deletion1 (mut/map->ProteinDeletion {:start {:amino-acid "Ala", :position 3}
-                                                  :end nil}))
+(def protein-deletion1 (mut/map->ProteinDeletion {:ref-start "Ala"
+                                                  :coord-start (coord/->ProteinCoordinate 3)
+                                                  :ref-end nil
+                                                  :coord-end nil}))
 
 (def protein-deletion2s "Cys76_Glu79del")
 (def protein-deletion2ss "C76_E79del")
-(def protein-deletion2 (mut/map->ProteinDeletion {:start {:amino-acid "Cys", :position 76}
-                                                  :end {:amino-acid "Glu", :position 79}}))
+(def protein-deletion2 (mut/map->ProteinDeletion {:ref-start "Cys"
+                                                  :coord-start (coord/->ProteinCoordinate 76)
+                                                  :ref-end "Glu"
+                                                  :coord-end (coord/->ProteinCoordinate 79)}))
 (deftest format-protein-deletion-test
   (testing "returns a string expression of a protein deletion"
     (is (= (mut/format protein-deletion1 nil) protein-deletion1s))
@@ -90,13 +87,17 @@
 
 (def protein-duplication1s "Ala3dup")
 (def protein-duplication1ss "A3dup")
-(def protein-duplication1 (mut/map->ProteinDuplication {:start {:amino-acid "Ala", :position 3}
-                                                        :end nil}))
+(def protein-duplication1 (mut/map->ProteinDuplication {:ref-start "Ala"
+                                                        :coord-start (coord/->ProteinCoordinate 3)
+                                                        :ref-end nil
+                                                        :coord-end nil}))
 
 (def protein-duplication2s "Ala3_Ser5dup")
 (def protein-duplication2ss "A3_S5dup")
-(def protein-duplication2 (mut/map->ProteinDuplication {:start {:amino-acid "Ala", :position 3}
-                                                        :end {:amino-acid "Ser", :position 5}}))
+(def protein-duplication2 (mut/map->ProteinDuplication {:ref-start "Ala"
+                                                        :coord-start (coord/->ProteinCoordinate 3)
+                                                        :ref-end "Ser"
+                                                        :coord-end (coord/->ProteinCoordinate 5)}))
 
 (deftest format-protein-duplication-test
   (testing "returns a string expression of a protein duplication"
@@ -116,8 +117,10 @@
 
 (def protein-insertions "Lys23_Leu24insArgSerGln")
 (def protein-insertionss "K23_L24insRSQ")
-(def protein-insertion (mut/map->ProteinInsertion {:start {:amino-acid "Lys", :position 23}
-                                                   :end {:amino-acid "Leu", :position 24}
+(def protein-insertion (mut/map->ProteinInsertion {:ref-start "Lys"
+                                                   :coord-start (coord/->ProteinCoordinate 23)
+                                                   :ref-end "Leu"
+                                                   :coord-end (coord/->ProteinCoordinate 24)
                                                    :alts ["Arg" "Ser" "Gln"]}))
 
 (deftest format-protein-insertion-test
@@ -134,14 +137,18 @@
 
 (def protein-indel1s "Cys28delinsTrpVal")
 (def protein-indel1ss "C28delinsWV")
-(def protein-indel1 (mut/map->ProteinIndel {:start {:amino-acid "Cys", :position 28}
-                                            :end nil
+(def protein-indel1 (mut/map->ProteinIndel {:ref-start "Cys"
+                                            :coord-start (coord/->ProteinCoordinate 28)
+                                            :ref-end nil
+                                            :coord-end nil
                                             :alts ["Trp" "Val"]}))
 
 (def protein-indel2s "Cys28_Lys29delinsTrp")
 (def protein-indel2ss "C28_K29delinsW")
-(def protein-indel2 (mut/map->ProteinIndel {:start {:amino-acid "Cys", :position 28}
-                                            :end {:amino-acid "Lys", :position 29}
+(def protein-indel2 (mut/map->ProteinIndel {:ref-start "Cys"
+                                            :coord-start (coord/->ProteinCoordinate 28)
+                                            :ref-end "Lys"
+                                            :coord-end (coord/->ProteinCoordinate 29)
                                             :alts ["Trp"]}))
 
 (deftest format-protein-indel-test
@@ -162,24 +169,30 @@
 
 (def protein-repeated-seqs1s "Ala2[10]")
 (def protein-repeated-seqs1ss "A2[10]")
-(def protein-repeated-seqs1 (mut/map->ProteinRepeatedSeqs {:start {:amino-acid "Ala", :position 2}
-                                                            :end nil
-                                                            :ncopy 10
-                                                            :ncopy-other nil}))
+(def protein-repeated-seqs1 (mut/map->ProteinRepeatedSeqs {:ref-start "Ala"
+                                                           :coord-start (coord/->ProteinCoordinate 2)
+                                                           :ref-end nil
+                                                           :coord-end nil
+                                                           :ncopy 10
+                                                           :ncopy-other nil}))
 
 (def protein-repeated-seqs2s "Ala2[10];[11]")
 (def protein-repeated-seqs2ss "A2[10];[11]")
-(def protein-repeated-seqs2 (mut/map->ProteinRepeatedSeqs {:start {:amino-acid "Ala", :position 2}
-                                                            :end nil
-                                                            :ncopy 10
-                                                            :ncopy-other 11}))
+(def protein-repeated-seqs2 (mut/map->ProteinRepeatedSeqs {:ref-start "Ala"
+                                                           :coord-start (coord/->ProteinCoordinate 2)
+                                                           :ref-end nil
+                                                           :coord-end nil
+                                                           :ncopy 10
+                                                           :ncopy-other 11}))
 
 (def protein-repeated-seqs3s "Arg65_Ser67[12]")
 (def protein-repeated-seqs3ss "R65_S67[12]")
-(def protein-repeated-seqs3 (mut/map->ProteinRepeatedSeqs {:start {:amino-acid "Arg", :position 65}
-                                                            :end {:amino-acid "Ser", :position 67}
-                                                            :ncopy 12
-                                                            :ncopy-other nil}))
+(def protein-repeated-seqs3 (mut/map->ProteinRepeatedSeqs {:ref-start "Arg"
+                                                           :coord-start (coord/->ProteinCoordinate 65)
+                                                           :ref-end "Ser"
+                                                           :coord-end (coord/->ProteinCoordinate 67)
+                                                           :ncopy 12
+                                                           :ncopy-other nil}))
 
 (deftest format-protein-repeated-seqs-test
   (testing "returns a string expression of a protein repeated-seqs"
@@ -202,23 +215,27 @@
 ;;; Protein - frame shift
 
 (def protein-frame-shift1s "Arg97ProfsTer23")
-(def protein-frame-shift1 (mut/map->ProteinFrameShift {:coord {:amino-acid "Arg", :position 97}
+(def protein-frame-shift1 (mut/map->ProteinFrameShift {:ref "Arg"
+                                                       :coord (coord/->ProteinCoordinate 97)
                                                        :alt "Pro"
                                                        :new-site "Ter23"}))
 
 (def protein-frame-shift2s "Arg97fs")
 (def protein-frame-shift2ss "R97fs")
-(def protein-frame-shift2 (mut/map->ProteinFrameShift {:coord {:amino-acid "Arg", :position 97}
+(def protein-frame-shift2 (mut/map->ProteinFrameShift {:ref "Arg"
+                                                       :coord (coord/->ProteinCoordinate 97)
                                                        :alt nil
                                                        :new-site nil}))
 
 (def protein-frame-shift3s "Ile327Argfs*?")
-(def protein-frame-shift3 (mut/map->ProteinFrameShift {:coord {:amino-acid "Ile", :position 327}
+(def protein-frame-shift3 (mut/map->ProteinFrameShift {:ref "Ile"
+                                                       :coord (coord/->ProteinCoordinate 327)
                                                        :alt "Arg"
                                                        :new-site "*?"}))
 
 (def protein-frame-shift4s "Gln151Thrfs*9")
-(def protein-frame-shift4 (mut/map->ProteinFrameShift {:coord {:amino-acid "Gln", :position 151}
+(def protein-frame-shift4 (mut/map->ProteinFrameShift {:ref "Gln"
+                                                       :coord (coord/->ProteinCoordinate 151)
                                                        :alt "Thr"
                                                        :new-site "*9"}))
 (deftest format-protein-frame-shift-test
@@ -241,18 +258,21 @@
 
 (def protein-extension1s "Met1ext-5")
 (def protein-extension1ss "M1ext-5")
-(def protein-extension1 (mut/map->ProteinExtension {:coord {:amino-acid "Met", :position 1}
+(def protein-extension1 (mut/map->ProteinExtension {:ref "Met"
+                                                    :coord (coord/->ProteinCoordinate 1)
                                                     :alt nil
                                                     :new-site "-5"}))
 
 (def protein-extension2s "Met1Valext-12")
 (def protein-extension2ss "M1Vext-12")
-(def protein-extension2 (mut/map->ProteinExtension {:coord {:amino-acid "Met", :position 1}
+(def protein-extension2 (mut/map->ProteinExtension {:ref "Met"
+                                                    :coord (coord/->ProteinCoordinate 1)
                                                     :alt "Val"
                                                     :new-site "-12"}))
 
 (def protein-extension3s "Ter110GlnextTer17")
-(def protein-extension3 (mut/map->ProteinExtension {:coord {:amino-acid "Ter", :position 110}
+(def protein-extension3 (mut/map->ProteinExtension {:ref "Ter"
+                                                    :coord (coord/->ProteinCoordinate 110)
                                                     :alt "Gln"
                                                     :new-site "Ter17"}))
 

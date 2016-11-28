@@ -1,11 +1,8 @@
 (ns clj-hgvs.mutation
   #?(:clj (:refer-clojure :exclude [format]))
-  (:require [clojure.string :as string]))
-
-(defn- parse-long
-  [s]
-  #?(:clj (Long/parseLong s)
-     :cljs (js/parseInt s)))
+  (:require [clojure.string :as string]
+            [clj-hgvs.coordinate :as coord]
+            [clj-hgvs.internal :refer [parse-long]]))
 
 (defn- ->mutation-type-keyword
   [s]
@@ -100,7 +97,7 @@
 (defprotocol Mutation
   (format [this opts]))
 
-;;; Genome
+;;; DNA mutations
 ;;;
 ;;; dup: g.123_345dup
 ;;; ins: g.123_124insAGC
@@ -108,6 +105,29 @@
 ;;; con: g.123_345con888_1110 (TODO)
 ;;; delins: g.123_127delinsAG
 ;;; repeat: g.123_125[36], g.123GGC[36] (TODO)
+
+;;; DNA - substitution
+;;;
+;;; e.g. 45576A>C
+;;;      88+1G>T
+;;;      76_77delinsTT
+;;;      123G=
+;;;      85C=/>T
+;;;      85C=//>T
+
+(defrecord DNASubstitution [start end ref alt]
+  Mutation
+  (format [_ _]
+
+    ))
+
+(def ^:private dna-substitution-re
+  #"")
+
+(defn parse-dna-substitution
+  [s]
+
+)
 
 (defrecord GenomeMutation [numbering type ref alt]
   Mutation
@@ -199,22 +219,6 @@
 
 ;;; Protein mutations
 
-(defn format-protein-coord
-  "{:amino-acid \"Ala\", :position 3} => Ala3"
-  [{:keys [amino-acid position]} amino-acid-format]
-  {:pre [(#{:long :short} amino-acid-format)]}
-  (str (cond-> amino-acid
-         (= amino-acid-format :short) ->short-amino-acid)
-       position))
-
-(defn parse-protein-coord
-  "Ala3 => {:amino-acid \"Ala\", :position 3}"
-  [s]
-  (if s
-    (if-let [[_ amino-acid pos] (re-find #"^([A-Z](?:[a-z]{2})?)(\d+)$" s)]
-      {:amino-acid (->long-amino-acid amino-acid)
-       :position (parse-long pos)})))
-
 ;;; Protein - substitution
 ;;;
 ;;; e.g. Arg54Ser
@@ -222,26 +226,28 @@
 ;;;      Trp26*
 ;;;      Cys123=
 
-(defrecord ProteinSubstitution [coord alt]
+(defrecord ProteinSubstitution [coord ref alt]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     {:pre [(#{:long :short} amino-acid-format)]}
-    (str (format-protein-coord coord amino-acid-format)
-         (if (= (:amino-acid coord) alt)
+    (str (cond-> ref
+           (= amino-acid-format :short) ->short-amino-acid)
+         (coord/format coord)
+         (if (= ref alt)
            "="
            (cond-> alt
              (= amino-acid-format :short) ->short-amino-acid)))))
 
 (def ^:private protein-substitution-re
-  #"^([A-Z](?:[a-z]{2})?\d+)([A-Z\*=](?:[a-z]{2})?)$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)([A-Z\*=](?:[a-z]{2})?)$")
 
 (defn parse-protein-substitution
   [s]
-  (let [[_ coord alt] (re-find protein-substitution-re s)
-        coord' (parse-protein-coord coord)]
-    (map->ProteinSubstitution {:coord coord'
+  (let [[_ ref coord' alt] (re-find protein-substitution-re s)]
+    (map->ProteinSubstitution {:coord (coord/parse-protein-coordinate coord')
+                               :ref (->long-amino-acid ref)
                                :alt (case alt
-                                      "=" (->long-amino-acid (:amino-acid coord'))
+                                      "=" (->long-amino-acid ref)
                                       "*" "Ter"
                                       (->long-amino-acid alt))})))
 
@@ -250,69 +256,88 @@
 ;;; e.g. Ala3del
 ;;;      Cys76_Glu79del
 
-(defrecord ProteinDeletion [start end]
+(defrecord ProteinDeletion [ref-start coord-start ref-end coord-end]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (apply str
-           (format-protein-coord start amino-acid-format)
-           (if end "_")
-           (format-protein-coord end amino-acid-format)
-           "del")))
+    (apply str (flatten [(cond-> ref-start
+                           (= amino-acid-format :short) ->short-amino-acid)
+                         (coord/format coord-start)
+                         (if ref-end
+                           ["_"
+                            (cond-> ref-end
+                              (= amino-acid-format :short) ->short-amino-acid)
+                            (coord/format coord-end)])
+                         "del"]))))
 
 (def ^:private protein-deletion-re
-  #"^([A-Z](?:[a-z]{2})?\d+)(?:_([A-Z](?:[a-z]{2})?\d+))?del$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?del$")
 
 (defn parse-protein-deletion
   [s]
-  (let [[_ start end] (re-find protein-deletion-re s)]
-    (map->ProteinDeletion {:start (parse-protein-coord start)
-                           :end (parse-protein-coord end)})))
+  (let [[_ ref-s coord-s ref-e coord-e] (re-find protein-deletion-re s)]
+    (map->ProteinDeletion {:ref-start (->long-amino-acid ref-s)
+                           :coord-start (coord/parse-protein-coordinate coord-s)
+                           :ref-end (->long-amino-acid ref-e)
+                           :coord-end (some-> coord-e coord/parse-protein-coordinate)})))
 
 ;;; Protein - duplication
 ;;;
 ;;; e.g. Ala3dup
 ;;;      Ala3_Ser5dup
 
-(defrecord ProteinDuplication [start end]
+(defrecord ProteinDuplication [ref-start coord-start ref-end coord-end]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (str (format-protein-coord start amino-acid-format)
-         (if end "_")
-         (format-protein-coord end amino-acid-format)
-         "dup")))
+    (apply str (flatten [(cond-> ref-start
+                           (= amino-acid-format :short) ->short-amino-acid)
+                         (coord/format coord-start)
+                         (if ref-end
+                           ["_"
+                            (cond-> ref-end
+                              (= amino-acid-format :short) ->short-amino-acid)
+                            (coord/format coord-end)])
+                         "dup"]))))
 
 (def ^:private protein-duplication-re
-  #"^([A-Z](?:[a-z]{2})?\d+)(?:_([A-Z](?:[a-z]{2})?\d+))?dup$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?dup$")
 
 (defn parse-protein-duplication
   [s]
-  (let [[_ start end] (re-find protein-duplication-re s)]
-    (map->ProteinDuplication {:start (parse-protein-coord start)
-                              :end (parse-protein-coord end)})))
+  (let [[_ ref-s coord-s ref-e coord-e] (re-find protein-duplication-re s)]
+    (map->ProteinDuplication {:ref-start (->long-amino-acid ref-s)
+                              :coord-start (coord/parse-protein-coordinate coord-s)
+                              :ref-end (->long-amino-acid ref-e)
+                              :coord-end (some-> coord-e coord/parse-protein-coordinate)})))
 
 ;;; Protein - insertion
 ;;;
 ;;; e.g. Lys23_Leu24insArgSerGln
 
-(defrecord ProteinInsertion [start end alts]
+(defrecord ProteinInsertion [ref-start coord-start ref-end coord-end alts]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (apply str
-           (format-protein-coord start amino-acid-format)
-           (if end "_")
-           (format-protein-coord end amino-acid-format)
-           "ins"
-           (cond->> alts
-             (= amino-acid-format :short) (map ->short-amino-acid)))))
+    (apply str (flatten [(cond-> ref-start
+                           (= amino-acid-format :short) ->short-amino-acid)
+                         (coord/format coord-start)
+                         (if ref-end
+                           ["_"
+                            (cond-> ref-end
+                              (= amino-acid-format :short) ->short-amino-acid)
+                            (coord/format coord-end)])
+                         "ins"
+                         (cond->> alts
+                           (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (def ^:private protein-insertion-re
-  #"^([A-Z](?:[a-z]{2})?\d+)(?:_([A-Z](?:[a-z]{2})?\d+))?ins([A-Z][a-zA-Z]*)?$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?ins([A-Z][a-zA-Z]*)?$")
 
 (defn parse-protein-insertion
   [s]
-  (let [[_ start end alts] (re-find protein-insertion-re s)]
-    (map->ProteinInsertion {:start (parse-protein-coord start)
-                            :end (parse-protein-coord end)
+  (let [[_ ref-s coord-s ref-e coord-e alts] (re-find protein-insertion-re s)]
+    (map->ProteinInsertion {:ref-start (->long-amino-acid ref-s)
+                            :coord-start (coord/parse-protein-coordinate coord-s)
+                            :ref-end (->long-amino-acid ref-e)
+                            :coord-end (some-> coord-e coord/parse-protein-coordinate)
                             :alts (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?")))})))
 
 ;;; Protein - indel
@@ -320,25 +345,31 @@
 ;;; e.g. Cys28delinsTrpVal
 ;;;      Cys28_Lys29delinsTrp
 
-(defrecord ProteinIndel [start end alts]
+(defrecord ProteinIndel [ref-start coord-start ref-end coord-end alts]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (apply str
-           (format-protein-coord start amino-acid-format)
-           (if end "_")
-           (format-protein-coord end amino-acid-format)
-           "delins"
-           (cond->> alts
-             (= amino-acid-format :short) (map ->short-amino-acid)))))
+    (apply str (flatten [(cond-> ref-start
+                           (= amino-acid-format :short) ->short-amino-acid)
+                         (coord/format coord-start)
+                         (if ref-end
+                           ["_"
+                            (cond-> ref-end
+                              (= amino-acid-format :short) ->short-amino-acid)
+                            (coord/format coord-end)])
+                         "delins"
+                         (cond->> alts
+                           (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (def ^:private protein-indel-re
-  #"^([A-Z](?:[a-z]{2})?\d+)(?:_([A-Z](?:[a-z]{2})?\d+))?delins([A-Z][a-zA-Z]*)?$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z][a-zA-Z]*)?$")
 
 (defn parse-protein-indel
   [s]
-  (let [[_ start end alts] (re-find protein-indel-re s)]
-    (map->ProteinIndel {:start (parse-protein-coord start)
-                        :end (parse-protein-coord end)
+  (let [[_ ref-s coord-s ref-e coord-e alts] (re-find protein-indel-re s)]
+    (map->ProteinIndel {:ref-start (->long-amino-acid ref-s)
+                        :coord-start (coord/parse-protein-coordinate coord-s)
+                        :ref-end (->long-amino-acid ref-e)
+                        :coord-end (some-> coord-e coord/parse-protein-coordinate)
                         :alts (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?")))})))
 
 ;;; Protein - repeated sequences
@@ -347,23 +378,31 @@
 ;;;      Ala2[10];[11]
 ;;;      Arg65_Ser67[12]
 
-(defrecord ProteinRepeatedSeqs [start end ncopy ncopy-other]
+(defrecord ProteinRepeatedSeqs [ref-start coord-start ref-end coord-end ncopy
+                                ncopy-other]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (str (format-protein-coord start amino-acid-format)
-         (if end "_")
-         (format-protein-coord end amino-acid-format)
-         "[" ncopy "]"
-         (if ncopy-other (str ";[" ncopy-other "]")))))
+    (apply str (flatten [(cond-> ref-start
+                           (= amino-acid-format :short) ->short-amino-acid)
+                         (coord/format coord-start)
+                         (if ref-end
+                           ["_"
+                            (cond-> ref-end
+                              (= amino-acid-format :short) ->short-amino-acid)
+                            (coord/format coord-end)])
+                         "[" ncopy "]"
+                         (if ncopy-other [";[" ncopy-other "]"])]))))
 
 (def ^:private protein-repeated-seqs-re
-  #"^([A-Z](?:[a-z]{2})?\d+)(?:_([A-Z](?:[a-z]{2})?\d+))?\[(\d+)\](?:;\[(\d+)\])?")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[(\d+)\](?:;\[(\d+)\])?")
 
 (defn parse-protein-repeated-seqs
   [s]
-  (let [[_ start end ncopy1 ncopy2] (re-find protein-repeated-seqs-re s)]
-    (map->ProteinRepeatedSeqs {:start (parse-protein-coord start)
-                               :end (parse-protein-coord end)
+  (let [[_ ref-s coord-s ref-e coord-e ncopy1 ncopy2] (re-find protein-repeated-seqs-re s)]
+    (map->ProteinRepeatedSeqs {:ref-start (->long-amino-acid ref-s)
+                               :coord-start (coord/parse-protein-coordinate coord-s)
+                               :ref-end (->long-amino-acid ref-e)
+                               :coord-end (some-> coord-e coord/parse-protein-coordinate)
                                :ncopy (parse-long ncopy1)
                                :ncopy-other (if ncopy2 (parse-long ncopy2))})))
 
@@ -374,22 +413,25 @@
 ;;;      Ile327Argfs*?
 ;;;      Gln151Thrfs*9
 
-(defrecord ProteinFrameShift [coord alt new-site]
+(defrecord ProteinFrameShift [ref coord alt new-site]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (str (format-protein-coord coord amino-acid-format)
+    (str (cond-> ref
+           (= amino-acid-format :short) ->short-amino-acid)
+         (coord/format coord)
          (cond-> alt
            (= amino-acid-format :short) ->short-amino-acid)
          "fs"
          new-site)))
 
 (def ^:private protein-frame-shift-re
-  #"^([A-Z](?:[a-z]{2})?\d+)([A-Z](?:[a-z]{2})?)?fs(.+)?$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(.+)?$")
 
 (defn parse-protein-frame-shift
   [s]
-  (let [[_ coord alt new-site] (re-find protein-frame-shift-re s)]
-    (map->ProteinFrameShift {:coord (parse-protein-coord coord)
+  (let [[_ ref coord' alt new-site] (re-find protein-frame-shift-re s)]
+    (map->ProteinFrameShift {:ref (->long-amino-acid ref)
+                             :coord (coord/parse-protein-coordinate coord')
                              :alt (->long-amino-acid alt)
                              :new-site new-site})))
 
@@ -399,22 +441,25 @@
 ;;;      Met1Valext-12
 ;;;      Ter110GlnextTer17
 
-(defrecord ProteinExtension [coord alt new-site]
+(defrecord ProteinExtension [ref coord alt new-site]
   Mutation
   (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (str (format-protein-coord coord amino-acid-format)
+    (str (cond-> ref
+           (= amino-acid-format :short) ->short-amino-acid)
+         (coord/format coord)
          (cond-> alt
            (= amino-acid-format :short) ->short-amino-acid)
          "ext"
          new-site)))
 
 (def ^:private protein-extension-re
-  #"^([A-Z](?:[a-z]{2})?\d+)([A-Z](?:[a-z]{2})?)?ext(.+)$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?ext(.+)$")
 
 (defn parse-protein-extension
   [s]
-  (let [[_ coord alt new-site] (re-find protein-extension-re s)]
-    (map->ProteinExtension {:coord (parse-protein-coord coord)
+  (let [[_ ref coord' alt new-site] (re-find protein-extension-re s)]
+    (map->ProteinExtension {:ref (->long-amino-acid ref)
+                             :coord (coord/parse-protein-coordinate coord')
                             :alt (->long-amino-acid alt)
                             :new-site new-site})))
 

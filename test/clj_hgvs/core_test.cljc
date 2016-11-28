@@ -1,6 +1,7 @@
 (ns clj-hgvs.core-test
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest is testing]])
+            [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]))
 
@@ -46,20 +47,20 @@
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
 (def hgvs6ss "NP_005219.2:p.L858R")
 (def hgvs6m {:transcript "NP_005219.2", :kind :protein,
-             :mutations [(mut/map->ProteinSubstitution {:coord {:amino-acid "Leu"
-                                                                :position 858}
+             :mutations [(mut/map->ProteinSubstitution {:ref "Leu"
+                                                        :coord (coord/->ProteinCoordinate 858)
                                                         :alt "Arg"})]})
 
 (def hgvs7s "NP_001096.1:p.Arg258=")
 (def hgvs7m {:transcript "NP_001096.1", :kind :protein,
-             :mutations [(mut/map->ProteinSubstitution {:coord {:amino-acid "Arg"
-                                                                :position 258}
+             :mutations [(mut/map->ProteinSubstitution {:ref "Arg"
+                                                        :coord (coord/->ProteinCoordinate 258)
                                                         :alt "Arg"})]})
 
 (def hgvs8s "NP_001005735.1:p.Leu344Trpfs")
 (def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
-             :mutations [(mut/map->ProteinFrameShift {:coord {:amino-acid "Leu"
-                                                              :position 344}
+             :mutations [(mut/map->ProteinFrameShift {:ref "Leu"
+                                                      :coord (coord/->ProteinCoordinate 344)
                                                       :alt "Trp"
                                                       :new-site nil})]})
 
