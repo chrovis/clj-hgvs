@@ -2,7 +2,7 @@
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]
-            [clj-hgvs.internal :refer [parse-long]]))
+            [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
 
 (defn- ->mutation-type-keyword
   [s]
@@ -98,108 +98,314 @@
   (format [this opts]))
 
 ;;; DNA mutations
-;;;
-;;; dup: g.123_345dup
-;;; ins: g.123_124insAGC
-;;; inv: g.123_345inv
-;;; con: g.123_345con888_1110 (TODO)
-;;; delins: g.123_127delinsAG
-;;; repeat: g.123_125[36], g.123GGC[36] (TODO)
+
+(defn- coord-parser
+  [kind]
+  (case kind
+    :genome coord/parse-genomic-coordinate
+    :mitochondria coord/parse-mitochondrial-coordinate
+    :cdna coord/parse-cdna-coordinate
+    :ncdna coord/parse-ncdna-coordinate))
 
 ;;; DNA - substitution
 ;;;
-;;; e.g. 45576A>C
-;;;      88+1G>T
-;;;      76_77delinsTT
-;;;      123G=
-;;;      85C=/>T
-;;;      85C=//>T
+;;; e.g. g.45576A>C
+;;;      c.88+1G>T
+;;;      c.123G=
+;;;      c.85C=/>T
+;;;      c.85C=//>T
 
-(defrecord DNASubstitution [start end ref alt]
+(defrecord DNASubstitution [coord-start coord-end ref type alt]
   Mutation
   (format [_ _]
-
-    ))
+    (apply str (flatten [(coord/format coord-start)
+                         (if coord-end ["_" (coord/format coord-end)])
+                         ref
+                         type
+                         alt]))))
 
 (def ^:private dna-substitution-re
-  #"")
+  #"^([\d\-\+]+)(?:_([\d\-\+]+))?([A-Z]+)([>=/]+)([A-Z]+)?$")
 
 (defn parse-dna-substitution
-  [s]
+  [s kind]
+  (let [[_ coord-s coord-e ref type alt] (re-find dna-substitution-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNASubstitution {:coord-start (parse-coord coord-s)
+                           :coord-end (some-> coord-e parse-coord)
+                           :ref ref
+                           :type type
+                           :alt alt})))
 
-)
+;;; DNA - deletion
+;;;
+;;; e.g. g.7del
+;;;      g.6_8del
+;;;      c.120_123+48del
+;;;      c.(4071+1_4072-1)_(5145+1_5146-1)del
+;;;      c.(?_-30)_(12+1_13-1)del
+;;;      c.(?_-1)_(*1_?)del
 
-(defrecord GenomeMutation [numbering type ref alt]
+(defrecord DNADeletion [coord-start coord-end ref]
   Mutation
   (format [_ _]
-    (string/join [numbering ref (->mutation-str type) alt])))
+    (apply str (flatten [(if (vector? coord-start)
+                           ["(" (coord/format (first coord-start))
+                            "_" (coord/format (second coord-start)) ")"]
+                           (coord/format coord-start))
+                         (if coord-end "_")
+                         (if (vector? coord-end)
+                           ["(" (coord/format (first coord-end))
+                            "_" (coord/format (second coord-end)) ")"]
+                           (some-> coord-end coord/format))
+                         "del"
+                         ref]))))
 
-(def ^:private genome-mutation-re
-  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
+(def ^:private dna-deletion-re
+  #"^([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?")
 
-(defn parse-genome
-  [s]
-  (let [[_ numbering ref type alt] (re-find genome-mutation-re s)]
-    (map->GenomeMutation {:numbering numbering
-                          :type (->mutation-type-keyword type)
-                          :ref ref
-                          :alt alt})))
+(defn- parse-dna-deletion*
+  [s kind]
+  (let [[_ coord-s coord-e ref] (re-find dna-deletion-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNADeletion {:coord-start (parse-coord coord-s)
+                       :coord-end (some-> coord-e parse-coord)
+                       :ref ref})))
 
-;;; Mitochondria
+(def ^:private dna-deletion-range-re
+  #"^\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)del([A-Z]+)?")
 
-(defrecord MitochondriaMutation [numbering type ref alt]
+(defn- parse-dna-deletion-range
+  [s kind]
+  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-find dna-deletion-range-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNADeletion {:coord-start (mapv parse-coord [coord-s1 coord-s2])
+                       :coord-end (mapv parse-coord [coord-e1 coord-e2])
+                       :ref ref})))
+
+(defn parse-dna-deletion
+  [s kind]
+  (if (re-find #"^\(.+\)_\(.+\)del[A-Z]*$" s)
+    (parse-dna-deletion-range s kind)
+    (parse-dna-deletion* s kind)))
+
+;;; DNA - duplication
+;;;
+;;; e.g. g.7dup
+;;;      g.6_8dup
+;;;      c.120_123+48dup
+;;;      c.(4071+1_4072-1)_(5145+1_5146-1)dup
+;;;      c.(?_-30)_(12+1_13-1)dup
+;;;      c.(?_-1)_(*1_?)dup
+
+(defrecord DNADuplication [coord-start coord-end ref]
   Mutation
   (format [_ _]
-    (string/join [numbering ref (->mutation-str type) alt])))
+    (apply str (flatten [(if (vector? coord-start)
+                           ["(" (coord/format (first coord-start))
+                            "_" (coord/format (second coord-start)) ")"]
+                           (coord/format coord-start))
+                         (if coord-end "_")
+                         (if (vector? coord-end)
+                           ["(" (coord/format (first coord-end))
+                            "_" (coord/format (second coord-end)) ")"]
+                           (some-> coord-end coord/format))
+                         "dup"
+                         ref]))))
 
-(def ^:private mitochondria-mutation-re
-  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
+(def ^:private dna-duplication-re
+  #"^([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?dup([A-Z]+)?")
 
-(defn parse-mitochondria
-  [s]
-  (let [[_ numbering ref type alt] (re-find genome-mutation-re s)]
-    (map->MitochondriaMutation {:numbering numbering
-                                :type (->mutation-type-keyword type)
-                                :ref ref
-                                :alt alt})))
+(defn- parse-dna-duplication*
+  [s kind]
+  (let [[_ coord-s coord-e ref] (re-find dna-duplication-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNADuplication {:coord-start (parse-coord coord-s)
+                          :coord-end (some-> coord-e parse-coord)
+                          :ref ref})))
 
-;;; Coding DNA
+(def ^:private dna-duplication-range-re
+  #"^\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)dup([A-Z]+)?")
 
-(defrecord CDNAMutation [numbering type ref alt]
+(defn- parse-dna-duplication-range
+  [s kind]
+  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-find dna-duplication-range-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNADuplication {:coord-start (mapv parse-coord [coord-s1 coord-s2])
+                          :coord-end (mapv parse-coord [coord-e1 coord-e2])
+                          :ref ref})))
+
+(defn parse-dna-duplication
+  [s kind]
+  (if (re-find #"^\(.+\)_\(.+\)dup[A-Z]*$" s)
+    (parse-dna-duplication-range s kind)
+    (parse-dna-duplication* s kind)))
+
+;;; DNA - insertion
+;;;
+;;; e.g. g.5756_5757insAGG
+;;;      g.123_124insL37425.1:23_361
+;;;      g.122_123ins123_234inv (TODO)
+;;;      g.122_123ins213_234invinsAins123_211inv (TODO)
+
+(defrecord DNAInsertion [coord-start coord-end alt]
   Mutation
   (format [_ _]
-    (string/join [numbering ref (->mutation-str type) alt])))
+    (apply str (flatten [(coord/format coord-start)
+                         "_"
+                         (coord/format coord-end)
+                         "ins"
+                         (cond
+                           (string? alt) alt
+                           (map? alt) [(:transcript alt)
+                                       ":"
+                                       (coord/format (:coord-start alt))
+                                       "_"
+                                       (coord/format (:coord-end alt))])]))))
 
-(def ^:private coding-dna-mutation-re
-  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
+(def ^:private dna-insertion-re
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))ins(.+)")
 
-(defn parse-cdna
-  [s]
-  (let [[_ numbering ref type alt] (re-find genome-mutation-re s)]
-    (map->CDNAMutation {:numbering numbering
-                        :type (->mutation-type-keyword type)
-                        :ref ref
-                        :alt alt})))
+(def ^:private dna-insertion-alt-re
+  #"(?:([^:]+):)([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))")
 
-;;; Non-coding DNA
+(defn parse-dna-insertion
+  [s kind]
+  (let [[_ coord-s coord-e alt] (re-matches dna-insertion-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNAInsertion
+     {:coord-start (parse-coord coord-s)
+      :coord-end (parse-coord coord-e)
+      :alt (or (re-matches #"[A-Z]+" alt)
+               (let [[_ transcript coord-s coord-e] (re-matches dna-insertion-alt-re alt)]
+                 {:transcript transcript
+                  :coord-start (parse-coord coord-s)
+                  :coord-end (parse-coord coord-e)}))})))
 
-(defrecord NCDNAMutation [numbering type ref alt]
+;;; DNA - inversion
+;;;
+;;; e.g. g.1077_1080inv
+;;;      c.77_80inv
+
+(defrecord DNAInversion [coord-start coord-end]
   Mutation
   (format [_ _]
-    (string/join [numbering ref (->mutation-str type) alt])))
+    (str (coord/format coord-start)
+         "_"
+         (coord/format coord-end)
+         "inv")))
 
-(def ^:private non-coding-dna-mutation-re
-  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
+(def ^:private dna-inversion-re
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))inv")
 
-(defn parse-ncdna
-  [s]
-  (let [[_ numbering ref type alt] (re-find genome-mutation-re s)]
-    (map->NCDNAMutation {:numbering numbering
-                         :type (->mutation-type-keyword type)
-                         :ref ref
-                         :alt alt})))
+(defn parse-dna-inversion
+  [s kind]
+  (let [[_ coord-s coord-e] (re-matches dna-inversion-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNAInversion {:coord-start (parse-coord coord-s)
+                        :coord-end (parse-coord coord-e)})))
 
-;;; RNA
+;;; DNA - conversion
+;;;
+;;; e.g. g.333_590con1844_2101
+;;;      g.415_1655conAC096506.5:g.409_1683
+;;;      c.15_355conNM_004006.1:20_360
+
+(defrecord DNAConversion [coord-start coord-end alt]
+  Mutation
+  (format [_ _]
+    (apply str (flatten [(coord/format coord-start)
+                         "_"
+                         (coord/format coord-end)
+                         "con"
+                         (if (:transcript alt) [(:transcript alt) ":"])
+                         (if (:kind alt) [(->kind-str (:kind alt)) "."])
+                         (coord/format (:coord-start alt))
+                         "_"
+                         (coord/format (:coord-end alt))]))))
+
+(def ^:private dna-conversion-re
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))con(.+)")
+
+(def ^:private dna-conversion-alt-re
+  #"(?:([^:]+):)?(?:([gmcn])\.)?([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))")
+
+(defn parse-dna-conversion
+  [s kind]
+  (let [[_ coord-s coord-e alt] (re-matches dna-conversion-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNAConversion
+     {:coord-start (parse-coord coord-s)
+      :coord-end (parse-coord coord-e)
+      :alt (let [[_ transcript kind coord-s coord-e] (re-matches dna-conversion-alt-re alt)
+                 parse-alt-coord (if kind
+                                   (coord-parser (->kind-keyword kind))
+                                   parse-coord)]
+             {:transcript transcript
+              :kind (some-> kind ->kind-keyword)
+              :coord-start (parse-alt-coord coord-s)
+              :coord-end (parse-alt-coord coord-e)})})))
+
+;;; DNA - indel
+;;;
+;;; e.g. g.6775delinsGA
+;;;      c.145_147delinsTGG
+
+(defrecord DNAIndel [coord-start coord-end alt]
+  Mutation
+  (format [_ _]
+    (apply str (flatten [(coord/format coord-start)
+                         (if coord-end ["_" (coord/format coord-end)])
+                         "delins"
+                         alt]))))
+
+(def ^:private dna-indel-re
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?delins([A-Z]+)")
+
+(defn parse-dna-indel
+  [s kind]
+  (let [[_ coord-s coord-e alt] (re-matches dna-indel-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNAIndel {:coord-start (parse-coord coord-s)
+                    :coord-end (some-> coord-e parse-coord)
+                    :alt alt})))
+
+;;; DNA - repeated sequences
+;;;
+;;; e.g. g.123_124[14]
+
+(defrecord DNARepeatedSeqs [coord-start coord-end ncopy]
+  Mutation
+  (format [_ _]
+    (apply str (flatten [(coord/format coord-start)
+                         "_" (coord/format coord-end)
+                         "[" ncopy "]"]))))
+
+(def ^:private dna-repeated-seqs-re
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))\[(\d+)\]")
+
+(defn parse-dna-repeated-seqs
+  [s kind]
+  (let [[_ coord-s coord-e ncopy] (re-matches dna-repeated-seqs-re s)
+        parse-coord (coord-parser kind)]
+    (map->DNARepeatedSeqs {:coord-start (parse-coord coord-s)
+                           :coord-end (parse-coord coord-e)
+                           :ncopy (parse-long ncopy)})))
+
+(defn parse-dna
+  [s kind]
+  ((cond
+     (string/includes? s "delins") parse-dna-indel
+     (string/includes? s "del") parse-dna-deletion
+     (string/includes? s "dup") parse-dna-duplication
+     (string/includes? s "ins") parse-dna-insertion
+     (string/includes? s "inv") parse-dna-inversion
+     (string/includes? s "con") parse-dna-conversion
+     (re-find #"\[\d+\]" s) parse-dna-repeated-seqs
+     :else parse-dna-substitution)
+   s kind))
+
+;;; TODO: RNA mutations
 
 (defrecord RNAMutation [numbering type ref alt]
   Mutation
@@ -211,7 +417,7 @@
 
 (defn parse-rna
   [s]
-  (let [[_ numbering ref type alt] (re-find genome-mutation-re s)]
+  (let [[_ numbering ref type alt] (re-find rna-mutation-re s)]
     (map->RNAMutation {:numbering numbering
                        :type (->mutation-type-keyword type)
                        :ref ref

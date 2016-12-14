@@ -1,6 +1,6 @@
 (ns clj-hgvs.mutation-test
   (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest is testing]])
+               :cljs [cljs.test :refer-macros [deftest is are testing]])
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.mutation :as mut]))
 
@@ -23,6 +23,350 @@
     (is (nil? (mut/->short-amino-acid "Z")))
     (is (nil? (mut/->short-amino-acid "")))
     (is (nil? (mut/->short-amino-acid nil)))))
+
+;;; DNA mutations
+
+;;; DNA - substitution
+
+(def dna-substitution1s "45576A>C")
+(def dna-substitution1k :genome)
+(def dna-substitution1 (mut/map->DNASubstitution {:coord-start (coord/->GenomicCoordinate 45576)
+                                                  :coord-end nil
+                                                  :ref "A"
+                                                  :type ">"
+                                                  :alt "C"}))
+
+(def dna-substitution2s "88+1G>T")
+(def dna-substitution2k :cdna)
+(def dna-substitution2 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 88 nil 1)
+                                                  :coord-end nil
+                                                  :ref "G"
+                                                  :type ">"
+                                                  :alt "T"}))
+
+(def dna-substitution3s "123G=")
+(def dna-substitution3k :cdna)
+(def dna-substitution3 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 123 nil nil)
+                                                  :coord-end nil
+                                                  :ref "G"
+                                                  :type "="
+                                                  :alt nil}))
+
+(def dna-substitution4s "85C=/>T")
+(def dna-substitution4k :cdna)
+(def dna-substitution4 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 85 nil nil)
+                                                  :coord-end nil
+                                                  :ref "C"
+                                                  :type "=/>"
+                                                  :alt "T"}))
+
+(def dna-substitution5s "85C=//>T")
+(def dna-substitution5k :cdna)
+(def dna-substitution5 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 85 nil nil)
+                                                  :coord-end nil
+                                                  :ref "C"
+                                                  :type "=//>"
+                                                  :alt "T"}))
+
+(deftest format-dna-substitution-test
+  (testing "returns a string expression of a DNA substitution"
+    (are [m s] (= (mut/format m nil) s)
+      dna-substitution1 dna-substitution1s
+      dna-substitution2 dna-substitution2s
+      dna-substitution3 dna-substitution3s
+      dna-substitution4 dna-substitution4s
+      dna-substitution5 dna-substitution5s)))
+
+(deftest parse-dna-substitution-test
+  (testing "returns a correct DNASubstitution"
+    (are [s k m] (= (mut/parse-dna-substitution s k) m)
+      dna-substitution1s dna-substitution1k dna-substitution1
+      dna-substitution2s dna-substitution2k dna-substitution2
+      dna-substitution3s dna-substitution3k dna-substitution3
+      dna-substitution4s dna-substitution4k dna-substitution4
+      dna-substitution5s dna-substitution5k dna-substitution5)))
+
+;;; DNA - deletion
+
+(def dna-deletion1s "7del")
+(def dna-deletion1k :genome)
+(def dna-deletion1 (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 7)
+                                          :coord-end nil
+                                          :ref nil}))
+
+(def dna-deletion2s "6_8del")
+(def dna-deletion2k :genome)
+(def dna-deletion2 (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 6)
+                                          :coord-end (coord/->GenomicCoordinate 8)
+                                          :ref nil}))
+
+(def dna-deletion3s "120_123+48del")
+(def dna-deletion3k :cdna)
+(def dna-deletion3 (mut/map->DNADeletion {:coord-start (coord/->CDNACoordinate 120 nil nil)
+                                          :coord-end (coord/->CDNACoordinate 123 nil 48)
+                                          :ref nil}))
+
+(def dna-deletion4s "(4071+1_4072-1)_(5145+1_5146-1)del")
+(def dna-deletion4k :cdna)
+(def dna-deletion4 (mut/map->DNADeletion {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
+                                                        (coord/->CDNACoordinate 4072 nil -1)]
+                                          :coord-end [(coord/->CDNACoordinate 5145 nil 1)
+                                                      (coord/->CDNACoordinate 5146 nil -1)]
+                                          :ref nil}))
+
+(def dna-deletion5s "(?_-30)_(12+1_13-1)del")
+(def dna-deletion5k :cdna)
+(def dna-deletion5 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
+                                                        (coord/->CDNACoordinate 30 :up nil)]
+                                          :coord-end [(coord/->CDNACoordinate 12 nil 1)
+                                                      (coord/->CDNACoordinate 13 nil -1)]
+                                          :ref nil}))
+
+(def dna-deletion6s "(?_-1)_(*1_?)del")
+(def dna-deletion6k :cdna)
+(def dna-deletion6 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
+                                                        (coord/->CDNACoordinate 1 :up nil)]
+                                          :coord-end [(coord/->CDNACoordinate 1 :down nil)
+                                                      (coord/->UnknownCoordinate)]
+                                          :ref nil}))
+
+(deftest format-dna-deletion-test
+  (testing "returns a string expression of a DNA deletion"
+    (are [m s] (= (mut/format m nil) s)
+      dna-deletion1 dna-deletion1s
+      dna-deletion2 dna-deletion2s
+      dna-deletion3 dna-deletion3s
+      dna-deletion4 dna-deletion4s
+      dna-deletion5 dna-deletion5s
+      dna-deletion6 dna-deletion6s)))
+
+(deftest parse-dna-deletion-test
+  (testing "returns a correct DNADeletion"
+    (are [s k m] (= (mut/parse-dna-deletion s k) m)
+      dna-deletion1s dna-deletion1k dna-deletion1
+      dna-deletion2s dna-deletion2k dna-deletion2
+      dna-deletion3s dna-deletion3k dna-deletion3
+      dna-deletion4s dna-deletion4k dna-deletion4
+      dna-deletion5s dna-deletion5k dna-deletion5
+      dna-deletion6s dna-deletion6k dna-deletion6)))
+
+;;; DNA - duplication
+
+(def dna-duplication1s "7dup")
+(def dna-duplication1k :genome)
+(def dna-duplication1 (mut/map->DNADuplication {:coord-start (coord/->GenomicCoordinate 7)
+                                                :coord-end nil
+                                                :ref nil}))
+
+(def dna-duplication2s "6_8dup")
+(def dna-duplication2k :genome)
+(def dna-duplication2 (mut/map->DNADuplication {:coord-start (coord/->GenomicCoordinate 6)
+                                                :coord-end (coord/->GenomicCoordinate 8)
+                                                :ref nil}))
+
+(def dna-duplication3s "120_123+48dup")
+(def dna-duplication3k :cdna)
+(def dna-duplication3 (mut/map->DNADuplication {:coord-start (coord/->CDNACoordinate 120 nil nil)
+                                                :coord-end (coord/->CDNACoordinate 123 nil 48)
+                                                :ref nil}))
+
+(def dna-duplication4s "(4071+1_4072-1)_(5145+1_5146-1)dup")
+(def dna-duplication4k :cdna)
+(def dna-duplication4 (mut/map->DNADuplication {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
+                                                              (coord/->CDNACoordinate 4072 nil -1)]
+                                                :coord-end [(coord/->CDNACoordinate 5145 nil 1)
+                                                            (coord/->CDNACoordinate 5146 nil -1)]
+                                                :ref nil}))
+
+(def dna-duplication5s "(?_-30)_(12+1_13-1)dup")
+(def dna-duplication5k :cdna)
+(def dna-duplication5 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
+                                                              (coord/->CDNACoordinate 30 :up nil)]
+                                                :coord-end [(coord/->CDNACoordinate 12 nil 1)
+                                                            (coord/->CDNACoordinate 13 nil -1)]
+                                                :ref nil}))
+
+(def dna-duplication6s "(?_-1)_(*1_?)dup")
+(def dna-duplication6k :cdna)
+(def dna-duplication6 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
+                                                              (coord/->CDNACoordinate 1 :up nil)]
+                                                :coord-end [(coord/->CDNACoordinate 1 :down nil)
+                                                            (coord/->UnknownCoordinate)]
+                                                :ref nil}))
+
+(deftest format-dna-duplication-test
+  (testing "returns a string expression of a DNA duplication"
+    (are [m s] (= (mut/format m nil) s)
+      dna-duplication1 dna-duplication1s
+      dna-duplication2 dna-duplication2s
+      dna-duplication3 dna-duplication3s
+      dna-duplication4 dna-duplication4s
+      dna-duplication5 dna-duplication5s
+      dna-duplication6 dna-duplication6s)))
+
+(deftest parse-dna-duplication-test
+  (testing "returns a correct DNADuplication"
+    (are [s k m] (= (mut/parse-dna-duplication s k) m)
+      dna-duplication1s dna-duplication1k dna-duplication1
+      dna-duplication2s dna-duplication2k dna-duplication2
+      dna-duplication3s dna-duplication3k dna-duplication3
+      dna-duplication4s dna-duplication4k dna-duplication4
+      dna-duplication5s dna-duplication5k dna-duplication5
+      dna-duplication6s dna-duplication6k dna-duplication6)))
+
+;;; DNA - insertion
+
+(def dna-insertion1s "5756_5757insAGG")
+(def dna-insertion1k :genome)
+(def dna-insertion1 (mut/map->DNAInsertion {:coord-start (coord/->GenomicCoordinate 5756)
+                                            :coord-end (coord/->GenomicCoordinate 5757)
+                                            :alt "AGG"}))
+
+(def dna-insertion2s "123_124insL37425.1:23_361")
+(def dna-insertion2k :genome)
+(def dna-insertion2 (mut/map->DNAInsertion {:coord-start (coord/->GenomicCoordinate 123)
+                                            :coord-end (coord/->GenomicCoordinate 124)
+                                            :alt {:transcript "L37425.1"
+                                                  :coord-start (coord/->GenomicCoordinate 23)
+                                                  :coord-end (coord/->GenomicCoordinate 361)}}))
+
+(def dna-insertion3s "122_123ins123_234inv")
+(def dna-insertion3k :genome)
+(def dna-insertion3 "TODO")
+
+(def dna-insertion4s "122_123ins213_234invinsAins123_211inv")
+(def dna-insertion4k :genome)
+(def dna-insertion4 "TODO")
+
+(deftest format-dna-insertion-test
+  (testing "returns a string expression of a DNA insertion"
+    (are [m s] (= (mut/format m nil) s)
+      dna-insertion1 dna-insertion1s
+      dna-insertion2 dna-insertion2s
+      ;; dna-insertion3 dna-insertion3s ; TODO
+      ;; dna-insertion4 dna-insertion4s ; TODO
+      )))
+
+(deftest parse-dna-insertion-test
+  (testing "returns a correct DNAInsertion"
+    (are [s k m] (= (mut/parse-dna-insertion s k) m)
+      dna-insertion1s dna-insertion1k dna-insertion1
+      dna-insertion2s dna-insertion2k dna-insertion2
+      ;; dna-insertion3s dna-insertion3k dna-insertion3 ; TODO
+      ;; dna-insertion4s dna-insertion4k dna-insertion4 ; TODO
+      )))
+
+;;; DNA - inversion
+
+(def dna-inversion1s "1077_1080inv")
+(def dna-inversion1k :genome)
+(def dna-inversion1 (mut/map->DNAInversion {:coord-start (coord/->GenomicCoordinate 1077)
+                                            :coord-end (coord/->GenomicCoordinate 1080)}))
+
+(def dna-inversion2s "77_80inv")
+(def dna-inversion2k :cdna)
+(def dna-inversion2 (mut/map->DNAInversion {:coord-start (coord/->CDNACoordinate 77 nil nil)
+                                            :coord-end (coord/->CDNACoordinate 80 nil nil)}))
+
+(deftest format-dna-inversion-test
+  (testing "returns a string expression of a DNA inversion"
+    (are [m s] (= (mut/format m nil) s)
+      dna-inversion1 dna-inversion1s
+      dna-inversion2 dna-inversion2s)))
+
+(deftest parse-dna-inversion-test
+  (testing "returns a correct DNAInversion"
+    (are [s k m] (= (mut/parse-dna-inversion s k) m)
+      dna-inversion1s dna-inversion1k dna-inversion1
+      dna-inversion2s dna-inversion2k dna-inversion2)))
+
+
+;;; DNA - conversion
+
+(def dna-conversion1s "333_590con1844_2101")
+(def dna-conversion1k :genome)
+(def dna-conversion1 (mut/map->DNAConversion {:coord-start (coord/->GenomicCoordinate 333)
+                                              :coord-end (coord/->GenomicCoordinate 590)
+                                              :alt {:transcript nil
+                                                    :kind nil
+                                                    :coord-start (coord/->GenomicCoordinate 1844)
+                                                    :coord-end (coord/->GenomicCoordinate 2101)}}))
+
+(def dna-conversion2s "415_1655conAC096506.5:g.409_1683")
+(def dna-conversion2k :genome)
+(def dna-conversion2 (mut/map->DNAConversion {:coord-start (coord/->GenomicCoordinate 415)
+                                              :coord-end (coord/->GenomicCoordinate 1655)
+                                              :alt {:transcript "AC096506.5"
+                                                    :kind :genome
+                                                    :coord-start (coord/->GenomicCoordinate 409)
+                                                    :coord-end (coord/->GenomicCoordinate 1683)}}))
+
+(def dna-conversion3s "15_355conNM_004006.1:20_360")
+(def dna-conversion3k :cdna)
+(def dna-conversion3 (mut/map->DNAConversion {:coord-start (coord/->CDNACoordinate 15 nil nil)
+                                              :coord-end (coord/->CDNACoordinate 355 nil nil)
+                                              :alt {:transcript "NM_004006.1"
+                                                    :kind nil
+                                                    :coord-start (coord/->CDNACoordinate 20 nil nil)
+                                                    :coord-end (coord/->CDNACoordinate 360 nil nil)}}))
+
+(deftest format-dna-conversion-test
+  (testing "returns a string expression of a DNA conversion"
+    (are [m s] (= (mut/format m nil) s)
+      dna-conversion1 dna-conversion1s
+      dna-conversion2 dna-conversion2s
+      dna-conversion3 dna-conversion3s)))
+
+(deftest parse-dna-conversion-test
+  (testing "returns a correct DNAConversion"
+    (are [s k m] (= (mut/parse-dna-conversion s k) m)
+      dna-conversion1s dna-conversion1k dna-conversion1
+      dna-conversion2s dna-conversion2k dna-conversion2
+      dna-conversion3s dna-conversion3k dna-conversion3)))
+
+;;; DNA - indel
+
+(def dna-indel1s "6775delinsGA")
+(def dna-indel1k :genome)
+(def dna-indel1 (mut/map->DNAIndel {:coord-start (coord/->GenomicCoordinate 6775)
+                                    :coord-end nil
+                                    :alt "GA"}))
+
+(def dna-indel2s "145_147delinsTGG")
+(def dna-indel2k :cdna)
+(def dna-indel2 (mut/map->DNAIndel {:coord-start (coord/->CDNACoordinate 145 nil nil)
+                                    :coord-end (coord/->CDNACoordinate 147 nil nil)
+                                    :alt "TGG"}))
+
+(deftest format-dna-indel-test
+  (testing "returns a string expression of a DNA indel"
+    (are [m s] (= (mut/format m nil) s)
+      dna-indel1 dna-indel1s
+      dna-indel2 dna-indel2s)))
+
+(deftest parse-dna-indel-test
+  (testing "returns a correct DNAIndel"
+    (are [s k m] (= (mut/parse-dna-indel s k) m)
+      dna-indel1s dna-indel1k dna-indel1
+      dna-indel2s dna-indel2k dna-indel2)))
+
+;;; DNA - repeated sequences
+
+(def dna-repeated-seqss "123_124[14]")
+(def dna-repeated-seqsk :genome)
+(def dna-repeated-seqs (mut/map->DNARepeatedSeqs {:coord-start (coord/->GenomicCoordinate 123)
+                                                  :coord-end (coord/->GenomicCoordinate 124)
+                                                  :ncopy 14}))
+
+(deftest format-dna-repeated-seqs-test
+  (testing "returns a string expression of a DNA repeated sequences"
+    (are [m s] (= (mut/format m nil) s)
+      dna-repeated-seqs dna-repeated-seqss)))
+
+(deftest parse-dna-repeated-seqs-test
+  (testing "returns a correct DNARepeatedSeqs"
+    (are [s k m] (= (mut/parse-dna-repeated-seqs s k) m)
+      dna-repeated-seqss dna-repeated-seqsk dna-repeated-seqs)))
 
 ;;; Protein mutations
 

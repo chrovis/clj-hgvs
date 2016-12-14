@@ -1,48 +1,50 @@
 (ns clj-hgvs.core-test
   (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest is testing]])
+               :cljs [cljs.test :refer-macros [deftest is are testing]])
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]))
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m {:transcript "NM_005228.3", :kind :cdna,
-             :mutations [(mut/map->CDNAMutation {:numbering "2361",
-                                                 :type :substitution,
-                                                 :ref "G",
-                                                 :alt "A"})]})
+             :mutations [(mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 2361 nil nil)
+                                                    :coord-end nil
+                                                    :ref "G"
+                                                    :type ">"
+                                                    :alt "A"})]})
 
 (def hgvs2s "c.2361G>A")
 (def hgvs2m {:transcript nil, :kind :cdna,
-             :mutations [(mut/map->CDNAMutation {:numbering "2361",
-                                                 :type :substitution,
-                                                 :ref "G",
-                                                 :alt "A"})]})
+             :mutations [(mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 2361 nil nil)
+                                                    :coord-end nil
+                                                    :ref "G"
+                                                    :type ">"
+                                                    :alt "A"})]})
 
 (def hgvs3s "g.[2376A>C;3103del]")
 (def hgvs3m {:transcript nil, :kind :genome,
-             :mutations [(mut/map->GenomeMutation {:numbering "2376",
-                                                   :type :substitution,
-                                                   :ref "A",
-                                                   :alt "C"}),
-                         (mut/map->GenomeMutation {:numbering "3103",
-                                                   :type :deletion,
-                                                   :ref nil,
-                                                   :alt nil})]})
+             :mutations [(mut/map->DNASubstitution {:coord-start (coord/->GenomicCoordinate 2376)
+                                                    :coord-end nil
+                                                    :ref "A"
+                                                    :type ">"
+                                                    :alt "C"}),
+                         (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 3103)
+                                                :coord-end nil
+                                                :ref nil})]})
 
 (def hgvs4s "NC_000022.11:g.28703511delA")
 (def hgvs4m {:transcript "NC_000022.11", :kind :genome,
-             :mutations [(mut/map->GenomeMutation {:numbering "28703511",
-                                                   :type :deletion,
-                                                   :ref nil,
-                                                   :alt "A"})]})
+             :mutations [(mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 28703511)
+                                                :coord-end nil
+                                                :ref "A"})]})
 
 (def hgvs5s "NM_004380.2:c.86-1G>T")
 (def hgvs5m {:transcript "NM_004380.2", :kind :cdna,
-             :mutations [(mut/map->CDNAMutation {:numbering "86-1",
-                                                 :type :substitution,
-                                                 :ref "G",
-                                                 :alt "T"})]})
+             :mutations [(mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 86 nil -1)
+                                                    :coord-end nil
+                                                    :ref "G"
+                                                    :type ">"
+                                                    :alt "T"})]})
 
 (def hgvs6s "NP_005219.2:p.Leu858Arg")
 (def hgvs6ss "NP_005219.2:p.L858R")
@@ -67,20 +69,21 @@
 (deftest hgvs-test
   (testing "allows mutation maps"
     (is (= (hgvs/hgvs "NM_005228.3" :cdna
-                      (mut/map->CDNAMutation {:numbering "2361",
-                                              :type :substitution,
-                                              :ref "G",
-                                              :alt "A"}))
+                      (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 2361 nil nil)
+                                                 :coord-end nil
+                                                 :ref "G"
+                                                 :type ">"
+                                                 :alt "A"}))
            hgvs1m))
     (is (= (hgvs/hgvs nil :genome
-                      (mut/map->GenomeMutation {:numbering "2376",
-                                                :type :substitution,
-                                                :ref "A",
-                                                :alt "C"})
-                      (mut/map->GenomeMutation {:numbering "3103",
-                                                :type :deletion,
-                                                :ref nil,
-                                                :alt nil}))
+                      (mut/map->DNASubstitution {:coord-start (coord/->GenomicCoordinate 2376)
+                                                 :coord-end nil
+                                                 :ref "A"
+                                                 :type ">"
+                                                 :alt "C"})
+                      (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 3103)
+                                             :coord-end nil
+                                             :ref nil}))
            hgvs3m)))
   (testing "allows mutation string"
     (is (= (hgvs/hgvs "NM_005228.3" :cdna "2361G>A") hgvs1m))
@@ -88,32 +91,35 @@
 
 (deftest parse-test
   (testing "returns HGVS map"
-    (is (= (hgvs/parse hgvs1s) hgvs1m))
-    (is (= (hgvs/parse hgvs2s) hgvs2m))
-    (is (= (hgvs/parse hgvs3s) hgvs3m))
-    (is (= (hgvs/parse hgvs4s) hgvs4m))
-    (is (= (hgvs/parse hgvs5s) hgvs5m))
-    (is (= (hgvs/parse hgvs6s) hgvs6m))
-    (is (= (hgvs/parse hgvs6ss) hgvs6m))
-    (is (= (hgvs/parse hgvs7s) hgvs7m))
-    (is (= (hgvs/parse hgvs8s) hgvs8m)))
+    (are [s m] (= (hgvs/parse s) m)
+      hgvs1s hgvs1m
+      hgvs2s hgvs2m
+      hgvs3s hgvs3m
+      hgvs4s hgvs4m
+      hgvs5s hgvs5m
+      hgvs6s hgvs6m
+      hgvs6ss hgvs6m
+      hgvs7s hgvs7m
+      hgvs8s hgvs8m))
   (testing "throws Exception when an illegal HGVS is passed"
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse ":2361G>A")))
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse "NM_005228.3:2361G>A")))
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse "NM_005228.3:z.2361G>A")))
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse "NM_005228.3:c.G>A")))
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse "NM_005228.3:c.2361G")))
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse "")))
-    (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse nil)))))
+    (are [x] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse x))
+      ":2361G>A"
+      "NM_005228.3:2361G>A"
+      "NM_005228.3:z.2361G>A"
+      "NM_005228.3:c.G>A"
+      "NM_005228.3:c.2361G"
+      ""
+      nil)))
 
 (deftest format-test
   (testing "returns HGVS string"
-    (is (= (hgvs/format hgvs1m) hgvs1s))
-    (is (= (hgvs/format hgvs2m) hgvs2s))
-    (is (= (hgvs/format hgvs3m) hgvs3s))
-    (is (= (hgvs/format hgvs4m) hgvs4s))
-    (is (= (hgvs/format hgvs5m) hgvs5s))
-    (is (= (hgvs/format hgvs6m) hgvs6s))
-    (is (= (hgvs/format hgvs6m :amino-acid-format :short) hgvs6ss))
-    (is (= (hgvs/format hgvs7m) hgvs7s))
-    (is (= (hgvs/format hgvs8m) hgvs8s))))
+    (are [m s] (= (hgvs/format m) s)
+      hgvs1m hgvs1s
+      hgvs2m hgvs2s
+      hgvs3m hgvs3s
+      hgvs4m hgvs4s
+      hgvs5m hgvs5s
+      hgvs6m hgvs6s
+      hgvs7m hgvs7s
+      hgvs8m hgvs8s)
+    (is (= (hgvs/format hgvs6m :amino-acid-format :short) hgvs6ss))))

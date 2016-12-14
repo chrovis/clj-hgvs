@@ -1,37 +1,15 @@
 (ns clj-hgvs.core
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.string :as string]
+            [clj-hgvs.internal :refer [->kind-keyword ->kind-str]]
             [clj-hgvs.mutation :as mut]))
-
-(defn- ->kind-keyword
-  [s]
-  (case s
-    "g" :genome
-    "m" :mitochondria
-    "c" :cdna
-    "n" :ncdna
-    "r" :rna
-    "p" :protein))
-
-(defn- ->kind-str
-  [k]
-  (case k
-    :genome "g"
-    :mitochondria "m"
-    :cdna "c"
-    :ncdna "n"
-    :rna "r"
-    :protein"p"))
 
 (defn- mutation-parser
   [kind]
-  (case kind
-    :genome mut/parse-genome
-    :mitochondria mut/parse-mitochondria
-    :cdna mut/parse-cdna
-    :ncdna mut/parse-ncdna
-    :rna mut/parse-rna
-    :protein mut/parse-protein))
+  (cond
+    (#{:genome :mitochondria :cdna :ncdna} kind) #(mut/parse-dna % kind)
+    (= kind :rna) mut/parse-rna
+    (= kind :protein) mut/parse-protein))
 
 (defn- split-mutations
   [s]
