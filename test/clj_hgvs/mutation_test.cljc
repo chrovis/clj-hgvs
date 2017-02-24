@@ -626,17 +626,19 @@
 
 (deftest format-protein-substitution-test
   (testing "returns a string expression of a protein substitution"
-    (is (= (mut/format protein-substitution1 nil) protein-substitution1s))
-    (is (= (mut/format protein-substitution1 {:amino-acid-format :short}) protein-substitution1ss))
-    (is (= (mut/format protein-substitution2 nil) protein-substitution2s))
-    (is (= (mut/format protein-substitution2 {:amino-acid-format :short}) protein-substitution2ss))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-substitution1 nil protein-substitution1s
+      protein-substitution1 {:amino-acid-format :short} protein-substitution1ss
+      protein-substitution2 nil protein-substitution2s
+      protein-substitution2 {:amino-acid-format :short} protein-substitution2ss)))
 
 (deftest parse-protein-substitution-test
   (testing "returns a correct ProteinSubstitution"
-    (is (= (mut/parse-protein-substitution protein-substitution1s) protein-substitution1))
-    (is (= (mut/parse-protein-substitution protein-substitution1ss) protein-substitution1))
-    (is (= (mut/parse-protein-substitution protein-substitution2s) protein-substitution2))
-    (is (= (mut/parse-protein-substitution protein-substitution2ss) protein-substitution2))))
+    (are [s m] (= (mut/parse-protein-substitution s) m)
+      protein-substitution1s protein-substitution1
+      protein-substitution1ss protein-substitution1
+      protein-substitution2s protein-substitution2
+      protein-substitution2ss protein-substitution2)))
 
 ;;; Protein - deletion
 
@@ -655,17 +657,19 @@
                                                   :coord-end (coord/->ProteinCoordinate 79)}))
 (deftest format-protein-deletion-test
   (testing "returns a string expression of a protein deletion"
-    (is (= (mut/format protein-deletion1 nil) protein-deletion1s))
-    (is (= (mut/format protein-deletion1 {:amino-acid-format :short}) protein-deletion1ss))
-    (is (= (mut/format protein-deletion2 nil) protein-deletion2s))
-    (is (= (mut/format protein-deletion2 {:amino-acid-format :short}) protein-deletion2ss))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-deletion1 nil protein-deletion1s
+      protein-deletion1 {:amino-acid-format :short} protein-deletion1ss
+      protein-deletion2 nil protein-deletion2s
+      protein-deletion2 {:amino-acid-format :short} protein-deletion2ss)))
 
 (deftest parse-protein-deletion-test
   (testing "returns a correct ProteinDeletion"
-    (is (= (mut/parse-protein-deletion protein-deletion1s) protein-deletion1))
-    (is (= (mut/parse-protein-deletion protein-deletion1ss) protein-deletion1))
-    (is (= (mut/parse-protein-deletion protein-deletion2s) protein-deletion2))
-    (is (= (mut/parse-protein-deletion protein-deletion2ss) protein-deletion2))))
+    (are [s m] (= (mut/parse-protein-deletion s) m)
+      protein-deletion1s protein-deletion1
+      protein-deletion1ss protein-deletion1
+      protein-deletion2s protein-deletion2
+      protein-deletion2ss protein-deletion2)))
 
 ;;; Protein - duplication
 
@@ -685,17 +689,19 @@
 
 (deftest format-protein-duplication-test
   (testing "returns a string expression of a protein duplication"
-    (is (= (mut/format protein-duplication1 nil) protein-duplication1s))
-    (is (= (mut/format protein-duplication1 {:amino-acid-format :short}) protein-duplication1ss))
-    (is (= (mut/format protein-duplication2 nil) protein-duplication2s))
-    (is (= (mut/format protein-duplication2 {:amino-acid-format :short}) protein-duplication2ss))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-duplication1 nil protein-duplication1s
+      protein-duplication1 {:amino-acid-format :short} protein-duplication1ss
+      protein-duplication2 nil protein-duplication2s
+      protein-duplication2 {:amino-acid-format :short} protein-duplication2ss)))
 
 (deftest parse-protein-duplication-test
   (testing "returns a correct ProteinDuplication"
-    (is (= (mut/parse-protein-duplication protein-duplication1s) protein-duplication1))
-    (is (= (mut/parse-protein-duplication protein-duplication1ss) protein-duplication1))
-    (is (= (mut/parse-protein-duplication protein-duplication2s) protein-duplication2))
-    (is (= (mut/parse-protein-duplication protein-duplication2ss) protein-duplication2))))
+    (are [s m] (= (mut/parse-protein-duplication s) m)
+      protein-duplication1s protein-duplication1
+      protein-duplication1ss protein-duplication1
+      protein-duplication2s protein-duplication2
+      protein-duplication2ss protein-duplication2)))
 
 ;;; Protein - insertion
 
@@ -709,13 +715,15 @@
 
 (deftest format-protein-insertion-test
   (testing "returns a string expression of a protein insertion"
-    (is (= (mut/format protein-insertion nil) protein-insertions))
-    (is (= (mut/format protein-insertion {:amino-acid-format :short}) protein-insertionss))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-insertion nil protein-insertions
+      protein-insertion {:amino-acid-format :short} protein-insertionss)))
 
 (deftest parse-protein-insertion-test
   (testing "returns a correct ProteinInsertion"
-    (is (= (mut/parse-protein-insertion protein-insertions) protein-insertion))
-    (is (= (mut/parse-protein-insertion protein-insertionss) protein-insertion))))
+    (are [s m] (= (mut/parse-protein-insertion s) m)
+      protein-insertions protein-insertion
+      protein-insertionss protein-insertion)))
 
 ;;; Protein - indel
 
@@ -737,17 +745,19 @@
 
 (deftest format-protein-indel-test
   (testing "returns a string expression of a protein indel"
-    (is (= (mut/format protein-indel1 nil) protein-indel1s))
-    (is (= (mut/format protein-indel1 {:amino-acid-format :short}) protein-indel1ss))
-    (is (= (mut/format protein-indel2 nil) protein-indel2s))
-    (is (= (mut/format protein-indel2 {:amino-acid-format :short}) protein-indel2ss))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-indel1 nil protein-indel1s
+      protein-indel1 {:amino-acid-format :short} protein-indel1ss
+      protein-indel2 nil protein-indel2s
+      protein-indel2 {:amino-acid-format :short} protein-indel2ss)))
 
 (deftest parse-protein-indel-test
   (testing "returns a correct ProteinIndel"
-    (is (= (mut/parse-protein-indel protein-indel1s) protein-indel1))
-    (is (= (mut/parse-protein-indel protein-indel1ss) protein-indel1))
-    (is (= (mut/parse-protein-indel protein-indel2s) protein-indel2))
-    (is (= (mut/parse-protein-indel protein-indel2ss) protein-indel2))))
+    (are [s m] (= (mut/parse-protein-indel s) m)
+      protein-indel1s protein-indel1
+      protein-indel1ss protein-indel1
+      protein-indel2s protein-indel2
+      protein-indel2ss protein-indel2)))
 
 ;;; Protein - repeated sequences
 
@@ -780,21 +790,23 @@
 
 (deftest format-protein-repeated-seqs-test
   (testing "returns a string expression of a protein repeated-seqs"
-    (is (= (mut/format protein-repeated-seqs1 nil) protein-repeated-seqs1s))
-    (is (= (mut/format protein-repeated-seqs1 {:amino-acid-format :short}) protein-repeated-seqs1ss))
-    (is (= (mut/format protein-repeated-seqs2 nil) protein-repeated-seqs2s))
-    (is (= (mut/format protein-repeated-seqs2 {:amino-acid-format :short}) protein-repeated-seqs2ss))
-    (is (= (mut/format protein-repeated-seqs3 nil) protein-repeated-seqs3s))
-    (is (= (mut/format protein-repeated-seqs3 {:amino-acid-format :short}) protein-repeated-seqs3ss))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-repeated-seqs1 nil protein-repeated-seqs1s
+      protein-repeated-seqs1 {:amino-acid-format :short} protein-repeated-seqs1ss
+      protein-repeated-seqs2 nil protein-repeated-seqs2s
+      protein-repeated-seqs2 {:amino-acid-format :short} protein-repeated-seqs2ss
+      protein-repeated-seqs3 nil protein-repeated-seqs3s
+      protein-repeated-seqs3 {:amino-acid-format :short} protein-repeated-seqs3ss)))
 
 (deftest parse-protein-repeated-seqs-test
   (testing "returns a correct ProteinRepeatedSeqs"
-    (is (= (mut/parse-protein-repeated-seqs protein-repeated-seqs1s) protein-repeated-seqs1))
-    (is (= (mut/parse-protein-repeated-seqs protein-repeated-seqs1ss) protein-repeated-seqs1))
-    (is (= (mut/parse-protein-repeated-seqs protein-repeated-seqs2s) protein-repeated-seqs2))
-    (is (= (mut/parse-protein-repeated-seqs protein-repeated-seqs2ss) protein-repeated-seqs2))
-    (is (= (mut/parse-protein-repeated-seqs protein-repeated-seqs3s) protein-repeated-seqs3))
-    (is (= (mut/parse-protein-repeated-seqs protein-repeated-seqs3ss) protein-repeated-seqs3))))
+    (are [s m] (= (mut/parse-protein-repeated-seqs s) m)
+      protein-repeated-seqs1s protein-repeated-seqs1
+      protein-repeated-seqs1ss protein-repeated-seqs1
+      protein-repeated-seqs2s protein-repeated-seqs2
+      protein-repeated-seqs2ss protein-repeated-seqs2
+      protein-repeated-seqs3s protein-repeated-seqs3
+      protein-repeated-seqs3ss protein-repeated-seqs3)))
 
 ;;; Protein - frame shift
 
@@ -824,19 +836,21 @@
                                                        :new-site "*9"}))
 (deftest format-protein-frame-shift-test
   (testing "returns a string expression of a protein frame-shift"
-    (is (= (mut/format protein-frame-shift1 nil) protein-frame-shift1s))
-    (is (= (mut/format protein-frame-shift2 nil) protein-frame-shift2s))
-    (is (= (mut/format protein-frame-shift2 {:amino-acid-format :short}) protein-frame-shift2ss))
-    (is (= (mut/format protein-frame-shift3 nil) protein-frame-shift3s))
-    (is (= (mut/format protein-frame-shift4 nil) protein-frame-shift4s))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-frame-shift1 nil protein-frame-shift1s
+      protein-frame-shift2 nil protein-frame-shift2s
+      protein-frame-shift2 {:amino-acid-format :short} protein-frame-shift2ss
+      protein-frame-shift3 nil protein-frame-shift3s
+      protein-frame-shift4 nil protein-frame-shift4s)))
 
 (deftest parse-protein-frame-shift-test
   (testing "returns a correct ProteinFrameShift"
-    (is (= (mut/parse-protein-frame-shift protein-frame-shift1s) protein-frame-shift1))
-    (is (= (mut/parse-protein-frame-shift protein-frame-shift2s) protein-frame-shift2))
-    (is (= (mut/parse-protein-frame-shift protein-frame-shift2ss) protein-frame-shift2))
-    (is (= (mut/parse-protein-frame-shift protein-frame-shift3s) protein-frame-shift3))
-    (is (= (mut/parse-protein-frame-shift protein-frame-shift4s) protein-frame-shift4))))
+    (are [s m] (= (mut/parse-protein-frame-shift s) m)
+      protein-frame-shift1s protein-frame-shift1
+      protein-frame-shift2s protein-frame-shift2
+      protein-frame-shift2ss protein-frame-shift2
+      protein-frame-shift3s protein-frame-shift3
+      protein-frame-shift4s protein-frame-shift4)))
 
 ;;; Protein - extension
 
@@ -862,16 +876,18 @@
 
 (deftest format-protein-extension-test
   (testing "returns a string expression of a protein extension"
-    (is (= (mut/format protein-extension1 nil) protein-extension1s))
-    (is (= (mut/format protein-extension1 {:amino-acid-format :short}) protein-extension1ss))
-    (is (= (mut/format protein-extension2 nil) protein-extension2s))
-    (is (= (mut/format protein-extension2 {:amino-acid-format :short}) protein-extension2ss))
-    (is (= (mut/format protein-extension3 nil) protein-extension3s))))
+    (are [m o s] (= (mut/format m o) s)
+      protein-extension1 nil protein-extension1s
+      protein-extension1 {:amino-acid-format :short} protein-extension1ss
+      protein-extension2 nil protein-extension2s
+      protein-extension2 {:amino-acid-format :short} protein-extension2ss
+      protein-extension3 nil protein-extension3s)))
 
 (deftest parse-protein-extension-test
   (testing "returns a correct ProteinExtension"
-    (is (= (mut/parse-protein-extension protein-extension1s) protein-extension1))
-    (is (= (mut/parse-protein-extension protein-extension1ss) protein-extension1))
-    (is (= (mut/parse-protein-extension protein-extension2s) protein-extension2))
-    (is (= (mut/parse-protein-extension protein-extension2ss) protein-extension2))
-    (is (= (mut/parse-protein-extension protein-extension3s) protein-extension3))))
+    (are [s m] (= (mut/parse-protein-extension s) m)
+      protein-extension1s protein-extension1
+      protein-extension1ss protein-extension1
+      protein-extension2s protein-extension2
+      protein-extension2ss protein-extension2
+      protein-extension3s protein-extension3)))
