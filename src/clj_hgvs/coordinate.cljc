@@ -85,13 +85,32 @@
     (UnknownCoordinate.)
     (->NCDNACoordinate (parse-long s))))
 
-;;; TODO: RNA coordinate
+;;; RNA coordinate
 
-(defrecord RNACoordinate [])
+(defrecord RNACoordinate [position stream intron-offset]
+  Coordinate
+  (format [_]
+    (str (case stream
+           :up "-"
+           :down "*"
+           nil)
+         position
+         (if (and intron-offset (pos? intron-offset))
+           "+")
+         intron-offset)))
+
+(def ^:private rna-coordinate-re
+  #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
 (defn parse-rna-coordinate
   [s]
-)
+  (let [[_ stream position intron-offset] (re-find rna-coordinate-re s)]
+    (map->RNACoordinate {:position (parse-long position)
+                         :stream (case stream
+                                   "-" :up
+                                   "*" :down
+                                   nil)
+                         :intron-offset (some-> intron-offset parse-long)})))
 
 ;;; protein coordinate
 

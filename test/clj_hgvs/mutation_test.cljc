@@ -368,6 +368,246 @@
     (are [s k m] (= (mut/parse-dna-repeated-seqs s k) m)
       dna-repeated-seqss dna-repeated-seqsk dna-repeated-seqs)))
 
+;;; RNA mutations
+
+;;; RNA - substitution
+
+(def rna-substitution1s "76a>c")
+(def rna-substitution1 (mut/map->RNASubstitution {:coord (coord/->RNACoordinate 76 nil nil)
+                                                  :ref "a"
+                                                  :alt "c"}))
+
+(def rna-substitution2s "-14g>c")
+(def rna-substitution2 (mut/map->RNASubstitution {:coord (coord/->RNACoordinate 14 :up nil)
+                                                  :ref "g"
+                                                  :alt "c"}))
+
+(def rna-substitution3s "*46u>a")
+(def rna-substitution3 (mut/map->RNASubstitution {:coord (coord/->RNACoordinate 46 :down nil)
+                                                  :ref "u"
+                                                  :alt "a"}))
+
+(deftest format-rna-substitution-test
+  (testing "returns a string expression of a RNA substitution"
+    (are [m s] (= (mut/format m nil) s)
+      rna-substitution1 rna-substitution1s
+      rna-substitution2 rna-substitution2s
+      rna-substitution3 rna-substitution3s)))
+
+(deftest parse-rna-substitution-test
+  (testing "returns a correct RNASubstitution"
+    (are [s m] (= (mut/parse-rna-substitution s) m)
+      rna-substitution1s rna-substitution1
+      rna-substitution2s rna-substitution2
+      rna-substitution3s rna-substitution3)))
+
+;;; RNA - deletion
+
+(def rna-deletion1s "7del")
+(def rna-deletion1 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 7 nil nil)
+                                          :coord-end nil
+                                          :ref nil}))
+
+(def rna-deletion2s "7delu")
+(def rna-deletion2 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 7 nil nil)
+                                          :coord-end nil
+                                          :ref "u"}))
+
+(def rna-deletion3s "6_8del")
+(def rna-deletion3 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 6 nil nil)
+                                          :coord-end (coord/->RNACoordinate 8 nil nil)
+                                          :ref nil}))
+
+(def rna-deletion4s "(4072_5145)del")
+(def rna-deletion4 "TODO")
+
+(deftest format-rna-deletion-test
+  (testing "returns a string expression of a RNA deletion"
+    (are [m s] (= (mut/format m nil) s)
+      rna-deletion1 rna-deletion1s
+      rna-deletion2 rna-deletion2s
+      rna-deletion3 rna-deletion3s
+      ;; rna-deletion4 rna-deletion4s ; TODO
+      )))
+
+(deftest parse-rna-deletion-test
+  (testing "returns a correct RNADeletion"
+    (are [s m] (= (mut/parse-rna-deletion s) m)
+      rna-deletion1s rna-deletion1
+      rna-deletion2s rna-deletion2
+      rna-deletion3s rna-deletion3
+      ;; rna-deletion4s rna-deletion4 ; TODO
+      )))
+
+;;; RNA - duplication
+
+(def rna-duplication1s "7dup")
+(def rna-duplication1 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 7 nil nil)
+                                                :coord-end nil
+                                                :ref nil}))
+
+(def rna-duplication2s "7dupu")
+(def rna-duplication2 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 7 nil nil)
+                                                :coord-end nil
+                                                :ref "u"}))
+
+(def rna-duplication3s "6_8dup")
+(def rna-duplication3 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 6 nil nil)
+                                                :coord-end (coord/->RNACoordinate 8 nil nil)
+                                                :ref nil}))
+
+(deftest format-rna-duplication-test
+  (testing "returns a string expression of a RNA duplication"
+    (are [m s] (= (mut/format m nil) s)
+      rna-duplication1 rna-duplication1s
+      rna-duplication2 rna-duplication2s
+      rna-duplication3 rna-duplication3s)))
+
+(deftest parse-rna-duplication-test
+  (testing "returns a correct RNADuplication"
+    (are [s m] (= (mut/parse-rna-duplication s) m)
+      rna-duplication1s rna-duplication1
+      rna-duplication2s rna-duplication2
+      rna-duplication3s rna-duplication3)))
+
+;;; RNA - insertion
+
+(def rna-insertion1s "756_757insacu")
+(def rna-insertion1 (mut/map->RNAInsertion {:coord-start (coord/->RNACoordinate 756 nil nil)
+                                            :coord-end (coord/->RNACoordinate 757 nil nil)
+                                            :alt "acu"}))
+
+(def rna-insertion2s "431_432ins(5)")
+(def rna-insertion2 (mut/map->RNAInsertion {:coord-start (coord/->RNACoordinate 431 nil nil)
+                                            :coord-end (coord/->RNACoordinate 432 nil nil)
+                                            :alt "nnnnn"}))
+
+(def rna-insertion3s "123_124insL37425.1:23_361")
+(def rna-insertion3 (mut/map->RNAInsertion {:coord-start (coord/->RNACoordinate 123 nil nil)
+                                            :coord-end (coord/->RNACoordinate 124 nil nil)
+                                            :alt {:genbank "L37425.1"
+                                                  :coord-start 23
+                                                  :coord-end 361}}))
+
+(deftest format-rna-insertion-test
+  (testing "returns a string expression of a RNA insertion"
+    (are [m s] (= (mut/format m nil) s)
+      rna-insertion1 rna-insertion1s
+      rna-insertion2 rna-insertion2s
+      rna-insertion3 rna-insertion3s)))
+
+(deftest parse-rna-insertion-test
+  (testing "returns a correct RNAInsertion"
+    (are [s m] (= (mut/parse-rna-insertion s) m)
+      rna-insertion1s rna-insertion1
+      rna-insertion2s rna-insertion2
+      rna-insertion3s rna-insertion3)))
+
+;;; RNA - inversion
+
+(def rna-inversion1s "177_180inv")
+(def rna-inversion1 (mut/map->RNAInversion {:coord-start (coord/->RNACoordinate 177 nil nil)
+                                            :coord-end (coord/->RNACoordinate 180 nil nil)}))
+
+(deftest format-rna-inversion-test
+  (testing "returns a string expression of a RNA inversion"
+    (are [m s] (= (mut/format m nil) s)
+      rna-inversion1 rna-inversion1s)))
+
+(deftest parse-rna-inversion-test
+  (testing "returns a correct RNAInversion"
+    (are [s m] (= (mut/parse-rna-inversion s) m)
+      rna-inversion1s rna-inversion1)))
+
+;;; RNA - conversion
+
+(def rna-conversion1s "123_345con888_1110")
+(def rna-conversion1 (mut/map->RNAConversion {:coord-start (coord/->RNACoordinate 123 nil nil)
+                                              :coord-end (coord/->RNACoordinate 345 nil nil)
+                                              :alt {:transcript nil
+                                                    :coord-start (coord/->RNACoordinate 888 nil nil)
+                                                    :coord-end (coord/->RNACoordinate 1110 nil nil)}}))
+
+(def rna-conversion2s "415_1655conAC096506.5:409_1649")
+(def rna-conversion2 (mut/map->RNAConversion {:coord-start (coord/->RNACoordinate 415 nil nil)
+                                              :coord-end (coord/->RNACoordinate 1655 nil nil)
+                                              :alt {:transcript "AC096506.5"
+                                                    :coord-start (coord/->RNACoordinate 409 nil nil)
+                                                    :coord-end (coord/->RNACoordinate 1649 nil nil)}}))
+
+(deftest format-rna-conversion-test
+  (testing "returns a string expression of a RNA conversion"
+    (are [m s] (= (mut/format m nil) s)
+      rna-conversion1 rna-conversion1s
+      rna-conversion2 rna-conversion2s)))
+
+(deftest parse-rna-conversion-test
+  (testing "returns a correct RNAConversion"
+    (are [s m] (= (mut/parse-rna-conversion s) m)
+      rna-conversion1s rna-conversion1
+      rna-conversion2s rna-conversion2)))
+
+;;; RNA - indel
+
+(def rna-indel1s "775delinsga")
+(def rna-indel1 (mut/map->RNAIndel {:coord-start (coord/->RNACoordinate 775 nil nil)
+                                    :coord-end nil
+                                    :alt "ga"}))
+
+(def rna-indel2s "775_777delinsc")
+(def rna-indel2 (mut/map->RNAIndel {:coord-start (coord/->RNACoordinate 775 nil nil)
+                                    :coord-end (coord/->RNACoordinate 777 nil nil)
+                                    :alt "c"}))
+
+(deftest format-rna-indel-test
+  (testing "returns a string expression of a RNA indel"
+    (are [m s] (= (mut/format m nil) s)
+      rna-indel1 rna-indel1s
+      rna-indel2 rna-indel2s)))
+
+(deftest parse-rna-indel-test
+  (testing "returns a correct RNAIndel"
+    (are [s m] (= (mut/parse-rna-indel s) m)
+      rna-indel1s rna-indel1
+      rna-indel2s rna-indel2)))
+
+;;; RNA - repeated sequences
+
+(def rna-repeated-seqs1s "-124_-123[14]")
+(def rna-repeated-seqs1 (mut/map->RNARepeatedSeqs {:coord-start (coord/->RNACoordinate 124 :up nil)
+                                                   :coord-end (coord/->RNACoordinate 123 :up nil)
+                                                   :ref nil
+                                                   :ncopy 14
+                                                   :ncopy-other nil}))
+
+(def rna-repeated-seqs2s "-124ug[14]")
+(def rna-repeated-seqs2 (mut/map->RNARepeatedSeqs {:coord-start (coord/->RNACoordinate 124 :up nil)
+                                                   :coord-end nil
+                                                   :ref "ug"
+                                                   :ncopy 14
+                                                   :ncopy-other nil}))
+
+(def rna-repeated-seqs3s "-124_-123[14];[18]")
+(def rna-repeated-seqs3 (mut/map->RNARepeatedSeqs {:coord-start (coord/->RNACoordinate 124 :up nil)
+                                                   :coord-end (coord/->RNACoordinate 123 :up nil)
+                                                   :ref nil
+                                                   :ncopy 14
+                                                   :ncopy-other 18}))
+
+(deftest format-rna-repeated-seqs-test
+  (testing "returns a string expression of a RNA repeated-seqs"
+    (are [m s] (= (mut/format m nil) s)
+      rna-repeated-seqs1 rna-repeated-seqs1s
+      rna-repeated-seqs2 rna-repeated-seqs2s
+      rna-repeated-seqs3 rna-repeated-seqs3s)))
+
+(deftest parse-rna-repeated-seqs-test
+  (testing "returns a correct RNARepeatedSeqs"
+    (are [s m] (= (mut/parse-rna-repeated-seqs s) m)
+      rna-repeated-seqs1s rna-repeated-seqs1
+      rna-repeated-seqs2s rna-repeated-seqs2
+      rna-repeated-seqs3s rna-repeated-seqs3)))
+
 ;;; Protein mutations
 
 ;;; Protein - substitution

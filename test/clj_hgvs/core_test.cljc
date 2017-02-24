@@ -46,21 +46,27 @@
                                                     :type ">"
                                                     :alt "T"})]})
 
-(def hgvs6s "NP_005219.2:p.Leu858Arg")
-(def hgvs6ss "NP_005219.2:p.L858R")
-(def hgvs6m {:transcript "NP_005219.2", :kind :protein,
+(def hgvs6s "NM_000000.1:r.76a>c")
+(def hgvs6m {:transcript "NM_000000.1", :kind :rna,
+             :mutations [(mut/map->RNASubstitution {:coord (coord/->RNACoordinate 76 nil nil)
+                                                    :ref "a"
+                                                    :alt "c"})]})
+
+(def hgvs7s "NP_005219.2:p.Leu858Arg")
+(def hgvs7ss "NP_005219.2:p.L858R")
+(def hgvs7m {:transcript "NP_005219.2", :kind :protein,
              :mutations [(mut/map->ProteinSubstitution {:ref "Leu"
                                                         :coord (coord/->ProteinCoordinate 858)
                                                         :alt "Arg"})]})
 
-(def hgvs7s "NP_001096.1:p.Arg258=")
-(def hgvs7m {:transcript "NP_001096.1", :kind :protein,
+(def hgvs8s "NP_001096.1:p.Arg258=")
+(def hgvs8m {:transcript "NP_001096.1", :kind :protein,
              :mutations [(mut/map->ProteinSubstitution {:ref "Arg"
                                                         :coord (coord/->ProteinCoordinate 258)
                                                         :alt "Arg"})]})
 
-(def hgvs8s "NP_001005735.1:p.Leu344Trpfs")
-(def hgvs8m {:transcript "NP_001005735.1", :kind :protein,
+(def hgvs9s "NP_001005735.1:p.Leu344Trpfs")
+(def hgvs9m {:transcript "NP_001005735.1", :kind :protein,
              :mutations [(mut/map->ProteinFrameShift {:ref "Leu"
                                                       :coord (coord/->ProteinCoordinate 344)
                                                       :alt "Trp"
@@ -98,9 +104,10 @@
       hgvs4s hgvs4m
       hgvs5s hgvs5m
       hgvs6s hgvs6m
-      hgvs6ss hgvs6m
       hgvs7s hgvs7m
-      hgvs8s hgvs8m))
+      hgvs7ss hgvs7m
+      hgvs8s hgvs8m
+      hgvs9s hgvs9m))
   (testing "throws Exception when an illegal HGVS is passed"
     (are [x] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse x))
       ":2361G>A"
@@ -121,5 +128,6 @@
       hgvs5m hgvs5s
       hgvs6m hgvs6s
       hgvs7m hgvs7s
-      hgvs8m hgvs8s)
-    (is (= (hgvs/format hgvs6m :amino-acid-format :short) hgvs6ss))))
+      hgvs8m hgvs8s
+      hgvs9m hgvs9s)
+    (is (= (hgvs/format hgvs7m :amino-acid-format :short) hgvs7ss))))

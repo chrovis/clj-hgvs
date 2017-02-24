@@ -405,23 +405,248 @@
      :else parse-dna-substitution)
    s kind))
 
-;;; TODO: RNA mutations
+;;; RNA mutations
 
-(defrecord RNAMutation [numbering type ref alt]
+;;; RNA - substitution
+;;;
+;;; e.g. r.76a>c
+;;;      r.-14g>c
+;;;      r.*46u>a
+
+(defrecord RNASubstitution [coord ref alt]
   Mutation
   (format [_ _]
-    (string/join [numbering ref (->mutation-str type) alt])))
+    (apply str (coord/format coord) ref ">" alt)))
 
-(def ^:private rna-mutation-re
-  #"^([\d_\-\+\*\?]+)([A-Z]+)?(>|del|dup|ins|delins|inv|con|fs|ext)([A-Z]+)?$")
+(def ^:private rna-substitution-re
+  #"([\d\-\+\*]+)([a-z]?)>([a-z]?)")
+
+(defn parse-rna-substitution
+  [s]
+  (let [[_ coord ref alt] (re-matches rna-substitution-re s)]
+    (map->RNASubstitution {:coord (coord/parse-rna-coordinate coord)
+                           :ref ref
+                           :alt alt})))
+
+;;; RNA - deletion
+;;;
+;;; e.g. r.7del
+;;;      r.7delu
+;;;      r.6_8del
+;;;      r.(4072_5145)del (TODO)
+
+(defrecord RNADeletion [coord-start coord-end ref]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         (if coord-end
+           (str "_" (coord/format coord-end)))
+         "del"
+         ref)))
+
+(def ^:private rna-deletion-re
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?")
+
+(defn parse-rna-deletion
+  [s]
+  (let [[_ coord-s coord-e ref] (re-matches rna-deletion-re s)]
+    (map->RNADeletion {:coord-start (coord/parse-rna-coordinate coord-s)
+                       :coord-end (some-> coord-e coord/parse-rna-coordinate)
+                       :ref ref})))
+
+;;; RNA - duplication
+;;;
+;;; e.g. r.7dup
+;;;      r.7dupu
+;;;      r.6_8dup
+
+(defrecord RNADuplication [coord-start coord-end ref]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         (if coord-end
+           (str "_" (coord/format coord-end)))
+         "dup"
+         ref)))
+
+(def ^:private rna-duplication-re
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?dup([a-z]+)?")
+
+(defn parse-rna-duplication
+  [s]
+  (let [[_ coord-s coord-e ref] (re-matches rna-duplication-re s)]
+    (map->RNADuplication {:coord-start (coord/parse-rna-coordinate coord-s)
+                          :coord-end (some-> coord-e coord/parse-rna-coordinate)
+                          :ref ref})))
+
+;;; RNA - insertion
+;;;
+;;; e.g. r.756_757insacu
+;;;      r.431_432ins(5)
+;;;      r.123_124insL37425.1:23_361
+
+(defrecord RNAInsertion [coord-start coord-end alt]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         "_"
+         (coord/format coord-end)
+         "ins"
+         (cond
+           (map? alt) (str (:genbank alt) ":" (:coord-start alt) "_" (:coord-end alt))
+           (re-matches #"n{2,}" alt) (str "(" (count alt) ")")
+           :else alt))))
+
+(defn- parse-rna-alt-n
+  [s]
+  (if-let [n (some-> (re-find #"\((\d)\)" s)
+                     second
+                     parse-long)]
+    (apply str (repeat n "n"))))
+
+(def ^:private genbank-re
+  #"([A-Z]+[\d\.]+):(\d+)_(\d+)")
+
+(defn- parse-rna-alt-genbank
+  [s]
+  (let [[_ genbank coord-s coord-e] (re-matches genbank-re s)]
+    {:genbank genbank
+     :coord-start (parse-long coord-s)
+     :coord-end (parse-long coord-e)}))
+
+(def ^:private rna-insertion-re
+  #"([\d\-\+\*]+)_([\d\-\+\*]+)ins(.+)?")
+
+(defn parse-rna-insertion
+  [s]
+  (let [[_ coord-s coord-e alt] (re-matches rna-insertion-re s)]
+    (map->RNAInsertion {:coord-start (coord/parse-rna-coordinate coord-s)
+                        :coord-end (some-> coord-e coord/parse-rna-coordinate)
+                        :alt (cond
+                               (re-find #"[a-z]+" alt) alt
+                               (re-find #"\(\d\)" alt) (parse-rna-alt-n alt)
+                               :else (parse-rna-alt-genbank alt))})))
+
+;;; RNA - inversion
+;;;
+;;; e.g. r.177_180inv
+
+(defrecord RNAInversion [coord-start coord-end]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         "_"
+         (coord/format coord-end)
+         "inv")))
+
+(def ^:private rna-inversion-re
+  #"([\d\-\+\*]+)_([\d\-\+\*]+)inv")
+
+(defn parse-rna-inversion
+  [s]
+  (let [[_ coord-s coord-e] (re-matches rna-inversion-re s)]
+    (map->RNAInversion {:coord-start (coord/parse-rna-coordinate coord-s)
+                        :coord-end (coord/parse-rna-coordinate coord-e)})))
+
+;;; RNA - conversion
+;;;
+;;; e.g. r.123_345con888_1110
+;;;      r.415_1655conAC096506.5:409_1649
+
+(defrecord RNAConversion [coord-start coord-end alt]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         "_"
+         (coord/format coord-end)
+         "con"
+         (some-> (:transcript alt) (str ":"))
+         (coord/format (:coord-start alt))
+         "_"
+         (coord/format (:coord-end alt)))))
+
+(def ^:private rna-conversion-re
+  #"([\d\-\+\*]+)_([\d\-\+\*]+)con(.+)")
+
+(def ^:private rna-conversion-alt-re
+  #"(?:([^:]+):)?([\d\-\+\*\?]+)_([\d\-\+\*\?]+)")
+
+(defn- parse-rna-conversion-alt
+  [s]
+  (let [[_ transcript coord-s coord-e] (re-matches rna-conversion-alt-re s)]
+    {:transcript transcript
+     :coord-start (coord/parse-rna-coordinate coord-s)
+     :coord-end (coord/parse-rna-coordinate coord-e)}))
+
+(defn parse-rna-conversion
+  [s]
+  (let [[_ coord-s coord-e alt] (re-matches rna-conversion-re s)]
+    (map->RNAConversion {:coord-start (coord/parse-rna-coordinate coord-s)
+                         :coord-end (coord/parse-rna-coordinate coord-e)
+                         :alt (parse-rna-conversion-alt alt)})))
+
+;;; RNA - indel
+;;;
+;;; e.g. r.775delinsga
+;;;      r.775_777delinsc
+
+(defrecord RNAIndel [coord-start coord-end alt]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         (some->> coord-end coord/format (str "_"))
+         "delins"
+         alt)))
+
+(def ^:private rna-indel-re
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?delins([a-z]+)")
+
+(defn parse-rna-indel
+  [s]
+  (let [[_ coord-s coord-e alt] (re-matches rna-indel-re s)]
+    (map->RNAIndel {:coord-start (coord/parse-rna-coordinate coord-s)
+                    :coord-end (some-> coord-e coord/parse-rna-coordinate)
+                    :alt alt})))
+
+;;; RNA - repeated sequences
+;;;
+;;; e.g. r.-124_-123[14]
+;;;      r.-124ug[14]
+;;;      r.-124_-123[14];[18]
+
+(defrecord RNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
+  Mutation
+  (format [_ _]
+    (str (coord/format coord-start)
+         (some->> coord-end coord/format (str "_"))
+         ref
+         "[" ncopy "]"
+         (if ncopy-other (str ";[" ncopy-other "]")))))
+
+(def ^:private rna-repeated-seqs-re
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[(\d+)\](?:;\[(\d+)\])?")
+
+(defn parse-rna-repeated-seqs
+  [s]
+  (let [[_ coord-s coord-e ref ncopy1 ncopy2] (re-matches rna-repeated-seqs-re s)]
+    (map->RNARepeatedSeqs {:coord-start (coord/parse-rna-coordinate coord-s)
+                           :coord-end (some-> coord-e coord/parse-rna-coordinate)
+                           :ref ref
+                           :ncopy (parse-long ncopy1)
+                           :ncopy-other (some-> ncopy2 parse-long)})))
 
 (defn parse-rna
   [s]
-  (let [[_ numbering ref type alt] (re-find rna-mutation-re s)]
-    (map->RNAMutation {:numbering numbering
-                       :type (->mutation-type-keyword type)
-                       :ref ref
-                       :alt alt})))
+  ((cond
+     (string/includes? s "delins") parse-rna-indel
+     (string/includes? s "del") parse-rna-deletion
+     (string/includes? s "dup") parse-rna-duplication
+     (string/includes? s "ins") parse-rna-insertion
+     (string/includes? s "inv") parse-rna-inversion
+     (string/includes? s "con") parse-rna-conversion
+     (re-find #"\[\d+\]" s) parse-rna-repeated-seqs
+     :else parse-rna-substitution)
+   s))
 
 ;;; Protein mutations
 
@@ -535,7 +760,7 @@
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (def ^:private protein-insertion-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?ins([A-Z][a-zA-Z]*)?$")
+  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?ins([A-Z][a-zA-Z]*)?$")\
 
 (defn parse-protein-insertion
   [s]
