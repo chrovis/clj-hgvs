@@ -30,40 +30,35 @@
 
 (def dna-substitution1s "45576A>C")
 (def dna-substitution1k :genome)
-(def dna-substitution1 (mut/map->DNASubstitution {:coord-start (coord/->GenomicCoordinate 45576)
-                                                  :coord-end nil
+(def dna-substitution1 (mut/map->DNASubstitution {:coord (coord/->GenomicCoordinate 45576)
                                                   :ref "A"
                                                   :type ">"
                                                   :alt "C"}))
 
 (def dna-substitution2s "88+1G>T")
 (def dna-substitution2k :cdna)
-(def dna-substitution2 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 88 nil 1)
-                                                  :coord-end nil
+(def dna-substitution2 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 88 nil 1)
                                                   :ref "G"
                                                   :type ">"
                                                   :alt "T"}))
 
 (def dna-substitution3s "123G=")
 (def dna-substitution3k :cdna)
-(def dna-substitution3 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 123 nil nil)
-                                                  :coord-end nil
+(def dna-substitution3 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 123 nil nil)
                                                   :ref "G"
                                                   :type "="
                                                   :alt nil}))
 
 (def dna-substitution4s "85C=/>T")
 (def dna-substitution4k :cdna)
-(def dna-substitution4 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 85 nil nil)
-                                                  :coord-end nil
+(def dna-substitution4 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 85 nil nil)
                                                   :ref "C"
                                                   :type "=/>"
                                                   :alt "T"}))
 
 (def dna-substitution5s "85C=//>T")
 (def dna-substitution5k :cdna)
-(def dna-substitution5 (mut/map->DNASubstitution {:coord-start (coord/->CDNACoordinate 85 nil nil)
-                                                  :coord-end nil
+(def dna-substitution5 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 85 nil nil)
                                                   :ref "C"
                                                   :type "=//>"
                                                   :alt "T"}))

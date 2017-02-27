@@ -115,24 +115,22 @@
 ;;;      c.85C=/>T
 ;;;      c.85C=//>T
 
-(defrecord DNASubstitution [coord-start coord-end ref type alt]
+(defrecord DNASubstitution [coord ref type alt]
   Mutation
   (format [_ _]
-    (apply str (flatten [(coord/format coord-start)
-                         (if coord-end ["_" (coord/format coord-end)])
+    (apply str (flatten [(coord/format coord)
                          ref
                          type
                          alt]))))
 
 (def ^:private dna-substitution-re
-  #"^([\d\-\+]+)(?:_([\d\-\+]+))?([A-Z]+)([>=/]+)([A-Z]+)?$")
+  #"^([\d\-\+]+)([A-Z]+)([>=/]+)([A-Z]+)?$")
 
 (defn parse-dna-substitution
   [s kind]
-  (let [[_ coord-s coord-e ref type alt] (re-find dna-substitution-re s)
+  (let [[_ coord ref type alt] (re-find dna-substitution-re s)
         parse-coord (coord-parser kind)]
-    (map->DNASubstitution {:coord-start (parse-coord coord-s)
-                           :coord-end (some-> coord-e parse-coord)
+    (map->DNASubstitution {:coord (parse-coord coord)
                            :ref ref
                            :type type
                            :alt alt})))
