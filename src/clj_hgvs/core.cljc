@@ -41,11 +41,11 @@
   (str (->kind-str kind) "."))
 
 (defn format-mutations
-  [mutations & {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  [mutations & opts]
   (let [multi? (> (count mutations) 1)]
     (apply str (flatten [(if multi? "[")
                          (->> mutations
-                              (map #(mut/format % {:amino-acid-format amino-acid-format}))
+                              (map #(mut/format % opts))
                               (string/join ";"))
                          (if multi? "]")]))))
 

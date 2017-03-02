@@ -139,6 +139,7 @@
 ;;;
 ;;; e.g. g.7del
 ;;;      g.6_8del
+;;;      g.6_8delTGC
 ;;;      c.120_123+48del
 ;;;      c.(4071+1_4072-1)_(5145+1_5146-1)del
 ;;;      c.(?_-30)_(12+1_13-1)del
@@ -146,7 +147,7 @@
 
 (defrecord DNADeletion [coord-start coord-end ref]
   Mutation
-  (format [_ _]
+  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(if (vector? coord-start)
                            ["(" (coord/format (first coord-start))
                             "_" (coord/format (second coord-start)) ")"]
@@ -157,7 +158,7 @@
                             "_" (coord/format (second coord-end)) ")"]
                            (some-> coord-end coord/format))
                          "del"
-                         ref]))))
+                         (if show-bases? ref)]))))
 
 (def ^:private dna-deletion-re
   #"^([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?")
@@ -191,6 +192,7 @@
 ;;;
 ;;; e.g. g.7dup
 ;;;      g.6_8dup
+;;;      g.6_8dupTGC
 ;;;      c.120_123+48dup
 ;;;      c.(4071+1_4072-1)_(5145+1_5146-1)dup
 ;;;      c.(?_-30)_(12+1_13-1)dup
@@ -198,7 +200,7 @@
 
 (defrecord DNADuplication [coord-start coord-end ref]
   Mutation
-  (format [_ _]
+  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(if (vector? coord-start)
                            ["(" (coord/format (first coord-start))
                             "_" (coord/format (second coord-start)) ")"]
@@ -209,7 +211,7 @@
                             "_" (coord/format (second coord-end)) ")"]
                            (some-> coord-end coord/format))
                          "dup"
-                         ref]))))
+                         (if show-bases? ref)]))))
 
 (def ^:private dna-duplication-re
   #"^([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?dup([A-Z]+)?")
@@ -435,12 +437,12 @@
 
 (defrecord RNADeletion [coord-start coord-end ref]
   Mutation
-  (format [_ _]
+  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
          (if coord-end
            (str "_" (coord/format coord-end)))
          "del"
-         ref)))
+         (if show-bases? ref))))
 
 (def ^:private rna-deletion-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?")
@@ -460,12 +462,12 @@
 
 (defrecord RNADuplication [coord-start coord-end ref]
   Mutation
-  (format [_ _]
+  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
          (if coord-end
            (str "_" (coord/format coord-end)))
          "dup"
-         ref)))
+         (if show-bases? ref))))
 
 (def ^:private rna-duplication-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?dup([a-z]+)?")

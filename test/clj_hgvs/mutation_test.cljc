@@ -95,31 +95,38 @@
                                           :coord-end (coord/->GenomicCoordinate 8)
                                           :ref nil}))
 
-(def dna-deletion3s "120_123+48del")
-(def dna-deletion3k :cdna)
-(def dna-deletion3 (mut/map->DNADeletion {:coord-start (coord/->CDNACoordinate 120 nil nil)
+(def dna-deletion3s "6_8delTGC")
+(def dna-deletion3ss "6_8del")
+(def dna-deletion3k :genome)
+(def dna-deletion3 (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 6)
+                                          :coord-end (coord/->GenomicCoordinate 8)
+                                          :ref "TGC"}))
+
+(def dna-deletion4s "120_123+48del")
+(def dna-deletion4k :cdna)
+(def dna-deletion4 (mut/map->DNADeletion {:coord-start (coord/->CDNACoordinate 120 nil nil)
                                           :coord-end (coord/->CDNACoordinate 123 nil 48)
                                           :ref nil}))
 
-(def dna-deletion4s "(4071+1_4072-1)_(5145+1_5146-1)del")
-(def dna-deletion4k :cdna)
-(def dna-deletion4 (mut/map->DNADeletion {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
+(def dna-deletion5s "(4071+1_4072-1)_(5145+1_5146-1)del")
+(def dna-deletion5k :cdna)
+(def dna-deletion5 (mut/map->DNADeletion {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
                                                         (coord/->CDNACoordinate 4072 nil -1)]
                                           :coord-end [(coord/->CDNACoordinate 5145 nil 1)
                                                       (coord/->CDNACoordinate 5146 nil -1)]
                                           :ref nil}))
 
-(def dna-deletion5s "(?_-30)_(12+1_13-1)del")
-(def dna-deletion5k :cdna)
-(def dna-deletion5 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
+(def dna-deletion6s "(?_-30)_(12+1_13-1)del")
+(def dna-deletion6k :cdna)
+(def dna-deletion6 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
                                                         (coord/->CDNACoordinate 30 :up nil)]
                                           :coord-end [(coord/->CDNACoordinate 12 nil 1)
                                                       (coord/->CDNACoordinate 13 nil -1)]
                                           :ref nil}))
 
-(def dna-deletion6s "(?_-1)_(*1_?)del")
-(def dna-deletion6k :cdna)
-(def dna-deletion6 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
+(def dna-deletion7s "(?_-1)_(*1_?)del")
+(def dna-deletion7k :cdna)
+(def dna-deletion7 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
                                                         (coord/->CDNACoordinate 1 :up nil)]
                                           :coord-end [(coord/->CDNACoordinate 1 :down nil)
                                                       (coord/->UnknownCoordinate)]
@@ -127,13 +134,15 @@
 
 (deftest format-dna-deletion-test
   (testing "returns a string expression of a DNA deletion"
-    (are [m s] (= (mut/format m nil) s)
-      dna-deletion1 dna-deletion1s
-      dna-deletion2 dna-deletion2s
-      dna-deletion3 dna-deletion3s
-      dna-deletion4 dna-deletion4s
-      dna-deletion5 dna-deletion5s
-      dna-deletion6 dna-deletion6s)))
+    (are [m o s] (= (mut/format m o) s)
+      dna-deletion1 nil dna-deletion1s
+      dna-deletion2 nil dna-deletion2s
+      dna-deletion3 nil dna-deletion3ss
+      dna-deletion3 {:show-bases? true} dna-deletion3s
+      dna-deletion4 nil dna-deletion4s
+      dna-deletion5 nil dna-deletion5s
+      dna-deletion6 nil dna-deletion6s
+      dna-deletion7 nil dna-deletion7s)))
 
 (deftest parse-dna-deletion-test
   (testing "returns a correct DNADeletion"
@@ -143,7 +152,8 @@
       dna-deletion3s dna-deletion3k dna-deletion3
       dna-deletion4s dna-deletion4k dna-deletion4
       dna-deletion5s dna-deletion5k dna-deletion5
-      dna-deletion6s dna-deletion6k dna-deletion6)))
+      dna-deletion6s dna-deletion6k dna-deletion6
+      dna-deletion7s dna-deletion7k dna-deletion7)))
 
 ;;; DNA - duplication
 
@@ -159,31 +169,39 @@
                                                 :coord-end (coord/->GenomicCoordinate 8)
                                                 :ref nil}))
 
-(def dna-duplication3s "120_123+48dup")
-(def dna-duplication3k :cdna)
-(def dna-duplication3 (mut/map->DNADuplication {:coord-start (coord/->CDNACoordinate 120 nil nil)
+(def dna-duplication3s "6_8dupTGC")
+(def dna-duplication3ss "6_8dup")
+(def dna-duplication3k :genome)
+(def dna-duplication3 (mut/map->DNADuplication {:coord-start (coord/->GenomicCoordinate 6)
+                                                :coord-end (coord/->GenomicCoordinate 8)
+                                                :ref "TGC"}))
+
+
+(def dna-duplication4s "120_123+48dup")
+(def dna-duplication4k :cdna)
+(def dna-duplication4 (mut/map->DNADuplication {:coord-start (coord/->CDNACoordinate 120 nil nil)
                                                 :coord-end (coord/->CDNACoordinate 123 nil 48)
                                                 :ref nil}))
 
-(def dna-duplication4s "(4071+1_4072-1)_(5145+1_5146-1)dup")
-(def dna-duplication4k :cdna)
-(def dna-duplication4 (mut/map->DNADuplication {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
+(def dna-duplication5s "(4071+1_4072-1)_(5145+1_5146-1)dup")
+(def dna-duplication5k :cdna)
+(def dna-duplication5 (mut/map->DNADuplication {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
                                                               (coord/->CDNACoordinate 4072 nil -1)]
                                                 :coord-end [(coord/->CDNACoordinate 5145 nil 1)
                                                             (coord/->CDNACoordinate 5146 nil -1)]
                                                 :ref nil}))
 
-(def dna-duplication5s "(?_-30)_(12+1_13-1)dup")
-(def dna-duplication5k :cdna)
-(def dna-duplication5 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
+(def dna-duplication6s "(?_-30)_(12+1_13-1)dup")
+(def dna-duplication6k :cdna)
+(def dna-duplication6 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
                                                               (coord/->CDNACoordinate 30 :up nil)]
                                                 :coord-end [(coord/->CDNACoordinate 12 nil 1)
                                                             (coord/->CDNACoordinate 13 nil -1)]
                                                 :ref nil}))
 
-(def dna-duplication6s "(?_-1)_(*1_?)dup")
-(def dna-duplication6k :cdna)
-(def dna-duplication6 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
+(def dna-duplication7s "(?_-1)_(*1_?)dup")
+(def dna-duplication7k :cdna)
+(def dna-duplication7 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
                                                               (coord/->CDNACoordinate 1 :up nil)]
                                                 :coord-end [(coord/->CDNACoordinate 1 :down nil)
                                                             (coord/->UnknownCoordinate)]
@@ -191,13 +209,15 @@
 
 (deftest format-dna-duplication-test
   (testing "returns a string expression of a DNA duplication"
-    (are [m s] (= (mut/format m nil) s)
-      dna-duplication1 dna-duplication1s
-      dna-duplication2 dna-duplication2s
-      dna-duplication3 dna-duplication3s
-      dna-duplication4 dna-duplication4s
-      dna-duplication5 dna-duplication5s
-      dna-duplication6 dna-duplication6s)))
+    (are [m o s] (= (mut/format m o ) s)
+      dna-duplication1 nil dna-duplication1s
+      dna-duplication2 nil dna-duplication2s
+      dna-duplication3 nil dna-duplication3ss
+      dna-duplication3 {:show-bases? true} dna-duplication3s
+      dna-duplication4 nil dna-duplication4s
+      dna-duplication5 nil dna-duplication5s
+      dna-duplication6 nil dna-duplication6s
+      dna-duplication7 nil dna-duplication7s)))
 
 (deftest parse-dna-duplication-test
   (testing "returns a correct DNADuplication"
@@ -207,7 +227,8 @@
       dna-duplication3s dna-duplication3k dna-duplication3
       dna-duplication4s dna-duplication4k dna-duplication4
       dna-duplication5s dna-duplication5k dna-duplication5
-      dna-duplication6s dna-duplication6k dna-duplication6)))
+      dna-duplication6s dna-duplication6k dna-duplication6
+      dna-duplication7s dna-duplication7k dna-duplication7)))
 
 ;;; DNA - insertion
 
@@ -404,6 +425,7 @@
                                           :ref nil}))
 
 (def rna-deletion2s "7delu")
+(def rna-deletion2ss "7del")
 (def rna-deletion2 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 7 nil nil)
                                           :coord-end nil
                                           :ref "u"}))
@@ -418,11 +440,12 @@
 
 (deftest format-rna-deletion-test
   (testing "returns a string expression of a RNA deletion"
-    (are [m s] (= (mut/format m nil) s)
-      rna-deletion1 rna-deletion1s
-      rna-deletion2 rna-deletion2s
-      rna-deletion3 rna-deletion3s
-      ;; rna-deletion4 rna-deletion4s ; TODO
+    (are [m o s] (= (mut/format m o) s)
+      rna-deletion1 nil rna-deletion1s
+      rna-deletion2 nil rna-deletion2ss
+      rna-deletion2 {:show-bases? true} rna-deletion2s
+      rna-deletion3 nil rna-deletion3s
+      ;; rna-deletion4 nil rna-deletion4s ; TODO
       )))
 
 (deftest parse-rna-deletion-test
@@ -442,6 +465,7 @@
                                                 :ref nil}))
 
 (def rna-duplication2s "7dupu")
+(def rna-duplication2ss "7dup")
 (def rna-duplication2 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 7 nil nil)
                                                 :coord-end nil
                                                 :ref "u"}))
@@ -453,10 +477,11 @@
 
 (deftest format-rna-duplication-test
   (testing "returns a string expression of a RNA duplication"
-    (are [m s] (= (mut/format m nil) s)
-      rna-duplication1 rna-duplication1s
-      rna-duplication2 rna-duplication2s
-      rna-duplication3 rna-duplication3s)))
+    (are [m o s] (= (mut/format m o) s)
+      rna-duplication1 nil rna-duplication1s
+      rna-duplication2 nil rna-duplication2ss
+      rna-duplication2 {:show-bases? true} rna-duplication2s
+      rna-duplication3 nil rna-duplication3s)))
 
 (deftest parse-rna-duplication-test
   (testing "returns a correct RNADuplication"
