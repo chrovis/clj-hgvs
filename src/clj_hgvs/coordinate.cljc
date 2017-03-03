@@ -53,9 +53,8 @@
            :down "*"
            nil)
          position
-         (if (and intron-offset (pos? intron-offset))
-           "+")
-         intron-offset)))
+         (if-not (or (nil? intron-offset) (zero? intron-offset))
+           (str (if (pos? intron-offset) "+") intron-offset)))))
 
 (def ^:private cdna-coordinate-re
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
