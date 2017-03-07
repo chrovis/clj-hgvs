@@ -124,11 +124,11 @@
                          alt]))))
 
 (def ^:private dna-substitution-re
-  #"^([\d\-\+]+)([A-Z]+)([>=/]+)([A-Z]+)?$")
+  #"([\d\-\+]+)([A-Z]+)([>=/]+)([A-Z]+)?")
 
 (defn parse-dna-substitution
   [s kind]
-  (let [[_ coord ref type alt] (re-find dna-substitution-re s)
+  (let [[_ coord ref type alt] (re-matches dna-substitution-re s)
         parse-coord (coord-parser kind)]
     (map->DNASubstitution {:coord (parse-coord coord)
                            :ref ref
@@ -161,22 +161,22 @@
                          (if show-bases? ref)]))))
 
 (def ^:private dna-deletion-re
-  #"^([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?")
 
 (defn- parse-dna-deletion*
   [s kind]
-  (let [[_ coord-s coord-e ref] (re-find dna-deletion-re s)
+  (let [[_ coord-s coord-e ref] (re-matches dna-deletion-re s)
         parse-coord (coord-parser kind)]
     (map->DNADeletion {:coord-start (parse-coord coord-s)
                        :coord-end (some-> coord-e parse-coord)
                        :ref ref})))
 
 (def ^:private dna-deletion-range-re
-  #"^\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)del([A-Z]+)?")
+  #"\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)del([A-Z]+)?")
 
 (defn- parse-dna-deletion-range
   [s kind]
-  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-find dna-deletion-range-re s)
+  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-matches dna-deletion-range-re s)
         parse-coord (coord-parser kind)]
     (map->DNADeletion {:coord-start (mapv parse-coord [coord-s1 coord-s2])
                        :coord-end (mapv parse-coord [coord-e1 coord-e2])
@@ -184,7 +184,7 @@
 
 (defn parse-dna-deletion
   [s kind]
-  (if (re-find #"^\(.+\)_\(.+\)del[A-Z]*$" s)
+  (if (re-matches #"\(.+\)_\(.+\)del[A-Z]*" s)
     (parse-dna-deletion-range s kind)
     (parse-dna-deletion* s kind)))
 
@@ -215,22 +215,22 @@
                          (if show-bases? ref)]))))
 
 (def ^:private dna-duplication-re
-  #"^([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?dup([A-Z]+)?")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?dup([A-Z]+)?")
 
 (defn- parse-dna-duplication*
   [s kind]
-  (let [[_ coord-s coord-e ref] (re-find dna-duplication-re s)
+  (let [[_ coord-s coord-e ref] (re-matches dna-duplication-re s)
         parse-coord (coord-parser kind)]
     (map->DNADuplication {:coord-start (parse-coord coord-s)
                           :coord-end (some-> coord-e parse-coord)
                           :ref ref})))
 
 (def ^:private dna-duplication-range-re
-  #"^\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)dup([A-Z]+)?")
+  #"\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)dup([A-Z]+)?")
 
 (defn- parse-dna-duplication-range
   [s kind]
-  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-find dna-duplication-range-re s)
+  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-matches dna-duplication-range-re s)
         parse-coord (coord-parser kind)]
     (map->DNADuplication {:coord-start (mapv parse-coord [coord-s1 coord-s2])
                           :coord-end (mapv parse-coord [coord-e1 coord-e2])
@@ -238,7 +238,7 @@
 
 (defn parse-dna-duplication
   [s kind]
-  (if (re-find #"^\(.+\)_\(.+\)dup[A-Z]*$" s)
+  (if (re-matches #"\(.+\)_\(.+\)dup[A-Z]*" s)
     (parse-dna-duplication-range s kind)
     (parse-dna-duplication* s kind)))
 
@@ -671,11 +671,11 @@
              (= amino-acid-format :short) ->short-amino-acid)))))
 
 (def ^:private protein-substitution-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)([A-Z\*=](?:[a-z]{2})?)$")
+  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z\*=](?:[a-z]{2})?)")
 
 (defn parse-protein-substitution
   [s]
-  (let [[_ ref coord' alt] (re-find protein-substitution-re s)]
+  (let [[_ ref coord' alt] (re-matches protein-substitution-re s)]
     (map->ProteinSubstitution {:coord (coord/parse-protein-coordinate coord')
                                :ref (->long-amino-acid ref)
                                :alt (case alt
@@ -702,11 +702,11 @@
                          "del"]))))
 
 (def ^:private protein-deletion-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?del$")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?del")
 
 (defn parse-protein-deletion
   [s]
-  (let [[_ ref-s coord-s ref-e coord-e] (re-find protein-deletion-re s)]
+  (let [[_ ref-s coord-s ref-e coord-e] (re-matches protein-deletion-re s)]
     (map->ProteinDeletion {:ref-start (->long-amino-acid ref-s)
                            :coord-start (coord/parse-protein-coordinate coord-s)
                            :ref-end (->long-amino-acid ref-e)
@@ -731,11 +731,11 @@
                          "dup"]))))
 
 (def ^:private protein-duplication-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?dup$")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?dup")
 
 (defn parse-protein-duplication
   [s]
-  (let [[_ ref-s coord-s ref-e coord-e] (re-find protein-duplication-re s)]
+  (let [[_ ref-s coord-s ref-e coord-e] (re-matches protein-duplication-re s)]
     (map->ProteinDuplication {:ref-start (->long-amino-acid ref-s)
                               :coord-start (coord/parse-protein-coordinate coord-s)
                               :ref-end (->long-amino-acid ref-e)
@@ -761,11 +761,11 @@
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (def ^:private protein-insertion-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?ins([A-Z][a-zA-Z]*)?$")\
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?ins([A-Z][a-zA-Z]*)?")
 
 (defn parse-protein-insertion
   [s]
-  (let [[_ ref-s coord-s ref-e coord-e alts] (re-find protein-insertion-re s)]
+  (let [[_ ref-s coord-s ref-e coord-e alts] (re-matches protein-insertion-re s)]
     (map->ProteinInsertion {:ref-start (->long-amino-acid ref-s)
                             :coord-start (coord/parse-protein-coordinate coord-s)
                             :ref-end (->long-amino-acid ref-e)
@@ -793,11 +793,11 @@
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (def ^:private protein-indel-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z][a-zA-Z]*)?$")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z][a-zA-Z]*)?")
 
 (defn parse-protein-indel
   [s]
-  (let [[_ ref-s coord-s ref-e coord-e alts] (re-find protein-indel-re s)]
+  (let [[_ ref-s coord-s ref-e coord-e alts] (re-matches protein-indel-re s)]
     (map->ProteinIndel {:ref-start (->long-amino-acid ref-s)
                         :coord-start (coord/parse-protein-coordinate coord-s)
                         :ref-end (->long-amino-acid ref-e)
@@ -826,11 +826,11 @@
                          (if ncopy-other [";[" ncopy-other "]"])]))))
 
 (def ^:private protein-repeated-seqs-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[(\d+)\](?:;\[(\d+)\])?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[(\d+)\](?:;\[(\d+)\])?")
 
 (defn parse-protein-repeated-seqs
   [s]
-  (let [[_ ref-s coord-s ref-e coord-e ncopy1 ncopy2] (re-find protein-repeated-seqs-re s)]
+  (let [[_ ref-s coord-s ref-e coord-e ncopy1 ncopy2] (re-matches protein-repeated-seqs-re s)]
     (map->ProteinRepeatedSeqs {:ref-start (->long-amino-acid ref-s)
                                :coord-start (coord/parse-protein-coordinate coord-s)
                                :ref-end (->long-amino-acid ref-e)
@@ -857,11 +857,11 @@
          new-site)))
 
 (def ^:private protein-frame-shift-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(.+)?$")
+  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(.+)?")
 
 (defn parse-protein-frame-shift
   [s]
-  (let [[_ ref coord' alt new-site] (re-find protein-frame-shift-re s)]
+  (let [[_ ref coord' alt new-site] (re-matches protein-frame-shift-re s)]
     (map->ProteinFrameShift {:ref (->long-amino-acid ref)
                              :coord (coord/parse-protein-coordinate coord')
                              :alt (->long-amino-acid alt)
@@ -885,11 +885,11 @@
          new-site)))
 
 (def ^:private protein-extension-re
-  #"^([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?ext(.+)$")
+  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?ext(.+)")
 
 (defn parse-protein-extension
   [s]
-  (let [[_ ref coord' alt new-site] (re-find protein-extension-re s)]
+  (let [[_ ref coord' alt new-site] (re-matches protein-extension-re s)]
     (map->ProteinExtension {:ref (->long-amino-acid ref)
                              :coord (coord/parse-protein-coordinate coord')
                             :alt (->long-amino-acid alt)
