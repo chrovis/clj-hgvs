@@ -205,11 +205,12 @@
                            ["(" (coord/format (first coord-start))
                             "_" (coord/format (second coord-start)) ")"]
                            (coord/format coord-start))
-                         (if coord-end "_")
-                         (if (vector? coord-end)
-                           ["(" (coord/format (first coord-end))
-                            "_" (coord/format (second coord-end)) ")"]
-                           (some-> coord-end coord/format))
+                         (if (and (some? coord-end) (not= coord-start coord-end))
+                           ["_"
+                            (if (vector? coord-end)
+                              ["(" (coord/format (first coord-end))
+                               "_" (coord/format (second coord-end)) ")"]
+                              (coord/format coord-end))])
                          "dup"
                          (if show-bases? ref)]))))
 
