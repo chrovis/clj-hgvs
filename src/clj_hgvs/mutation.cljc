@@ -265,7 +265,7 @@
                                        (coord/format (:coord-end alt))])]))))
 
 (def ^:private dna-insertion-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))ins(.+)")
+  #"([\d\-\+\*\?]+)_([\d\-\+\*\?]+)ins(.+)")
 
 (def ^:private dna-insertion-alt-re
   #"(?:([^:]+):)([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))")
