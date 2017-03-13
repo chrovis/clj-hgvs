@@ -66,7 +66,7 @@
              :mutations [(mut/map->ProteinFrameShift {:ref "Leu"
                                                       :coord (coord/->ProteinCoordinate 344)
                                                       :alt "Trp"
-                                                      :new-site nil})]})
+                                                      :new-ter-site nil})]})
 
 (deftest hgvs-test
   (testing "allows mutation maps"

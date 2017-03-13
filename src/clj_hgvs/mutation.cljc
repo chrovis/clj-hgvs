@@ -845,27 +845,34 @@
 ;;;      Ile327Argfs*?
 ;;;      Gln151Thrfs*9
 
-(defrecord ProteinFrameShift [ref coord alt new-site]
+(defrecord ProteinFrameShift [ref coord alt new-ter-site]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [_ {:keys [amino-acid-format ter-format]
+              :or {amino-acid-format :long}}]
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
          (cond-> alt
            (= amino-acid-format :short) ->short-amino-acid)
          "fs"
-         new-site)))
+         (if (some? new-ter-site)
+           (str (cond
+                  (= ter-format :short) (->short-amino-acid "Ter")
+                  (= ter-format :long) "Ter"
+                  (= amino-acid-format :short) (->short-amino-acid "Ter")
+                  :else "Ter")
+                (coord/format new-ter-site))))))
 
 (def ^:private protein-frame-shift-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(.+)?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(?:Ter|\*)?(\?|\d+)?")
 
 (defn parse-protein-frame-shift
   [s]
-  (let [[_ ref coord' alt new-site] (re-matches protein-frame-shift-re s)]
+  (let [[_ ref coord' alt new-ter-site] (re-matches protein-frame-shift-re s)]
     (map->ProteinFrameShift {:ref (->long-amino-acid ref)
                              :coord (coord/parse-protein-coordinate coord')
                              :alt (->long-amino-acid alt)
-                             :new-site new-site})))
+                             :new-ter-site (some-> new-ter-site coord/parse-protein-coordinate)})))
 
 ;;; Protein - extension
 ;;;

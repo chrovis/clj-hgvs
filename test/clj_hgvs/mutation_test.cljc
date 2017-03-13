@@ -834,34 +834,34 @@
 (def protein-frame-shift1 (mut/map->ProteinFrameShift {:ref "Arg"
                                                        :coord (coord/->ProteinCoordinate 97)
                                                        :alt "Pro"
-                                                       :new-site "Ter23"}))
+                                                       :new-ter-site (coord/->ProteinCoordinate 23)}))
 
 (def protein-frame-shift2s "Arg97fs")
 (def protein-frame-shift2ss "R97fs")
 (def protein-frame-shift2 (mut/map->ProteinFrameShift {:ref "Arg"
                                                        :coord (coord/->ProteinCoordinate 97)
                                                        :alt nil
-                                                       :new-site nil}))
+                                                       :new-ter-site nil}))
 
 (def protein-frame-shift3s "Ile327Argfs*?")
 (def protein-frame-shift3 (mut/map->ProteinFrameShift {:ref "Ile"
                                                        :coord (coord/->ProteinCoordinate 327)
                                                        :alt "Arg"
-                                                       :new-site "*?"}))
+                                                       :new-ter-site (coord/->UnknownCoordinate)}))
 
 (def protein-frame-shift4s "Gln151Thrfs*9")
 (def protein-frame-shift4 (mut/map->ProteinFrameShift {:ref "Gln"
                                                        :coord (coord/->ProteinCoordinate 151)
                                                        :alt "Thr"
-                                                       :new-site "*9"}))
+                                                       :new-ter-site (coord/->ProteinCoordinate 9)}))
 (deftest format-protein-frame-shift-test
   (testing "returns a string expression of a protein frame-shift"
     (are [m o s] (= (mut/format m o) s)
       protein-frame-shift1 nil protein-frame-shift1s
       protein-frame-shift2 nil protein-frame-shift2s
       protein-frame-shift2 {:amino-acid-format :short} protein-frame-shift2ss
-      protein-frame-shift3 nil protein-frame-shift3s
-      protein-frame-shift4 nil protein-frame-shift4s)))
+      protein-frame-shift3 {:ter-format :short} protein-frame-shift3s
+      protein-frame-shift4 {:ter-format :short} protein-frame-shift4s)))
 
 (deftest parse-protein-frame-shift-test
   (testing "returns a correct ProteinFrameShift"
