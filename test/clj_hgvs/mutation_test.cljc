@@ -681,7 +681,14 @@
       protein-deletion1 nil protein-deletion1s
       protein-deletion1 {:amino-acid-format :short} protein-deletion1ss
       protein-deletion2 nil protein-deletion2s
-      protein-deletion2 {:amino-acid-format :short} protein-deletion2ss)))
+      protein-deletion2 {:amino-acid-format :short} protein-deletion2ss))
+  (testing "not show last amino acid if range size is 1."
+    (is (= (mut/format (mut/map->ProteinDeletion
+                        {:ref-start "Ala"
+                         :coord-start (coord/->ProteinCoordinate 3)
+                         :ref-end "Ala"
+                         :coord-end (coord/->ProteinCoordinate 3)}) nil)
+           "Ala3del"))))
 
 (deftest parse-protein-deletion-test
   (testing "returns a correct ProteinDeletion"
@@ -713,7 +720,14 @@
       protein-duplication1 nil protein-duplication1s
       protein-duplication1 {:amino-acid-format :short} protein-duplication1ss
       protein-duplication2 nil protein-duplication2s
-      protein-duplication2 {:amino-acid-format :short} protein-duplication2ss)))
+      protein-duplication2 {:amino-acid-format :short} protein-duplication2ss))
+  (testing "not show last amino acid if range size is 1."
+    (is (= (mut/format (mut/map->ProteinDuplication
+                        {:ref-start "Ala"
+                         :coord-start (coord/->ProteinCoordinate 3)
+                         :ref-end "Ala"
+                         :coord-end (coord/->ProteinCoordinate 3)}) nil)
+           "Ala3dup"))))
 
 (deftest parse-protein-duplication-test
   (testing "returns a correct ProteinDuplication"

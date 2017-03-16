@@ -651,6 +651,12 @@
 
 ;;; Protein mutations
 
+(defn- should-show-end?
+  [ref-start coord-start ref-end coord-end]
+  (and (some? ref-end)
+       (some? coord-end)
+       (< (:position coord-start) (:position coord-end))))
+
 ;;; Protein - substitution
 ;;;
 ;;; e.g. Arg54Ser
@@ -694,7 +700,7 @@
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
-                         (if ref-end
+                         (if (should-show-end? ref-start coord-start ref-end coord-end)
                            ["_"
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
@@ -723,7 +729,7 @@
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
-                         (if ref-end
+                         (if (should-show-end? ref-start coord-start ref-end coord-end)
                            ["_"
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
