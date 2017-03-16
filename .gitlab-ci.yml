@@ -4,7 +4,7 @@ test:
     - lein clean
     - lein -U deps
     - lein with-profile xcoo jar
-    - lein with-profile xcoo,dev test
+    - lein with-profile xcoo,dev:xcoo,1.7:xcoo,1.9 test
     - QT_QPA_PLATFORM=offscreen lein with-profile xcoo,dev doo phantom test once
 
 deploy:

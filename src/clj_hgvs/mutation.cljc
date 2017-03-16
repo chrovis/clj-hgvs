@@ -395,15 +395,15 @@
 
 (defn parse-dna
   [s kind]
-  ((cond
-     (string/includes? s "delins") parse-dna-indel
-     (string/includes? s "del") parse-dna-deletion
-     (string/includes? s "dup") parse-dna-duplication
-     (string/includes? s "ins") parse-dna-insertion
-     (string/includes? s "inv") parse-dna-inversion
-     (string/includes? s "con") parse-dna-conversion
-     (re-find #"\[\d+\]" s) parse-dna-repeated-seqs
-     :else parse-dna-substitution)
+  ((condp re-find s
+     #"delins" parse-dna-indel
+     #"del" parse-dna-deletion
+     #"dup" parse-dna-duplication
+     #"ins" parse-dna-insertion
+     #"inv" parse-dna-inversion
+     #"con" parse-dna-conversion
+     #"\[\d+\]" parse-dna-repeated-seqs
+     parse-dna-substitution)
    s kind))
 
 ;;; RNA mutations
@@ -638,15 +638,15 @@
 
 (defn parse-rna
   [s]
-  ((cond
-     (string/includes? s "delins") parse-rna-indel
-     (string/includes? s "del") parse-rna-deletion
-     (string/includes? s "dup") parse-rna-duplication
-     (string/includes? s "ins") parse-rna-insertion
-     (string/includes? s "inv") parse-rna-inversion
-     (string/includes? s "con") parse-rna-conversion
-     (re-find #"\[\d+\]" s) parse-rna-repeated-seqs
-     :else parse-rna-substitution)
+  ((condp re-find s
+     #"delins" parse-rna-indel
+     #"del" parse-rna-deletion
+     #"dup" parse-rna-duplication
+     #"ins" parse-rna-insertion
+     #"inv" parse-rna-inversion
+     #"con" parse-rna-conversion
+     #"\[\d+\]" parse-rna-repeated-seqs
+     parse-rna-substitution)
    s))
 
 ;;; Protein mutations
@@ -910,13 +910,13 @@
 
 (defn parse-protein
   [s]
-  ((cond
-     (string/includes? s "delins") parse-protein-indel
-     (string/includes? s "del") parse-protein-deletion
-     (string/includes? s "dup") parse-protein-duplication
-     (string/includes? s "ins") parse-protein-insertion
-     (string/includes? s "fs") parse-protein-frame-shift
-     (string/includes? s "ext") parse-protein-extension
-     (re-find #"\[\d+\]" s) parse-protein-repeated-seqs
-     :else parse-protein-substitution)
+  ((condp re-find s
+     #"delins" parse-protein-indel
+     #"del" parse-protein-deletion
+     #"dup" parse-protein-duplication
+     #"ins" parse-protein-insertion
+     #"fs" parse-protein-frame-shift
+     #"ext" parse-protein-extension
+     #"\[\d+\]" parse-protein-repeated-seqs
+     parse-protein-substitution)
    s))
