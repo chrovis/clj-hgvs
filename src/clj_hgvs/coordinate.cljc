@@ -59,23 +59,24 @@
 ;;;      -85+3
 ;;;      *37+3
 
-(defrecord CDNACoordinate [position stream intron-offset]
+(defrecord CDNACoordinate [position offset region]
   Coordinate
   (format [_]
-    (str (case stream
-           :up "-"
-           :down "*"
+    (str (case region
+           :upstream "-"
+           :downstream "*"
            nil)
          position
-         (if-not (or (nil? intron-offset) (zero? intron-offset))
-           (str (if (pos? intron-offset) "+") intron-offset)))))
+         (if-not (or (nil? offset) (zero? offset))
+           (str (if (pos? offset) "+") offset)))))
 
 (defn cdna-coordinate
-  [position stream intron-offset]
-  {:pre [(integer? position) (pos? position)
-         (or (nil? stream) (#{:up :down} stream))
-         (or (nil? intron-offset) (integer? intron-offset))]}
-  (CDNACoordinate. position stream intron-offset))
+  ([position] (cdna-coordinate position 0 nil))
+  ([position offset region]
+   {:pre [(integer? position) (pos? position)
+          (integer? offset)
+          (or (nil? region) (#{:upstream :downstream} region))]}
+   (CDNACoordinate. position offset region)))
 
 (def ^:private cdna-coordinate-re
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
@@ -84,13 +85,15 @@
   [s]
   (if (= s "?")
     (unknown-coordinate)
-    (let [[_ stream position intron-offset] (re-find cdna-coordinate-re s)]
+    (let [[_ region position offset] (re-find cdna-coordinate-re s)]
       (cdna-coordinate (parse-long position)
-                       (case stream
-                         "-" :up
-                         "*" :down
-                         nil)
-                       (some-> intron-offset parse-long)))))
+                       (if (some? offset)
+                         (parse-long offset)
+                         0)
+                       (case region
+                         "-" :upstream
+                         "*" :downstream
+                         nil)))))
 
 ;;; non-coding DNA coordinate
 
@@ -112,37 +115,40 @@
 
 ;;; RNA coordinate
 
-(defrecord RNACoordinate [position stream intron-offset]
+(defrecord RNACoordinate [position offset region]
   Coordinate
   (format [_]
-    (str (case stream
-           :up "-"
-           :down "*"
+    (str (case region
+           :upstream "-"
+           :downstream "*"
            nil)
          position
-         (if (and intron-offset (pos? intron-offset))
-           "+")
-         intron-offset)))
+         (if-not (or (nil? offset) (zero? offset))
+           (str (if (pos? offset) "+") offset)))))
 
 (defn rna-coordinate
-  [position stream intron-offset]
+  [position offset region]
   {:pre [(integer? position) (pos? position)
-         (or (nil? stream) (#{:up :down} stream))
-         (or (nil? intron-offset) (integer? intron-offset))]}
-  (RNACoordinate. position stream intron-offset))
+         (or (nil? offset) (integer? offset))
+         (or (nil? region) (#{:upstream :downstream} region))]}
+  (RNACoordinate. position offset region))
 
 (def ^:private rna-coordinate-re
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
 (defn parse-rna-coordinate
   [s]
-  (let [[_ stream position intron-offset] (re-find rna-coordinate-re s)]
-    (rna-coordinate (parse-long position)
-                    (case stream
-                      "-" :up
-                      "*" :down
-                      nil)
-                    (some-> intron-offset parse-long))))
+  (let [[_ region position offset] (re-find rna-coordinate-re s)]
+    (if (or (some? region) (some? offset))
+      (rna-coordinate (parse-long position)
+                      (if (some? offset)
+                        (parse-long offset)
+                        0)
+                      (case region
+                        "-" :upstream
+                        "*" :downstream
+                        nil))
+      (rna-coordinate (parse-long position) nil nil))))
 
 ;;; protein coordinate
 

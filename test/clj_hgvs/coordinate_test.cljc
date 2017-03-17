@@ -25,35 +25,35 @@
 
 (deftest cdna-coordinate-test
   (testing "validates inputs and returns CDNACoordinate"
-    (are [p s i] (= (coord/cdna-coordinate p s i) (coord/->CDNACoordinate p s i))
-      3 nil nil
-      3 :up nil
-      3 :down nil
-      87 nil 3
-      88 nil -1
-      85 :up 3
-      37 :down 3))
+    (are [p o r] (= (coord/cdna-coordinate p o r) (coord/->CDNACoordinate p o r))
+      3 0 nil
+      3 0 :upstream
+      3 0 :downstream
+      87 3 nil
+      88 -1 nil
+      85 3 :upstream
+      37 3 :downstream))
   (testing "throws an error if inputs are illegal"
-    (are [p s i] (thrown? #?(:clj Error, :cljs js/Error) (coord/cdna-coordinate p s i))
-      0 nil nil
-      3.5 nil nil
-      "3" nil nil
-      nil nil nil
-      3 :illegal nil
-      3 nil 8.5
-      3 nil "3")))
+    (are [p o r] (thrown? #?(:clj Error, :cljs js/Error) (coord/cdna-coordinate p o r))
+      0 0 nil
+      3.5 0 nil
+      "3" 0 nil
+      nil 0 nil
+      3 0 :illegal
+      3 8.5 nil
+      3 "3" nil)))
 
 (deftest format-cdna-coordinate-test
   (testing "returns a string expression of a CDNA coordinate"
     (are [m s] (= (coord/format m) s)
-      (coord/cdna-coordinate 3 nil nil) "3"
-      (coord/cdna-coordinate 3 :up nil) "-3"
-      (coord/cdna-coordinate 3 :down nil) "*3"
-      (coord/cdna-coordinate 87 nil 3) "87+3"
-      (coord/cdna-coordinate 88 nil -1) "88-1"
-      (coord/cdna-coordinate 88 nil 0) "88"
-      (coord/cdna-coordinate 85 :up 3) "-85+3"
-      (coord/cdna-coordinate 37 :down 3) "*37+3")))
+      (coord/cdna-coordinate 3 0 nil) "3"
+      (coord/cdna-coordinate 3 0 :upstream) "-3"
+      (coord/cdna-coordinate 3 0 :downstream) "*3"
+      (coord/cdna-coordinate 87 3 nil) "87+3"
+      (coord/cdna-coordinate 88 -1 nil) "88-1"
+      (coord/cdna-coordinate 88 0 nil) "88"
+      (coord/cdna-coordinate 85 3 :upstream) "-85+3"
+      (coord/cdna-coordinate 37 3 :downstream) "*37+3")))
 
 (deftest ncdna-coordinate-test
   (testing "validates an input and returns NCDNACoordinate"
@@ -69,21 +69,21 @@
   (testing "validates inputs and returns RNACoordinate"
     (are [p s i] (= (coord/rna-coordinate p s i) (coord/->RNACoordinate p s i))
       3 nil nil
-      3 :up nil
-      3 :down nil
-      87 nil 3
-      88 nil -1
-      85 :up 3
-      37 :down 3))
+      3 nil :upstream
+      3 nil :downstream
+      87 3 nil
+      88 -1 nil
+      85 3 :upstream
+      37 3 :downstream))
   (testing "throws an error if inputs are illegal"
     (are [p s i] (thrown? #?(:clj Error, :cljs js/Error) (coord/rna-coordinate p s i))
       0 nil nil
       3.5 nil nil
       "3" nil nil
       nil nil nil
-      3 :illegal nil
-      3 nil 8.5
-      3 nil "3")))
+      3 nil :illegal
+      3 8.5 nil
+      3 "3" nil)))
 
 (deftest protein-coordinate-test
   (testing "validates an input and returns ProteinCoordinate"
