@@ -123,5 +123,5 @@
       hgvs7m hgvs7s
       hgvs8m hgvs8s
       hgvs9m hgvs9s)
-    (is (= (hgvs/format hgvs4m :show-bases? true) hgvs4s))
-    (is (= (hgvs/format hgvs7m :amino-acid-format :short) hgvs7ss))))
+    (is (= (hgvs/format hgvs4m {:show-bases? true}) hgvs4s))
+    (is (= (hgvs/format hgvs7m {:amino-acid-format :short}) hgvs7ss))))
