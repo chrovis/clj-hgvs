@@ -7,44 +7,44 @@
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m {:transcript "NM_005228.3", :kind :cdna,
-             :mutations [(mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 2361 nil nil)
+             :mutations [(mut/map->DNASubstitution {:coord (coord/cdna-coordinate 2361 nil nil)
                                                     :ref "G"
                                                     :type ">"
                                                     :alt "A"})]})
 
 (def hgvs2s "c.2361G>A")
 (def hgvs2m {:transcript nil, :kind :cdna,
-             :mutations [(mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 2361 nil nil)
+             :mutations [(mut/map->DNASubstitution {:coord (coord/cdna-coordinate 2361 nil nil)
                                                     :ref "G"
                                                     :type ">"
                                                     :alt "A"})]})
 
 (def hgvs3s "g.[2376A>C;3103del]")
 (def hgvs3m {:transcript nil, :kind :genome,
-             :mutations [(mut/map->DNASubstitution {:coord (coord/->GenomicCoordinate 2376)
+             :mutations [(mut/map->DNASubstitution {:coord (coord/genomic-coordinate 2376)
                                                     :ref "A"
                                                     :type ">"
                                                     :alt "C"}),
-                         (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 3103)
+                         (mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 3103)
                                                 :coord-end nil
                                                 :ref nil})]})
 
 (def hgvs4s "NC_000022.11:g.28703511delA")
 (def hgvs4m {:transcript "NC_000022.11", :kind :genome,
-             :mutations [(mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 28703511)
+             :mutations [(mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 28703511)
                                                 :coord-end nil
                                                 :ref "A"})]})
 
 (def hgvs5s "NM_004380.2:c.86-1G>T")
 (def hgvs5m {:transcript "NM_004380.2", :kind :cdna,
-             :mutations [(mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 86 nil -1)
+             :mutations [(mut/map->DNASubstitution {:coord (coord/cdna-coordinate 86 nil -1)
                                                     :ref "G"
                                                     :type ">"
                                                     :alt "T"})]})
 
 (def hgvs6s "NM_000000.1:r.76a>c")
 (def hgvs6m {:transcript "NM_000000.1", :kind :rna,
-             :mutations [(mut/map->RNASubstitution {:coord (coord/->RNACoordinate 76 nil nil)
+             :mutations [(mut/map->RNASubstitution {:coord (coord/rna-coordinate 76 nil nil)
                                                     :ref "a"
                                                     :alt "c"})]})
 
@@ -52,36 +52,36 @@
 (def hgvs7ss "NP_005219.2:p.L858R")
 (def hgvs7m {:transcript "NP_005219.2", :kind :protein,
              :mutations [(mut/map->ProteinSubstitution {:ref "Leu"
-                                                        :coord (coord/->ProteinCoordinate 858)
+                                                        :coord (coord/protein-coordinate 858)
                                                         :alt "Arg"})]})
 
 (def hgvs8s "NP_001096.1:p.Arg258=")
 (def hgvs8m {:transcript "NP_001096.1", :kind :protein,
              :mutations [(mut/map->ProteinSubstitution {:ref "Arg"
-                                                        :coord (coord/->ProteinCoordinate 258)
+                                                        :coord (coord/protein-coordinate 258)
                                                         :alt "Arg"})]})
 
 (def hgvs9s "NP_001005735.1:p.Leu344Trpfs")
 (def hgvs9m {:transcript "NP_001005735.1", :kind :protein,
              :mutations [(mut/map->ProteinFrameShift {:ref "Leu"
-                                                      :coord (coord/->ProteinCoordinate 344)
+                                                      :coord (coord/protein-coordinate 344)
                                                       :alt "Trp"
                                                       :new-ter-site nil})]})
 
 (deftest hgvs-test
   (testing "allows mutation maps"
     (is (= (hgvs/hgvs "NM_005228.3" :cdna
-                      (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 2361 nil nil)
+                      (mut/map->DNASubstitution {:coord (coord/cdna-coordinate 2361 nil nil)
                                                  :ref "G"
                                                  :type ">"
                                                  :alt "A"}))
            hgvs1m))
     (is (= (hgvs/hgvs nil :genome
-                      (mut/map->DNASubstitution {:coord (coord/->GenomicCoordinate 2376)
+                      (mut/map->DNASubstitution {:coord (coord/genomic-coordinate 2376)
                                                  :ref "A"
                                                  :type ">"
                                                  :alt "C"})
-                      (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 3103)
+                      (mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 3103)
                                              :coord-end nil
                                              :ref nil}))
            hgvs3m)))

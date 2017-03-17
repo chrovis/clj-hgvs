@@ -30,35 +30,35 @@
 
 (def dna-substitution1s "45576A>C")
 (def dna-substitution1k :genome)
-(def dna-substitution1 (mut/map->DNASubstitution {:coord (coord/->GenomicCoordinate 45576)
+(def dna-substitution1 (mut/map->DNASubstitution {:coord (coord/genomic-coordinate 45576)
                                                   :ref "A"
                                                   :type ">"
                                                   :alt "C"}))
 
 (def dna-substitution2s "88+1G>T")
 (def dna-substitution2k :cdna)
-(def dna-substitution2 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 88 nil 1)
+(def dna-substitution2 (mut/map->DNASubstitution {:coord (coord/cdna-coordinate 88 nil 1)
                                                   :ref "G"
                                                   :type ">"
                                                   :alt "T"}))
 
 (def dna-substitution3s "123G=")
 (def dna-substitution3k :cdna)
-(def dna-substitution3 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 123 nil nil)
+(def dna-substitution3 (mut/map->DNASubstitution {:coord (coord/cdna-coordinate 123 nil nil)
                                                   :ref "G"
                                                   :type "="
                                                   :alt nil}))
 
 (def dna-substitution4s "85C=/>T")
 (def dna-substitution4k :cdna)
-(def dna-substitution4 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 85 nil nil)
+(def dna-substitution4 (mut/map->DNASubstitution {:coord (coord/cdna-coordinate 85 nil nil)
                                                   :ref "C"
                                                   :type "=/>"
                                                   :alt "T"}))
 
 (def dna-substitution5s "85C=//>T")
 (def dna-substitution5k :cdna)
-(def dna-substitution5 (mut/map->DNASubstitution {:coord (coord/->CDNACoordinate 85 nil nil)
+(def dna-substitution5 (mut/map->DNASubstitution {:coord (coord/cdna-coordinate 85 nil nil)
                                                   :ref "C"
                                                   :type "=//>"
                                                   :alt "T"}))
@@ -85,51 +85,51 @@
 
 (def dna-deletion1s "7del")
 (def dna-deletion1k :genome)
-(def dna-deletion1 (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 7)
+(def dna-deletion1 (mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 7)
                                           :coord-end nil
                                           :ref nil}))
 
 (def dna-deletion2s "6_8del")
 (def dna-deletion2k :genome)
-(def dna-deletion2 (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 6)
-                                          :coord-end (coord/->GenomicCoordinate 8)
+(def dna-deletion2 (mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 6)
+                                          :coord-end (coord/genomic-coordinate 8)
                                           :ref nil}))
 
 (def dna-deletion3s "6_8delTGC")
 (def dna-deletion3ss "6_8del")
 (def dna-deletion3k :genome)
-(def dna-deletion3 (mut/map->DNADeletion {:coord-start (coord/->GenomicCoordinate 6)
-                                          :coord-end (coord/->GenomicCoordinate 8)
+(def dna-deletion3 (mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 6)
+                                          :coord-end (coord/genomic-coordinate 8)
                                           :ref "TGC"}))
 
 (def dna-deletion4s "120_123+48del")
 (def dna-deletion4k :cdna)
-(def dna-deletion4 (mut/map->DNADeletion {:coord-start (coord/->CDNACoordinate 120 nil nil)
-                                          :coord-end (coord/->CDNACoordinate 123 nil 48)
+(def dna-deletion4 (mut/map->DNADeletion {:coord-start (coord/cdna-coordinate 120 nil nil)
+                                          :coord-end (coord/cdna-coordinate 123 nil 48)
                                           :ref nil}))
 
 (def dna-deletion5s "(4071+1_4072-1)_(5145+1_5146-1)del")
 (def dna-deletion5k :cdna)
-(def dna-deletion5 (mut/map->DNADeletion {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
-                                                        (coord/->CDNACoordinate 4072 nil -1)]
-                                          :coord-end [(coord/->CDNACoordinate 5145 nil 1)
-                                                      (coord/->CDNACoordinate 5146 nil -1)]
+(def dna-deletion5 (mut/map->DNADeletion {:coord-start [(coord/cdna-coordinate 4071 nil 1)
+                                                        (coord/cdna-coordinate 4072 nil -1)]
+                                          :coord-end [(coord/cdna-coordinate 5145 nil 1)
+                                                      (coord/cdna-coordinate 5146 nil -1)]
                                           :ref nil}))
 
 (def dna-deletion6s "(?_-30)_(12+1_13-1)del")
 (def dna-deletion6k :cdna)
-(def dna-deletion6 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
-                                                        (coord/->CDNACoordinate 30 :up nil)]
-                                          :coord-end [(coord/->CDNACoordinate 12 nil 1)
-                                                      (coord/->CDNACoordinate 13 nil -1)]
+(def dna-deletion6 (mut/map->DNADeletion {:coord-start [(coord/unknown-coordinate)
+                                                        (coord/cdna-coordinate 30 :up nil)]
+                                          :coord-end [(coord/cdna-coordinate 12 nil 1)
+                                                      (coord/cdna-coordinate 13 nil -1)]
                                           :ref nil}))
 
 (def dna-deletion7s "(?_-1)_(*1_?)del")
 (def dna-deletion7k :cdna)
-(def dna-deletion7 (mut/map->DNADeletion {:coord-start [(coord/->UnknownCoordinate)
-                                                        (coord/->CDNACoordinate 1 :up nil)]
-                                          :coord-end [(coord/->CDNACoordinate 1 :down nil)
-                                                      (coord/->UnknownCoordinate)]
+(def dna-deletion7 (mut/map->DNADeletion {:coord-start [(coord/unknown-coordinate)
+                                                        (coord/cdna-coordinate 1 :up nil)]
+                                          :coord-end [(coord/cdna-coordinate 1 :down nil)
+                                                      (coord/unknown-coordinate)]
                                           :ref nil}))
 
 (deftest format-dna-deletion-test
@@ -159,52 +159,52 @@
 
 (def dna-duplication1s "7dup")
 (def dna-duplication1k :genome)
-(def dna-duplication1 (mut/map->DNADuplication {:coord-start (coord/->GenomicCoordinate 7)
+(def dna-duplication1 (mut/map->DNADuplication {:coord-start (coord/genomic-coordinate 7)
                                                 :coord-end nil
                                                 :ref nil}))
 
 (def dna-duplication2s "6_8dup")
 (def dna-duplication2k :genome)
-(def dna-duplication2 (mut/map->DNADuplication {:coord-start (coord/->GenomicCoordinate 6)
-                                                :coord-end (coord/->GenomicCoordinate 8)
+(def dna-duplication2 (mut/map->DNADuplication {:coord-start (coord/genomic-coordinate 6)
+                                                :coord-end (coord/genomic-coordinate 8)
                                                 :ref nil}))
 
 (def dna-duplication3s "6_8dupTGC")
 (def dna-duplication3ss "6_8dup")
 (def dna-duplication3k :genome)
-(def dna-duplication3 (mut/map->DNADuplication {:coord-start (coord/->GenomicCoordinate 6)
-                                                :coord-end (coord/->GenomicCoordinate 8)
+(def dna-duplication3 (mut/map->DNADuplication {:coord-start (coord/genomic-coordinate 6)
+                                                :coord-end (coord/genomic-coordinate 8)
                                                 :ref "TGC"}))
 
 
 (def dna-duplication4s "120_123+48dup")
 (def dna-duplication4k :cdna)
-(def dna-duplication4 (mut/map->DNADuplication {:coord-start (coord/->CDNACoordinate 120 nil nil)
-                                                :coord-end (coord/->CDNACoordinate 123 nil 48)
+(def dna-duplication4 (mut/map->DNADuplication {:coord-start (coord/cdna-coordinate 120 nil nil)
+                                                :coord-end (coord/cdna-coordinate 123 nil 48)
                                                 :ref nil}))
 
 (def dna-duplication5s "(4071+1_4072-1)_(5145+1_5146-1)dup")
 (def dna-duplication5k :cdna)
-(def dna-duplication5 (mut/map->DNADuplication {:coord-start [(coord/->CDNACoordinate 4071 nil 1)
-                                                              (coord/->CDNACoordinate 4072 nil -1)]
-                                                :coord-end [(coord/->CDNACoordinate 5145 nil 1)
-                                                            (coord/->CDNACoordinate 5146 nil -1)]
+(def dna-duplication5 (mut/map->DNADuplication {:coord-start [(coord/cdna-coordinate 4071 nil 1)
+                                                              (coord/cdna-coordinate 4072 nil -1)]
+                                                :coord-end [(coord/cdna-coordinate 5145 nil 1)
+                                                            (coord/cdna-coordinate 5146 nil -1)]
                                                 :ref nil}))
 
 (def dna-duplication6s "(?_-30)_(12+1_13-1)dup")
 (def dna-duplication6k :cdna)
-(def dna-duplication6 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
-                                                              (coord/->CDNACoordinate 30 :up nil)]
-                                                :coord-end [(coord/->CDNACoordinate 12 nil 1)
-                                                            (coord/->CDNACoordinate 13 nil -1)]
+(def dna-duplication6 (mut/map->DNADuplication {:coord-start [(coord/unknown-coordinate)
+                                                              (coord/cdna-coordinate 30 :up nil)]
+                                                :coord-end [(coord/cdna-coordinate 12 nil 1)
+                                                            (coord/cdna-coordinate 13 nil -1)]
                                                 :ref nil}))
 
 (def dna-duplication7s "(?_-1)_(*1_?)dup")
 (def dna-duplication7k :cdna)
-(def dna-duplication7 (mut/map->DNADuplication {:coord-start [(coord/->UnknownCoordinate)
-                                                              (coord/->CDNACoordinate 1 :up nil)]
-                                                :coord-end [(coord/->CDNACoordinate 1 :down nil)
-                                                            (coord/->UnknownCoordinate)]
+(def dna-duplication7 (mut/map->DNADuplication {:coord-start [(coord/unknown-coordinate)
+                                                              (coord/cdna-coordinate 1 :up nil)]
+                                                :coord-end [(coord/cdna-coordinate 1 :down nil)
+                                                            (coord/unknown-coordinate)]
                                                 :ref nil}))
 
 (deftest format-dna-duplication-test
@@ -234,17 +234,17 @@
 
 (def dna-insertion1s "5756_5757insAGG")
 (def dna-insertion1k :genome)
-(def dna-insertion1 (mut/map->DNAInsertion {:coord-start (coord/->GenomicCoordinate 5756)
-                                            :coord-end (coord/->GenomicCoordinate 5757)
+(def dna-insertion1 (mut/map->DNAInsertion {:coord-start (coord/genomic-coordinate 5756)
+                                            :coord-end (coord/genomic-coordinate 5757)
                                             :alt "AGG"}))
 
 (def dna-insertion2s "123_124insL37425.1:23_361")
 (def dna-insertion2k :genome)
-(def dna-insertion2 (mut/map->DNAInsertion {:coord-start (coord/->GenomicCoordinate 123)
-                                            :coord-end (coord/->GenomicCoordinate 124)
+(def dna-insertion2 (mut/map->DNAInsertion {:coord-start (coord/genomic-coordinate 123)
+                                            :coord-end (coord/genomic-coordinate 124)
                                             :alt {:transcript "L37425.1"
-                                                  :coord-start (coord/->GenomicCoordinate 23)
-                                                  :coord-end (coord/->GenomicCoordinate 361)}}))
+                                                  :coord-start (coord/genomic-coordinate 23)
+                                                  :coord-end (coord/genomic-coordinate 361)}}))
 
 (def dna-insertion3s "122_123ins123_234inv")
 (def dna-insertion3k :genome)
@@ -276,13 +276,13 @@
 
 (def dna-inversion1s "1077_1080inv")
 (def dna-inversion1k :genome)
-(def dna-inversion1 (mut/map->DNAInversion {:coord-start (coord/->GenomicCoordinate 1077)
-                                            :coord-end (coord/->GenomicCoordinate 1080)}))
+(def dna-inversion1 (mut/map->DNAInversion {:coord-start (coord/genomic-coordinate 1077)
+                                            :coord-end (coord/genomic-coordinate 1080)}))
 
 (def dna-inversion2s "77_80inv")
 (def dna-inversion2k :cdna)
-(def dna-inversion2 (mut/map->DNAInversion {:coord-start (coord/->CDNACoordinate 77 nil nil)
-                                            :coord-end (coord/->CDNACoordinate 80 nil nil)}))
+(def dna-inversion2 (mut/map->DNAInversion {:coord-start (coord/cdna-coordinate 77 nil nil)
+                                            :coord-end (coord/cdna-coordinate 80 nil nil)}))
 
 (deftest format-dna-inversion-test
   (testing "returns a string expression of a DNA inversion"
@@ -301,30 +301,30 @@
 
 (def dna-conversion1s "333_590con1844_2101")
 (def dna-conversion1k :genome)
-(def dna-conversion1 (mut/map->DNAConversion {:coord-start (coord/->GenomicCoordinate 333)
-                                              :coord-end (coord/->GenomicCoordinate 590)
+(def dna-conversion1 (mut/map->DNAConversion {:coord-start (coord/genomic-coordinate 333)
+                                              :coord-end (coord/genomic-coordinate 590)
                                               :alt {:transcript nil
                                                     :kind nil
-                                                    :coord-start (coord/->GenomicCoordinate 1844)
-                                                    :coord-end (coord/->GenomicCoordinate 2101)}}))
+                                                    :coord-start (coord/genomic-coordinate 1844)
+                                                    :coord-end (coord/genomic-coordinate 2101)}}))
 
 (def dna-conversion2s "415_1655conAC096506.5:g.409_1683")
 (def dna-conversion2k :genome)
-(def dna-conversion2 (mut/map->DNAConversion {:coord-start (coord/->GenomicCoordinate 415)
-                                              :coord-end (coord/->GenomicCoordinate 1655)
+(def dna-conversion2 (mut/map->DNAConversion {:coord-start (coord/genomic-coordinate 415)
+                                              :coord-end (coord/genomic-coordinate 1655)
                                               :alt {:transcript "AC096506.5"
                                                     :kind :genome
-                                                    :coord-start (coord/->GenomicCoordinate 409)
-                                                    :coord-end (coord/->GenomicCoordinate 1683)}}))
+                                                    :coord-start (coord/genomic-coordinate 409)
+                                                    :coord-end (coord/genomic-coordinate 1683)}}))
 
 (def dna-conversion3s "15_355conNM_004006.1:20_360")
 (def dna-conversion3k :cdna)
-(def dna-conversion3 (mut/map->DNAConversion {:coord-start (coord/->CDNACoordinate 15 nil nil)
-                                              :coord-end (coord/->CDNACoordinate 355 nil nil)
+(def dna-conversion3 (mut/map->DNAConversion {:coord-start (coord/cdna-coordinate 15 nil nil)
+                                              :coord-end (coord/cdna-coordinate 355 nil nil)
                                               :alt {:transcript "NM_004006.1"
                                                     :kind nil
-                                                    :coord-start (coord/->CDNACoordinate 20 nil nil)
-                                                    :coord-end (coord/->CDNACoordinate 360 nil nil)}}))
+                                                    :coord-start (coord/cdna-coordinate 20 nil nil)
+                                                    :coord-end (coord/cdna-coordinate 360 nil nil)}}))
 
 (deftest format-dna-conversion-test
   (testing "returns a string expression of a DNA conversion"
@@ -344,14 +344,14 @@
 
 (def dna-indel1s "6775delinsGA")
 (def dna-indel1k :genome)
-(def dna-indel1 (mut/map->DNAIndel {:coord-start (coord/->GenomicCoordinate 6775)
+(def dna-indel1 (mut/map->DNAIndel {:coord-start (coord/genomic-coordinate 6775)
                                     :coord-end nil
                                     :alt "GA"}))
 
 (def dna-indel2s "145_147delinsTGG")
 (def dna-indel2k :cdna)
-(def dna-indel2 (mut/map->DNAIndel {:coord-start (coord/->CDNACoordinate 145 nil nil)
-                                    :coord-end (coord/->CDNACoordinate 147 nil nil)
+(def dna-indel2 (mut/map->DNAIndel {:coord-start (coord/cdna-coordinate 145 nil nil)
+                                    :coord-end (coord/cdna-coordinate 147 nil nil)
                                     :alt "TGG"}))
 
 (deftest format-dna-indel-test
@@ -370,8 +370,8 @@
 
 (def dna-repeated-seqss "123_124[14]")
 (def dna-repeated-seqsk :genome)
-(def dna-repeated-seqs (mut/map->DNARepeatedSeqs {:coord-start (coord/->GenomicCoordinate 123)
-                                                  :coord-end (coord/->GenomicCoordinate 124)
+(def dna-repeated-seqs (mut/map->DNARepeatedSeqs {:coord-start (coord/genomic-coordinate 123)
+                                                  :coord-end (coord/genomic-coordinate 124)
                                                   :ncopy 14}))
 
 (deftest format-dna-repeated-seqs-test
@@ -389,17 +389,17 @@
 ;;; RNA - substitution
 
 (def rna-substitution1s "76a>c")
-(def rna-substitution1 (mut/map->RNASubstitution {:coord (coord/->RNACoordinate 76 nil nil)
+(def rna-substitution1 (mut/map->RNASubstitution {:coord (coord/rna-coordinate 76 nil nil)
                                                   :ref "a"
                                                   :alt "c"}))
 
 (def rna-substitution2s "-14g>c")
-(def rna-substitution2 (mut/map->RNASubstitution {:coord (coord/->RNACoordinate 14 :up nil)
+(def rna-substitution2 (mut/map->RNASubstitution {:coord (coord/rna-coordinate 14 :up nil)
                                                   :ref "g"
                                                   :alt "c"}))
 
 (def rna-substitution3s "*46u>a")
-(def rna-substitution3 (mut/map->RNASubstitution {:coord (coord/->RNACoordinate 46 :down nil)
+(def rna-substitution3 (mut/map->RNASubstitution {:coord (coord/rna-coordinate 46 :down nil)
                                                   :ref "u"
                                                   :alt "a"}))
 
@@ -420,19 +420,19 @@
 ;;; RNA - deletion
 
 (def rna-deletion1s "7del")
-(def rna-deletion1 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 7 nil nil)
+(def rna-deletion1 (mut/map->RNADeletion {:coord-start (coord/rna-coordinate 7 nil nil)
                                           :coord-end nil
                                           :ref nil}))
 
 (def rna-deletion2s "7delu")
 (def rna-deletion2ss "7del")
-(def rna-deletion2 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 7 nil nil)
+(def rna-deletion2 (mut/map->RNADeletion {:coord-start (coord/rna-coordinate 7 nil nil)
                                           :coord-end nil
                                           :ref "u"}))
 
 (def rna-deletion3s "6_8del")
-(def rna-deletion3 (mut/map->RNADeletion {:coord-start (coord/->RNACoordinate 6 nil nil)
-                                          :coord-end (coord/->RNACoordinate 8 nil nil)
+(def rna-deletion3 (mut/map->RNADeletion {:coord-start (coord/rna-coordinate 6 nil nil)
+                                          :coord-end (coord/rna-coordinate 8 nil nil)
                                           :ref nil}))
 
 (def rna-deletion4s "(4072_5145)del")
@@ -460,19 +460,19 @@
 ;;; RNA - duplication
 
 (def rna-duplication1s "7dup")
-(def rna-duplication1 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 7 nil nil)
+(def rna-duplication1 (mut/map->RNADuplication {:coord-start (coord/rna-coordinate 7 nil nil)
                                                 :coord-end nil
                                                 :ref nil}))
 
 (def rna-duplication2s "7dupu")
 (def rna-duplication2ss "7dup")
-(def rna-duplication2 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 7 nil nil)
+(def rna-duplication2 (mut/map->RNADuplication {:coord-start (coord/rna-coordinate 7 nil nil)
                                                 :coord-end nil
                                                 :ref "u"}))
 
 (def rna-duplication3s "6_8dup")
-(def rna-duplication3 (mut/map->RNADuplication {:coord-start (coord/->RNACoordinate 6 nil nil)
-                                                :coord-end (coord/->RNACoordinate 8 nil nil)
+(def rna-duplication3 (mut/map->RNADuplication {:coord-start (coord/rna-coordinate 6 nil nil)
+                                                :coord-end (coord/rna-coordinate 8 nil nil)
                                                 :ref nil}))
 
 (deftest format-rna-duplication-test
@@ -493,18 +493,18 @@
 ;;; RNA - insertion
 
 (def rna-insertion1s "756_757insacu")
-(def rna-insertion1 (mut/map->RNAInsertion {:coord-start (coord/->RNACoordinate 756 nil nil)
-                                            :coord-end (coord/->RNACoordinate 757 nil nil)
+(def rna-insertion1 (mut/map->RNAInsertion {:coord-start (coord/rna-coordinate 756 nil nil)
+                                            :coord-end (coord/rna-coordinate 757 nil nil)
                                             :alt "acu"}))
 
 (def rna-insertion2s "431_432ins(5)")
-(def rna-insertion2 (mut/map->RNAInsertion {:coord-start (coord/->RNACoordinate 431 nil nil)
-                                            :coord-end (coord/->RNACoordinate 432 nil nil)
+(def rna-insertion2 (mut/map->RNAInsertion {:coord-start (coord/rna-coordinate 431 nil nil)
+                                            :coord-end (coord/rna-coordinate 432 nil nil)
                                             :alt "nnnnn"}))
 
 (def rna-insertion3s "123_124insL37425.1:23_361")
-(def rna-insertion3 (mut/map->RNAInsertion {:coord-start (coord/->RNACoordinate 123 nil nil)
-                                            :coord-end (coord/->RNACoordinate 124 nil nil)
+(def rna-insertion3 (mut/map->RNAInsertion {:coord-start (coord/rna-coordinate 123 nil nil)
+                                            :coord-end (coord/rna-coordinate 124 nil nil)
                                             :alt {:genbank "L37425.1"
                                                   :coord-start 23
                                                   :coord-end 361}}))
@@ -526,8 +526,8 @@
 ;;; RNA - inversion
 
 (def rna-inversion1s "177_180inv")
-(def rna-inversion1 (mut/map->RNAInversion {:coord-start (coord/->RNACoordinate 177 nil nil)
-                                            :coord-end (coord/->RNACoordinate 180 nil nil)}))
+(def rna-inversion1 (mut/map->RNAInversion {:coord-start (coord/rna-coordinate 177 nil nil)
+                                            :coord-end (coord/rna-coordinate 180 nil nil)}))
 
 (deftest format-rna-inversion-test
   (testing "returns a string expression of a RNA inversion"
@@ -542,18 +542,18 @@
 ;;; RNA - conversion
 
 (def rna-conversion1s "123_345con888_1110")
-(def rna-conversion1 (mut/map->RNAConversion {:coord-start (coord/->RNACoordinate 123 nil nil)
-                                              :coord-end (coord/->RNACoordinate 345 nil nil)
+(def rna-conversion1 (mut/map->RNAConversion {:coord-start (coord/rna-coordinate 123 nil nil)
+                                              :coord-end (coord/rna-coordinate 345 nil nil)
                                               :alt {:transcript nil
-                                                    :coord-start (coord/->RNACoordinate 888 nil nil)
-                                                    :coord-end (coord/->RNACoordinate 1110 nil nil)}}))
+                                                    :coord-start (coord/rna-coordinate 888 nil nil)
+                                                    :coord-end (coord/rna-coordinate 1110 nil nil)}}))
 
 (def rna-conversion2s "415_1655conAC096506.5:409_1649")
-(def rna-conversion2 (mut/map->RNAConversion {:coord-start (coord/->RNACoordinate 415 nil nil)
-                                              :coord-end (coord/->RNACoordinate 1655 nil nil)
+(def rna-conversion2 (mut/map->RNAConversion {:coord-start (coord/rna-coordinate 415 nil nil)
+                                              :coord-end (coord/rna-coordinate 1655 nil nil)
                                               :alt {:transcript "AC096506.5"
-                                                    :coord-start (coord/->RNACoordinate 409 nil nil)
-                                                    :coord-end (coord/->RNACoordinate 1649 nil nil)}}))
+                                                    :coord-start (coord/rna-coordinate 409 nil nil)
+                                                    :coord-end (coord/rna-coordinate 1649 nil nil)}}))
 
 (deftest format-rna-conversion-test
   (testing "returns a string expression of a RNA conversion"
@@ -570,13 +570,13 @@
 ;;; RNA - indel
 
 (def rna-indel1s "775delinsga")
-(def rna-indel1 (mut/map->RNAIndel {:coord-start (coord/->RNACoordinate 775 nil nil)
+(def rna-indel1 (mut/map->RNAIndel {:coord-start (coord/rna-coordinate 775 nil nil)
                                     :coord-end nil
                                     :alt "ga"}))
 
 (def rna-indel2s "775_777delinsc")
-(def rna-indel2 (mut/map->RNAIndel {:coord-start (coord/->RNACoordinate 775 nil nil)
-                                    :coord-end (coord/->RNACoordinate 777 nil nil)
+(def rna-indel2 (mut/map->RNAIndel {:coord-start (coord/rna-coordinate 775 nil nil)
+                                    :coord-end (coord/rna-coordinate 777 nil nil)
                                     :alt "c"}))
 
 (deftest format-rna-indel-test
@@ -594,22 +594,22 @@
 ;;; RNA - repeated sequences
 
 (def rna-repeated-seqs1s "-124_-123[14]")
-(def rna-repeated-seqs1 (mut/map->RNARepeatedSeqs {:coord-start (coord/->RNACoordinate 124 :up nil)
-                                                   :coord-end (coord/->RNACoordinate 123 :up nil)
+(def rna-repeated-seqs1 (mut/map->RNARepeatedSeqs {:coord-start (coord/rna-coordinate 124 :up nil)
+                                                   :coord-end (coord/rna-coordinate 123 :up nil)
                                                    :ref nil
                                                    :ncopy 14
                                                    :ncopy-other nil}))
 
 (def rna-repeated-seqs2s "-124ug[14]")
-(def rna-repeated-seqs2 (mut/map->RNARepeatedSeqs {:coord-start (coord/->RNACoordinate 124 :up nil)
+(def rna-repeated-seqs2 (mut/map->RNARepeatedSeqs {:coord-start (coord/rna-coordinate 124 :up nil)
                                                    :coord-end nil
                                                    :ref "ug"
                                                    :ncopy 14
                                                    :ncopy-other nil}))
 
 (def rna-repeated-seqs3s "-124_-123[14];[18]")
-(def rna-repeated-seqs3 (mut/map->RNARepeatedSeqs {:coord-start (coord/->RNACoordinate 124 :up nil)
-                                                   :coord-end (coord/->RNACoordinate 123 :up nil)
+(def rna-repeated-seqs3 (mut/map->RNARepeatedSeqs {:coord-start (coord/rna-coordinate 124 :up nil)
+                                                   :coord-end (coord/rna-coordinate 123 :up nil)
                                                    :ref nil
                                                    :ncopy 14
                                                    :ncopy-other 18}))
@@ -635,13 +635,13 @@
 (def protein-substitution1s "Arg54Ser")
 (def protein-substitution1ss "R54S")
 (def protein-substitution1 (mut/map->ProteinSubstitution {:ref "Arg"
-                                                          :coord (coord/->ProteinCoordinate 54)
+                                                          :coord (coord/protein-coordinate 54)
                                                           :alt "Ser"}))
 
 (def protein-substitution2s "Cys123=")
 (def protein-substitution2ss "C123=")
 (def protein-substitution2 (mut/map->ProteinSubstitution {:ref "Cys"
-                                                          :coord (coord/->ProteinCoordinate 123)
+                                                          :coord (coord/protein-coordinate 123)
                                                           :alt "Cys"}))
 
 (deftest format-protein-substitution-test
@@ -665,16 +665,16 @@
 (def protein-deletion1s "Ala3del")
 (def protein-deletion1ss "A3del")
 (def protein-deletion1 (mut/map->ProteinDeletion {:ref-start "Ala"
-                                                  :coord-start (coord/->ProteinCoordinate 3)
+                                                  :coord-start (coord/protein-coordinate 3)
                                                   :ref-end nil
                                                   :coord-end nil}))
 
 (def protein-deletion2s "Cys76_Glu79del")
 (def protein-deletion2ss "C76_E79del")
 (def protein-deletion2 (mut/map->ProteinDeletion {:ref-start "Cys"
-                                                  :coord-start (coord/->ProteinCoordinate 76)
+                                                  :coord-start (coord/protein-coordinate 76)
                                                   :ref-end "Glu"
-                                                  :coord-end (coord/->ProteinCoordinate 79)}))
+                                                  :coord-end (coord/protein-coordinate 79)}))
 (deftest format-protein-deletion-test
   (testing "returns a string expression of a protein deletion"
     (are [m o s] (= (mut/format m o) s)
@@ -685,9 +685,9 @@
   (testing "not show last amino acid if range size is 1."
     (is (= (mut/format (mut/map->ProteinDeletion
                         {:ref-start "Ala"
-                         :coord-start (coord/->ProteinCoordinate 3)
+                         :coord-start (coord/protein-coordinate 3)
                          :ref-end "Ala"
-                         :coord-end (coord/->ProteinCoordinate 3)}) nil)
+                         :coord-end (coord/protein-coordinate 3)}) nil)
            "Ala3del"))))
 
 (deftest parse-protein-deletion-test
@@ -703,16 +703,16 @@
 (def protein-duplication1s "Ala3dup")
 (def protein-duplication1ss "A3dup")
 (def protein-duplication1 (mut/map->ProteinDuplication {:ref-start "Ala"
-                                                        :coord-start (coord/->ProteinCoordinate 3)
+                                                        :coord-start (coord/protein-coordinate 3)
                                                         :ref-end nil
                                                         :coord-end nil}))
 
 (def protein-duplication2s "Ala3_Ser5dup")
 (def protein-duplication2ss "A3_S5dup")
 (def protein-duplication2 (mut/map->ProteinDuplication {:ref-start "Ala"
-                                                        :coord-start (coord/->ProteinCoordinate 3)
+                                                        :coord-start (coord/protein-coordinate 3)
                                                         :ref-end "Ser"
-                                                        :coord-end (coord/->ProteinCoordinate 5)}))
+                                                        :coord-end (coord/protein-coordinate 5)}))
 
 (deftest format-protein-duplication-test
   (testing "returns a string expression of a protein duplication"
@@ -724,9 +724,9 @@
   (testing "not show last amino acid if range size is 1."
     (is (= (mut/format (mut/map->ProteinDuplication
                         {:ref-start "Ala"
-                         :coord-start (coord/->ProteinCoordinate 3)
+                         :coord-start (coord/protein-coordinate 3)
                          :ref-end "Ala"
-                         :coord-end (coord/->ProteinCoordinate 3)}) nil)
+                         :coord-end (coord/protein-coordinate 3)}) nil)
            "Ala3dup"))))
 
 (deftest parse-protein-duplication-test
@@ -742,9 +742,9 @@
 (def protein-insertions "Lys23_Leu24insArgSerGln")
 (def protein-insertionss "K23_L24insRSQ")
 (def protein-insertion (mut/map->ProteinInsertion {:ref-start "Lys"
-                                                   :coord-start (coord/->ProteinCoordinate 23)
+                                                   :coord-start (coord/protein-coordinate 23)
                                                    :ref-end "Leu"
-                                                   :coord-end (coord/->ProteinCoordinate 24)
+                                                   :coord-end (coord/protein-coordinate 24)
                                                    :alts ["Arg" "Ser" "Gln"]}))
 
 (deftest format-protein-insertion-test
@@ -764,7 +764,7 @@
 (def protein-indel1s "Cys28delinsTrpVal")
 (def protein-indel1ss "C28delinsWV")
 (def protein-indel1 (mut/map->ProteinIndel {:ref-start "Cys"
-                                            :coord-start (coord/->ProteinCoordinate 28)
+                                            :coord-start (coord/protein-coordinate 28)
                                             :ref-end nil
                                             :coord-end nil
                                             :alts ["Trp" "Val"]}))
@@ -772,9 +772,9 @@
 (def protein-indel2s "Cys28_Lys29delinsTrp")
 (def protein-indel2ss "C28_K29delinsW")
 (def protein-indel2 (mut/map->ProteinIndel {:ref-start "Cys"
-                                            :coord-start (coord/->ProteinCoordinate 28)
+                                            :coord-start (coord/protein-coordinate 28)
                                             :ref-end "Lys"
-                                            :coord-end (coord/->ProteinCoordinate 29)
+                                            :coord-end (coord/protein-coordinate 29)
                                             :alts ["Trp"]}))
 
 (deftest format-protein-indel-test
@@ -798,7 +798,7 @@
 (def protein-repeated-seqs1s "Ala2[10]")
 (def protein-repeated-seqs1ss "A2[10]")
 (def protein-repeated-seqs1 (mut/map->ProteinRepeatedSeqs {:ref-start "Ala"
-                                                           :coord-start (coord/->ProteinCoordinate 2)
+                                                           :coord-start (coord/protein-coordinate 2)
                                                            :ref-end nil
                                                            :coord-end nil
                                                            :ncopy 10
@@ -807,7 +807,7 @@
 (def protein-repeated-seqs2s "Ala2[10];[11]")
 (def protein-repeated-seqs2ss "A2[10];[11]")
 (def protein-repeated-seqs2 (mut/map->ProteinRepeatedSeqs {:ref-start "Ala"
-                                                           :coord-start (coord/->ProteinCoordinate 2)
+                                                           :coord-start (coord/protein-coordinate 2)
                                                            :ref-end nil
                                                            :coord-end nil
                                                            :ncopy 10
@@ -816,9 +816,9 @@
 (def protein-repeated-seqs3s "Arg65_Ser67[12]")
 (def protein-repeated-seqs3ss "R65_S67[12]")
 (def protein-repeated-seqs3 (mut/map->ProteinRepeatedSeqs {:ref-start "Arg"
-                                                           :coord-start (coord/->ProteinCoordinate 65)
+                                                           :coord-start (coord/protein-coordinate 65)
                                                            :ref-end "Ser"
-                                                           :coord-end (coord/->ProteinCoordinate 67)
+                                                           :coord-end (coord/protein-coordinate 67)
                                                            :ncopy 12
                                                            :ncopy-other nil}))
 
@@ -846,28 +846,28 @@
 
 (def protein-frame-shift1s "Arg97ProfsTer23")
 (def protein-frame-shift1 (mut/map->ProteinFrameShift {:ref "Arg"
-                                                       :coord (coord/->ProteinCoordinate 97)
+                                                       :coord (coord/protein-coordinate 97)
                                                        :alt "Pro"
-                                                       :new-ter-site (coord/->ProteinCoordinate 23)}))
+                                                       :new-ter-site (coord/protein-coordinate 23)}))
 
 (def protein-frame-shift2s "Arg97fs")
 (def protein-frame-shift2ss "R97fs")
 (def protein-frame-shift2 (mut/map->ProteinFrameShift {:ref "Arg"
-                                                       :coord (coord/->ProteinCoordinate 97)
+                                                       :coord (coord/protein-coordinate 97)
                                                        :alt nil
                                                        :new-ter-site nil}))
 
 (def protein-frame-shift3s "Ile327Argfs*?")
 (def protein-frame-shift3 (mut/map->ProteinFrameShift {:ref "Ile"
-                                                       :coord (coord/->ProteinCoordinate 327)
+                                                       :coord (coord/protein-coordinate 327)
                                                        :alt "Arg"
-                                                       :new-ter-site (coord/->UnknownCoordinate)}))
+                                                       :new-ter-site (coord/unknown-coordinate)}))
 
 (def protein-frame-shift4s "Gln151Thrfs*9")
 (def protein-frame-shift4 (mut/map->ProteinFrameShift {:ref "Gln"
-                                                       :coord (coord/->ProteinCoordinate 151)
+                                                       :coord (coord/protein-coordinate 151)
                                                        :alt "Thr"
-                                                       :new-ter-site (coord/->ProteinCoordinate 9)}))
+                                                       :new-ter-site (coord/protein-coordinate 9)}))
 (deftest format-protein-frame-shift-test
   (testing "returns a string expression of a protein frame-shift"
     (are [m o s] (= (mut/format m o) s)
@@ -891,20 +891,20 @@
 (def protein-extension1s "Met1ext-5")
 (def protein-extension1ss "M1ext-5")
 (def protein-extension1 (mut/map->ProteinExtension {:ref "Met"
-                                                    :coord (coord/->ProteinCoordinate 1)
+                                                    :coord (coord/protein-coordinate 1)
                                                     :alt nil
                                                     :new-site "-5"}))
 
 (def protein-extension2s "Met1Valext-12")
 (def protein-extension2ss "M1Vext-12")
 (def protein-extension2 (mut/map->ProteinExtension {:ref "Met"
-                                                    :coord (coord/->ProteinCoordinate 1)
+                                                    :coord (coord/protein-coordinate 1)
                                                     :alt "Val"
                                                     :new-site "-12"}))
 
 (def protein-extension3s "Ter110GlnextTer17")
 (def protein-extension3 (mut/map->ProteinExtension {:ref "Ter"
-                                                    :coord (coord/->ProteinCoordinate 110)
+                                                    :coord (coord/protein-coordinate 110)
                                                     :alt "Gln"
                                                     :new-site "Ter17"}))
 

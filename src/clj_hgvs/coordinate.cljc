@@ -9,6 +9,10 @@
   Coordinate
   (format [_] "?"))
 
+(defn unknown-coordinate
+  []
+  (UnknownCoordinate.))
+
 ;;; genomic coordinate
 
 (defrecord GenomicCoordinate [position]
@@ -16,11 +20,16 @@
   (format [_]
     (str position)))
 
+(defn genomic-coordinate
+  [position]
+  {:pre [(integer? position) (pos? position)]}
+  (GenomicCoordinate. position))
+
 (defn parse-genomic-coordinate
   [s]
   (if (= s "?")
-    (UnknownCoordinate.)
-    (->GenomicCoordinate (parse-long s))))
+    (unknown-coordinate)
+    (genomic-coordinate (parse-long s))))
 
 ;;; mitochondrial coordinate
 
@@ -29,11 +38,16 @@
   (format [_]
     (str position)))
 
+(defn mitochondrial-coordinate
+  [position]
+  {:pre [(integer? position) (pos? position)]}
+  (MitochondrialCoordinate. position))
+
 (defn parse-mitochondrial-coordinate
   [s]
   (if (= s "?")
-    (UnknownCoordinate.)
-   (->MitochondrialCoordinate (parse-long s))))
+    (unknown-coordinate)
+    (mitochondrial-coordinate (parse-long s))))
 
 ;;; coding DNA coordinate
 ;;;
@@ -56,20 +70,27 @@
          (if-not (or (nil? intron-offset) (zero? intron-offset))
            (str (if (pos? intron-offset) "+") intron-offset)))))
 
+(defn cdna-coordinate
+  [position stream intron-offset]
+  {:pre [(integer? position) (pos? position)
+         (or (nil? stream) (#{:up :down} stream))
+         (or (nil? intron-offset) (integer? intron-offset))]}
+  (CDNACoordinate. position stream intron-offset))
+
 (def ^:private cdna-coordinate-re
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
 (defn parse-cdna-coordinate
   [s]
   (if (= s "?")
-    (UnknownCoordinate.)
+    (unknown-coordinate)
     (let [[_ stream position intron-offset] (re-find cdna-coordinate-re s)]
-      (map->CDNACoordinate {:position (parse-long position)
-                            :stream (case stream
-                                      "-" :up
-                                      "*" :down
-                                      nil)
-                            :intron-offset (some-> intron-offset parse-long)}))))
+      (cdna-coordinate (parse-long position)
+                       (case stream
+                         "-" :up
+                         "*" :down
+                         nil)
+                       (some-> intron-offset parse-long)))))
 
 ;;; non-coding DNA coordinate
 
@@ -78,11 +99,16 @@
   (format [_]
     (str position)))
 
+(defn ncdna-coordinate
+  [position]
+  {:pre [(integer? position) (pos? position)]}
+  (NCDNACoordinate. position))
+
 (defn parse-ncdna-coordinate
   [s]
   (if (= s "?")
-    (UnknownCoordinate.)
-    (->NCDNACoordinate (parse-long s))))
+    (unknown-coordinate)
+    (ncdna-coordinate (parse-long s))))
 
 ;;; RNA coordinate
 
@@ -98,18 +124,25 @@
            "+")
          intron-offset)))
 
+(defn rna-coordinate
+  [position stream intron-offset]
+  {:pre [(integer? position) (pos? position)
+         (or (nil? stream) (#{:up :down} stream))
+         (or (nil? intron-offset) (integer? intron-offset))]}
+  (RNACoordinate. position stream intron-offset))
+
 (def ^:private rna-coordinate-re
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
 (defn parse-rna-coordinate
   [s]
   (let [[_ stream position intron-offset] (re-find rna-coordinate-re s)]
-    (map->RNACoordinate {:position (parse-long position)
-                         :stream (case stream
-                                   "-" :up
-                                   "*" :down
-                                   nil)
-                         :intron-offset (some-> intron-offset parse-long)})))
+    (rna-coordinate (parse-long position)
+                    (case stream
+                      "-" :up
+                      "*" :down
+                      nil)
+                    (some-> intron-offset parse-long))))
 
 ;;; protein coordinate
 
@@ -118,8 +151,14 @@
   (format [_]
     (str position)))
 
+;; TODO
+(defn protein-coordinate
+  [position]
+  {:pre [(integer? position) (pos? position)]}
+  (ProteinCoordinate. position))
+
 (defn parse-protein-coordinate
   [s]
   (if (= s "?")
-    (UnknownCoordinate.)
-    (->ProteinCoordinate (parse-long s))))
+    (unknown-coordinate)
+    (protein-coordinate (parse-long s))))
