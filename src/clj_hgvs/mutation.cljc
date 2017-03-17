@@ -95,7 +95,7 @@
     (get long-short-amino-acid-map s)))
 
 (defprotocol Mutation
-  (format [this opts]))
+  (format [this] [this opts]))
 
 ;;; DNA mutations
 
@@ -117,7 +117,8 @@
 
 (defrecord DNASubstitution [coord ref type alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (apply str (flatten [(coord/format coord)
                          ref
                          type
@@ -147,7 +148,8 @@
 
 (defrecord DNADeletion [coord-start coord-end ref]
   Mutation
-  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
+  (format [this] (format this nil))
+  (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(if (vector? coord-start)
                            ["(" (coord/format (first coord-start))
                             "_" (coord/format (second coord-start)) ")"]
@@ -200,7 +202,8 @@
 
 (defrecord DNADuplication [coord-start coord-end ref]
   Mutation
-  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
+  (format [this] (format this nil))
+  (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(if (vector? coord-start)
                            ["(" (coord/format (first coord-start))
                             "_" (coord/format (second coord-start)) ")"]
@@ -251,7 +254,8 @@
 
 (defrecord DNAInsertion [coord-start coord-end alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (apply str (flatten [(coord/format coord-start)
                          "_"
                          (coord/format coord-end)
@@ -290,7 +294,8 @@
 
 (defrecord DNAInversion [coord-start coord-end]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
@@ -314,7 +319,8 @@
 
 (defrecord DNAConversion [coord-start coord-end alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (apply str (flatten [(coord/format coord-start)
                          "_"
                          (coord/format coord-end)
@@ -354,7 +360,8 @@
 
 (defrecord DNAIndel [coord-start coord-end alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (apply str (flatten [(coord/format coord-start)
                          (if coord-end ["_" (coord/format coord-end)])
                          "delins"
@@ -377,7 +384,8 @@
 
 (defrecord DNARepeatedSeqs [coord-start coord-end ncopy]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (apply str (flatten [(coord/format coord-start)
                          "_" (coord/format coord-end)
                          "[" ncopy "]"]))))
@@ -416,7 +424,8 @@
 
 (defrecord RNASubstitution [coord ref alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (apply str (coord/format coord) ref ">" alt)))
 
 (def ^:private rna-substitution-re
@@ -438,7 +447,8 @@
 
 (defrecord RNADeletion [coord-start coord-end ref]
   Mutation
-  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
+  (format [this] (format this nil))
+  (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
          (if coord-end
            (str "_" (coord/format coord-end)))
@@ -463,7 +473,8 @@
 
 (defrecord RNADuplication [coord-start coord-end ref]
   Mutation
-  (format [_ {:keys [show-bases?] :or {show-bases? false}}]
+  (format [this] (format this nil))
+  (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
          (if coord-end
            (str "_" (coord/format coord-end)))
@@ -488,7 +499,8 @@
 
 (defrecord RNAInsertion [coord-start coord-end alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
@@ -534,7 +546,8 @@
 
 (defrecord RNAInversion [coord-start coord-end]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
@@ -556,7 +569,8 @@
 
 (defrecord RNAConversion [coord-start coord-end alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
@@ -593,7 +607,8 @@
 
 (defrecord RNAIndel [coord-start coord-end alt]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (str (coord/format coord-start)
          (some->> coord-end coord/format (str "_"))
          "delins"
@@ -617,7 +632,8 @@
 
 (defrecord RNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
   Mutation
-  (format [_ _]
+  (format [this] (format this nil))
+  (format [this _]
     (str (coord/format coord-start)
          (some->> coord-end coord/format (str "_"))
          ref
@@ -666,7 +682,8 @@
 
 (defrecord ProteinSubstitution [coord ref alt]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     {:pre [(#{:long :short} amino-acid-format)]}
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
@@ -696,7 +713,8 @@
 
 (defrecord ProteinDeletion [ref-start coord-start ref-end coord-end]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
@@ -725,7 +743,8 @@
 
 (defrecord ProteinDuplication [ref-start coord-start ref-end coord-end]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
@@ -753,7 +772,8 @@
 
 (defrecord ProteinInsertion [ref-start coord-start ref-end coord-end alts]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
@@ -785,7 +805,8 @@
 
 (defrecord ProteinIndel [ref-start coord-start ref-end coord-end alts]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
@@ -819,7 +840,8 @@
 (defrecord ProteinRepeatedSeqs [ref-start coord-start ref-end coord-end ncopy
                                 ncopy-other]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
@@ -853,8 +875,9 @@
 
 (defrecord ProteinFrameShift [ref coord alt new-ter-site]
   Mutation
-  (format [_ {:keys [amino-acid-format ter-format]
-              :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format ter-format]
+                 :or {amino-acid-format :long}}]
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
@@ -888,7 +911,8 @@
 
 (defrecord ProteinExtension [ref coord alt new-site]
   Mutation
-  (format [_ {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this] (format this nil))
+  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
@@ -904,7 +928,7 @@
   [s]
   (let [[_ ref coord' alt new-site] (re-matches protein-extension-re s)]
     (map->ProteinExtension {:ref (->long-amino-acid ref)
-                             :coord (coord/parse-protein-coordinate coord')
+                            :coord (coord/parse-protein-coordinate coord')
                             :alt (->long-amino-acid alt)
                             :new-site new-site})))
 
