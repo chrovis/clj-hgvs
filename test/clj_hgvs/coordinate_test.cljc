@@ -55,6 +55,11 @@
       (coord/cdna-coordinate 85 3 :upstream) "-85+3"
       (coord/cdna-coordinate 37 3 :downstream) "*37+3")))
 
+(deftest cdna-in-exon?-test
+  (testing "detects a coordinate is in exon ranges"
+    (is (true? (coord/in-exon? (coord/cdna-coordinate 3 0 nil))))
+    (is (false? (coord/in-exon? (coord/cdna-coordinate 87 3 nil))))))
+
 (deftest ncdna-coordinate-test
   (testing "validates an input and returns NCDNACoordinate"
     (is (= (coord/ncdna-coordinate 3) (coord/->NCDNACoordinate 3))))
@@ -84,6 +89,12 @@
       3 nil :illegal
       3 8.5 nil
       3 "3" nil)))
+
+(deftest rna-in-exon?-test
+  (testing "detects a coordinate is in exon ranges"
+    (is (true? (coord/in-exon? (coord/rna-coordinate 3 0 nil))))
+    (is (true? (coord/in-exon? (coord/rna-coordinate 3 nil nil))))
+    (is (false? (coord/in-exon? (coord/rna-coordinate 87 3 nil))))))
 
 (deftest protein-coordinate-test
   (testing "validates an input and returns ProteinCoordinate"

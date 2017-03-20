@@ -5,6 +5,9 @@
 (defprotocol Coordinate
   (format [this]))
 
+(defprotocol ICDNACoordinate
+  (in-exon? [this]))
+
 (defrecord UnknownCoordinate []
   Coordinate
   (format [_] "?"))
@@ -68,7 +71,10 @@
            nil)
          position
          (if-not (or (nil? offset) (zero? offset))
-           (str (if (pos? offset) "+") offset)))))
+           (str (if (pos? offset) "+") offset))))
+  ICDNACoordinate
+  (in-exon? [this]
+    (or (nil? offset) (zero? offset))))
 
 (defn cdna-coordinate
   ([position] (cdna-coordinate position 0 nil))
@@ -124,7 +130,10 @@
            nil)
          position
          (if-not (or (nil? offset) (zero? offset))
-           (str (if (pos? offset) "+") offset)))))
+           (str (if (pos? offset) "+") offset))))
+  ICDNACoordinate
+  (in-exon? [this]
+    (or (nil? offset) (zero? offset))))
 
 (defn rna-coordinate
   [position offset region]
