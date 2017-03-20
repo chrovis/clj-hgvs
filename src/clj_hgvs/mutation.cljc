@@ -356,26 +356,30 @@
 ;;; DNA - indel
 ;;;
 ;;; e.g. g.6775delinsGA
+;;;      g.6775delTinsGA
 ;;;      c.145_147delinsTGG
 
-(defrecord DNAIndel [coord-start coord-end alt]
+(defrecord DNAIndel [coord-start coord-end ref alt]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
+  (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(coord/format coord-start)
                          (if coord-end ["_" (coord/format coord-end)])
-                         "delins"
+                         "del"
+                         (if show-bases? ref)
+                         "ins"
                          alt]))))
 
 (def ^:private dna-indel-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?delins([A-Z]+)")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?ins([A-Z]+)")
 
 (defn parse-dna-indel
   [s kind]
-  (let [[_ coord-s coord-e alt] (re-matches dna-indel-re s)
+  (let [[_ coord-s coord-e ref alt] (re-matches dna-indel-re s)
         parse-coord (coord-parser kind)]
     (map->DNAIndel {:coord-start (parse-coord coord-s)
                     :coord-end (some-> coord-e parse-coord)
+                    :ref ref
                     :alt alt})))
 
 ;;; DNA - repeated sequences
@@ -603,25 +607,29 @@
 ;;; RNA - indel
 ;;;
 ;;; e.g. r.775delinsga
+;;;      r.775deluinsga
 ;;;      r.775_777delinsc
 
-(defrecord RNAIndel [coord-start coord-end alt]
+(defrecord RNAIndel [coord-start coord-end ref alt]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
+  (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
          (some->> coord-end coord/format (str "_"))
-         "delins"
+         "del"
+         (if show-bases? ref)
+         "ins"
          alt)))
 
 (def ^:private rna-indel-re
-  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?delins([a-z]+)")
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?ins([a-z]+)")
 
 (defn parse-rna-indel
   [s]
-  (let [[_ coord-s coord-e alt] (re-matches rna-indel-re s)]
+  (let [[_ coord-s coord-e ref alt] (re-matches rna-indel-re s)]
     (map->RNAIndel {:coord-start (coord/parse-rna-coordinate coord-s)
                     :coord-end (some-> coord-e coord/parse-rna-coordinate)
+                    :ref ref
                     :alt alt})))
 
 ;;; RNA - repeated sequences

@@ -346,25 +346,38 @@
 (def dna-indel1k :genome)
 (def dna-indel1 (mut/map->DNAIndel {:coord-start (coord/genomic-coordinate 6775)
                                     :coord-end nil
+                                    :ref nil
                                     :alt "GA"}))
 
-(def dna-indel2s "145_147delinsTGG")
-(def dna-indel2k :cdna)
-(def dna-indel2 (mut/map->DNAIndel {:coord-start (coord/cdna-coordinate 145)
+(def dna-indel2s "6775delTinsGA")
+(def dna-indel2ss "6775delinsGA")
+(def dna-indel2k :genome)
+(def dna-indel2 (mut/map->DNAIndel {:coord-start (coord/genomic-coordinate 6775)
+                                    :coord-end nil
+                                    :ref "T"
+                                    :alt "GA"}))
+
+(def dna-indel3s "145_147delinsTGG")
+(def dna-indel3k :cdna)
+(def dna-indel3 (mut/map->DNAIndel {:coord-start (coord/cdna-coordinate 145)
                                     :coord-end (coord/cdna-coordinate 147)
+                                    :ref nil
                                     :alt "TGG"}))
 
 (deftest format-dna-indel-test
   (testing "returns a string expression of a DNA indel"
-    (are [m s] (= (mut/format m nil) s)
-      dna-indel1 dna-indel1s
-      dna-indel2 dna-indel2s)))
+    (are [m o s] (= (mut/format m o) s)
+      dna-indel1 nil dna-indel1s
+      dna-indel2 nil dna-indel2ss
+      dna-indel2 {:show-bases? true} dna-indel2s
+      dna-indel3 nil dna-indel3s)))
 
 (deftest parse-dna-indel-test
   (testing "returns a correct DNAIndel"
     (are [s k m] (= (mut/parse-dna-indel s k) m)
       dna-indel1s dna-indel1k dna-indel1
-      dna-indel2s dna-indel2k dna-indel2)))
+      dna-indel2s dna-indel2k dna-indel2
+      dna-indel3s dna-indel3k dna-indel3)))
 
 ;;; DNA - repeated sequences
 
@@ -572,24 +585,37 @@
 (def rna-indel1s "775delinsga")
 (def rna-indel1 (mut/map->RNAIndel {:coord-start (coord/rna-coordinate 775 nil nil)
                                     :coord-end nil
+                                    :ref nil
                                     :alt "ga"}))
 
-(def rna-indel2s "775_777delinsc")
+(def rna-indel2s "775deluinsga")
+(def rna-indel2ss "775delinsga")
 (def rna-indel2 (mut/map->RNAIndel {:coord-start (coord/rna-coordinate 775 nil nil)
+                                    :coord-end nil
+                                    :ref "u"
+                                    :alt "ga"}))
+
+
+(def rna-indel3s "775_777delinsc")
+(def rna-indel3 (mut/map->RNAIndel {:coord-start (coord/rna-coordinate 775 nil nil)
                                     :coord-end (coord/rna-coordinate 777 nil nil)
+                                    :ref nil
                                     :alt "c"}))
 
 (deftest format-rna-indel-test
   (testing "returns a string expression of a RNA indel"
-    (are [m s] (= (mut/format m nil) s)
-      rna-indel1 rna-indel1s
-      rna-indel2 rna-indel2s)))
+    (are [m o s] (= (mut/format m o) s)
+      rna-indel1 nil rna-indel1s
+      rna-indel2 nil rna-indel2ss
+      rna-indel2 {:show-bases? true} rna-indel2s
+      rna-indel3 nil rna-indel3s)))
 
 (deftest parse-rna-indel-test
   (testing "returns a correct RNAIndel"
     (are [s m] (= (mut/parse-rna-indel s) m)
       rna-indel1s rna-indel1
-      rna-indel2s rna-indel2)))
+      rna-indel2s rna-indel2
+      rna-indel3s rna-indel3)))
 
 ;;; RNA - repeated sequences
 
