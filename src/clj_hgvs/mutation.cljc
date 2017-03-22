@@ -364,7 +364,8 @@
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(coord/format coord-start)
-                         (if coord-end ["_" (coord/format coord-end)])
+                         (if (neg? (compare coord-start coord-end))
+                           ["_" (coord/format coord-end)])
                          "del"
                          (if show-bases? ref)
                          "ins"
@@ -615,7 +616,8 @@
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
-         (some->> coord-end coord/format (str "_"))
+         (if (neg? (compare coord-start coord-end))
+           (str "_" (coord/format coord-end)))
          "del"
          (if show-bases? ref)
          "ins"
@@ -678,8 +680,7 @@
 (defn- should-show-end?
   [ref-start coord-start ref-end coord-end]
   (and (some? ref-end)
-       (some? coord-end)
-       (< (:position coord-start) (:position coord-end))))
+       (neg? (compare coord-start coord-end))))
 
 ;;; Protein - substitution
 ;;;
@@ -785,17 +786,16 @@
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
-                         (if ref-end
-                           ["_"
-                            (cond-> ref-end
-                              (= amino-acid-format :short) ->short-amino-acid)
-                            (coord/format coord-end)])
+                         "_"
+                         (cond-> ref-end
+                           (= amino-acid-format :short) ->short-amino-acid)
+                         (coord/format coord-end)
                          "ins"
                          (cond->> alts
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (def ^:private protein-insertion-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?ins([A-Z][a-zA-Z]*)?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([A-Z][a-zA-Z]*)?")
 
 (defn parse-protein-insertion
   [s]
@@ -818,7 +818,7 @@
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
-                         (if ref-end
+                         (if (should-show-end? ref-start coord-start ref-end coord-end)
                            ["_"
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
