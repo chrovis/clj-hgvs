@@ -19,6 +19,9 @@
 ;;; genomic coordinate
 
 (defrecord GenomicCoordinate [position]
+  #?(:clj Comparable, :cljs IComparable)
+  (#?(:clj compareTo, :cljs -compare) [this o]
+    (compare position (:position o)))
   Coordinate
   (format [_]
     (str position)))
@@ -37,6 +40,9 @@
 ;;; mitochondrial coordinate
 
 (defrecord MitochondrialCoordinate [position]
+  #?(:clj Comparable, :cljs IComparable)
+  (#?(:clj compareTo, :cljs -compare) [this o]
+    (compare position (:position o)))
   Coordinate
   (format [_]
     (str position)))
@@ -63,6 +69,17 @@
 ;;;      *37+3
 
 (defrecord CDNACoordinate [position offset region]
+  #?(:clj Comparable, :cljs IComparable)
+  (#?(:clj compareTo, :cljs -compare) [this o]
+    (let [{o-position :position, o-region :region} o
+          offset (or offset 0)
+          o-offset (or (:offset o) 0)]
+      (if (= region o-region)
+        (if (= position o-position)
+          (compare offset o-offset)
+          (compare position o-position))
+        (compare (get {:upstream -1, :downstream 1} region 0)
+                 (get {:upstream -1, :downstream 1} o-region 0)))))
   Coordinate
   (format [_]
     (str (case region
@@ -104,6 +121,9 @@
 ;;; non-coding DNA coordinate
 
 (defrecord NCDNACoordinate [position]
+  #?(:clj Comparable, :cljs IComparable)
+  (#?(:clj compareTo, :cljs -compare) [this o]
+    (compare position (:position o)))
   Coordinate
   (format [_]
     (str position)))
@@ -122,6 +142,17 @@
 ;;; RNA coordinate
 
 (defrecord RNACoordinate [position offset region]
+  #?(:clj Comparable, :cljs IComparable)
+  (#?(:clj compareTo, :cljs -compare) [this o]
+    (let [{o-position :position, o-region :region} o
+          offset (or offset 0)
+          o-offset (or (:offset o) 0)]
+      (if (= region o-region)
+        (if (= position o-position)
+          (compare offset o-offset)
+          (compare position o-position))
+        (compare (get {:upstream -1, :downstream 1} region 0)
+                 (get {:upstream -1, :downstream 1} o-region 0)))))
   Coordinate
   (format [_]
     (str (case region
@@ -162,11 +193,13 @@
 ;;; protein coordinate
 
 (defrecord ProteinCoordinate [position]
+  #?(:clj Comparable, :cljs IComparable)
+  (#?(:clj compareTo, :cljs -compare) [this o]
+    (compare position (:position o)))
   Coordinate
   (format [_]
     (str position)))
 
-;; TODO
 (defn protein-coordinate
   [position]
   {:pre [(integer? position) (pos? position)]}

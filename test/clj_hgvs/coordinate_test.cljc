@@ -13,6 +13,13 @@
       "3"
       nil)))
 
+(deftest genomic-compare-test
+  (testing "compares actual positions"
+    (are [c1 c2 e] (= (compare c1 c2) e)
+      (coord/genomic-coordinate 2) (coord/genomic-coordinate 2) 0
+      (coord/genomic-coordinate 3) (coord/genomic-coordinate 2) 1
+      (coord/genomic-coordinate 2) (coord/genomic-coordinate 3) -1)))
+
 (deftest mitochondrial-coordinate-test
   (testing "validates an input and returns MitochondrialCoordinate"
     (is (= (coord/mitochondrial-coordinate 3) (coord/->MitochondrialCoordinate 3))))
@@ -22,6 +29,13 @@
       3.5
       "3"
       nil)))
+
+(deftest mitochondrial-compare-test
+  (testing "compares actual positions"
+    (are [c1 c2 e] (= (compare c1 c2) e)
+      (coord/mitochondrial-coordinate 2) (coord/mitochondrial-coordinate 2) 0
+      (coord/mitochondrial-coordinate 3) (coord/mitochondrial-coordinate 2) 1
+      (coord/mitochondrial-coordinate 2) (coord/mitochondrial-coordinate 3) -1)))
 
 (deftest cdna-coordinate-test
   (testing "validates inputs and returns CDNACoordinate"
@@ -42,6 +56,20 @@
       3 0 :illegal
       3 8.5 nil
       3 "3" nil)))
+
+(deftest cdna-compare-test
+  (testing "compares actual positions"
+    (are [c1 c2 e] (= (compare c1 c2) e)
+      (coord/cdna-coordinate 2) (coord/cdna-coordinate 2) 0
+      (coord/cdna-coordinate 3) (coord/cdna-coordinate 2) 1
+      (coord/cdna-coordinate 2) (coord/cdna-coordinate 3) -1
+      (coord/cdna-coordinate 2 3 nil) (coord/cdna-coordinate 2 1 nil) 1
+      (coord/cdna-coordinate 2 1 nil) (coord/cdna-coordinate 2 3 nil) -1
+      (coord/cdna-coordinate 2 -1 nil) (coord/cdna-coordinate 2 -3 nil) 1
+      (coord/cdna-coordinate 2 -3 nil) (coord/cdna-coordinate 2 -1 nil) -1
+      (coord/cdna-coordinate 2 3 nil) (coord/cdna-coordinate 3 -1 nil) -1
+      (coord/cdna-coordinate 3 0 :upstream) (coord/cdna-coordinate 3 0 nil) -1
+      (coord/cdna-coordinate 3 0 :downstream) (coord/cdna-coordinate 3 0 nil) 1)))
 
 (deftest format-cdna-coordinate-test
   (testing "returns a string expression of a CDNA coordinate"
@@ -70,6 +98,13 @@
       "3"
       nil)))
 
+(deftest ncdna-compare-test
+  (testing "compares actual positions"
+    (are [c1 c2 e] (= (compare c1 c2) e)
+      (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 2) 0
+      (coord/ncdna-coordinate 3) (coord/ncdna-coordinate 2) 1
+      (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 3) -1)))
+
 (deftest rna-coordinate-test
   (testing "validates inputs and returns RNACoordinate"
     (are [p s i] (= (coord/rna-coordinate p s i) (coord/->RNACoordinate p s i))
@@ -90,6 +125,20 @@
       3 8.5 nil
       3 "3" nil)))
 
+(deftest rna-compare-test
+  (testing "compares actual positions"
+    (are [c1 c2 e] (= (compare c1 c2) e)
+      (coord/rna-coordinate 2 nil nil) (coord/rna-coordinate 2 nil nil) 0
+      (coord/rna-coordinate 3 nil nil) (coord/rna-coordinate 2 nil nil) 1
+      (coord/rna-coordinate 2 nil nil) (coord/rna-coordinate 3 nil nil) -1
+      (coord/rna-coordinate 2 3 nil) (coord/rna-coordinate 2 1 nil) 1
+      (coord/rna-coordinate 2 1 nil) (coord/rna-coordinate 2 3 nil) -1
+      (coord/rna-coordinate 2 -1 nil) (coord/rna-coordinate 2 -3 nil) 1
+      (coord/rna-coordinate 2 -3 nil) (coord/rna-coordinate 2 -1 nil) -1
+      (coord/rna-coordinate 2 3 nil) (coord/rna-coordinate 3 -1 nil) -1
+      (coord/rna-coordinate 3 0 :upstream) (coord/rna-coordinate 3 0 nil) -1
+      (coord/rna-coordinate 3 0 :downstream) (coord/rna-coordinate 3 0 nil) 1)))
+
 (deftest rna-in-exon?-test
   (testing "detects a coordinate is in exon ranges"
     (is (true? (coord/in-exon? (coord/rna-coordinate 3 0 nil))))
@@ -105,3 +154,10 @@
       3.5
       "3"
       nil)))
+
+(deftest protein-compare-test
+  (testing "compares actual positions"
+    (are [c1 c2 e] (= (compare c1 c2) e)
+      (coord/protein-coordinate 2) (coord/protein-coordinate 2) 0
+      (coord/protein-coordinate 3) (coord/protein-coordinate 2) 1
+      (coord/protein-coordinate 2) (coord/protein-coordinate 3) -1)))
