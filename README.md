@@ -1,8 +1,18 @@
 # clj-hgvs
 
-HGVS library for Clojure(Script).
+Clojure(Script) library for handling [HGVS](http://varnomen.hgvs.org/).
+
+## Features
+
+clj-hgvs provides:
+
+* Data structure of HGVS
+* Parser of HGVS text
+* Formatter to HGVS text
 
 ## Installation
+
+With Leiningen/Boot:
 
 ```clojure
 [clj-hgvs "0.1.0-SNAPSHOT"]
