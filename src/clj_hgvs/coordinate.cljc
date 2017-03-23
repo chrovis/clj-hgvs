@@ -77,7 +77,9 @@
       (if (= region o-region)
         (if (= position o-position)
           (compare offset o-offset)
-          (compare position o-position))
+          (if (= region :upstream)
+            (compare o-position position)
+            (compare position o-position)))
         (compare (get {:upstream -1, :downstream 1} region 0)
                  (get {:upstream -1, :downstream 1} o-region 0)))))
   Coordinate
@@ -150,7 +152,9 @@
       (if (= region o-region)
         (if (= position o-position)
           (compare offset o-offset)
-          (compare position o-position))
+          (if (= region :upstream)
+            (compare o-position position)
+            (compare position o-position)))
         (compare (get {:upstream -1, :downstream 1} region 0)
                  (get {:upstream -1, :downstream 1} o-region 0)))))
   Coordinate

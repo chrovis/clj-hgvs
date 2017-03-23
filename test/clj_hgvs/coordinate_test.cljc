@@ -63,6 +63,8 @@
       (coord/cdna-coordinate 2) (coord/cdna-coordinate 2) 0
       (coord/cdna-coordinate 3) (coord/cdna-coordinate 2) 1
       (coord/cdna-coordinate 2) (coord/cdna-coordinate 3) -1
+      (coord/cdna-coordinate 2 0 :upstream) (coord/cdna-coordinate 3 0 :upstream) 1
+      (coord/cdna-coordinate 3 0 :upstream) (coord/cdna-coordinate 2 0 :upstream) -1
       (coord/cdna-coordinate 2 3 nil) (coord/cdna-coordinate 2 1 nil) 1
       (coord/cdna-coordinate 2 1 nil) (coord/cdna-coordinate 2 3 nil) -1
       (coord/cdna-coordinate 2 -1 nil) (coord/cdna-coordinate 2 -3 nil) 1
@@ -131,6 +133,8 @@
       (coord/rna-coordinate 2 nil nil) (coord/rna-coordinate 2 nil nil) 0
       (coord/rna-coordinate 3 nil nil) (coord/rna-coordinate 2 nil nil) 1
       (coord/rna-coordinate 2 nil nil) (coord/rna-coordinate 3 nil nil) -1
+      (coord/rna-coordinate 2 0 :upstream) (coord/rna-coordinate 3 0 :upstream) 1
+      (coord/rna-coordinate 3 0 :upstream) (coord/rna-coordinate 2 0 :upstream) -1
       (coord/rna-coordinate 2 3 nil) (coord/rna-coordinate 2 1 nil) 1
       (coord/rna-coordinate 2 1 nil) (coord/rna-coordinate 2 3 nil) -1
       (coord/rna-coordinate 2 -1 nil) (coord/rna-coordinate 2 -3 nil) 1
