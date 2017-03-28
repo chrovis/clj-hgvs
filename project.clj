@@ -1,6 +1,8 @@
 (defproject clj-hgvs "0.1.0-SNAPSHOT"
-  :description "HGVS library for Clojure(Script)"
+  :description "Clojure(Script) library for handling HGVS"
   :url "http://example.com/FIXME"
+  :license {:name "Apache License, Version 2.0"
+            :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :dependencies [[org.clojure/clojure "1.8.0"]]
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-doo "0.1.7"]]
