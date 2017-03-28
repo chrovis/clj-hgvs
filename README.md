@@ -27,18 +27,17 @@ With Leiningen/Boot:
 (def hgvs1 (hgvs/parse "NM_005228.3:c.2573T>G"))
 
 hgvs1
-=> {:transcript "NM_005228.3"
-    :kind :cdna
-    :mutations [#clj_hgvs.mutation.DNASubstitution
-                {:coord-start #clj_hgvs.coordinate.CDNACoordinate {:position 2573
-                                                                   :stream nil
-                                                                   :intron-offset nil}
-                 :coord-end nil
-                 :ref "T"
-                 :type ">"
-                 :alt "G"}]}
+;;=> {:transcript "NM_005228.3"
+      :kind :cdna
+      :mutations [#clj_hgvs.mutation.DNASubstitution
+                  {:coord #clj_hgvs.coordinate.CDNACoordinate {:position 2573
+                                                               :offset 0
+                                                               :region nil}
+                   :ref "T"
+                   :type ">"
+                   :alt "G"}]}
 
 ;; `format` returns HGVS text.
 (hgvs/format hgvs1)
-=> "NM_005228.3:c.2573T>G"
+;;=> "NM_005228.3:c.2573T>G"
 ```

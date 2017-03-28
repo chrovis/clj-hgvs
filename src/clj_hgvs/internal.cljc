@@ -1,4 +1,5 @@
-(ns clj-hgvs.internal)
+(ns clj-hgvs.internal
+  "Common functions used only inside this projects.")
 
 (defn parse-long
   [s]

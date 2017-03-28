@@ -1,4 +1,5 @@
 (ns clj-hgvs.mutation
+  "Data structures and functions to handle HGVS mutations."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.string :as string]
             [clj-hgvs.coordinate :as coord]

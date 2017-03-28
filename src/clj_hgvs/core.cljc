@@ -1,4 +1,6 @@
 (ns clj-hgvs.core
+  "Functions to handle HGVS. See http://varnomen.hgvs.org/ for the detail HGVS
+  nomenclature."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.string :as string]
             [clj-hgvs.internal :refer [->kind-keyword ->kind-str]]
@@ -16,6 +18,7 @@
   (map #(string/replace % #"[\[\]]" "") (string/split s #";")))
 
 (defn hgvs
+  "Constructor of HGVS map."
   [transcript kind mutation & mutations]
   {:transcript transcript
    :kind kind
@@ -26,6 +29,7 @@
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 
 (defn parse
+  "Parses a HGVS string s, returning a map representing the HGVS."
   [s]
   (let [[_ transcript kind mutations] (re-find hgvs-re s)
         kind-k (->kind-keyword kind)]
@@ -51,6 +55,11 @@
                           (if multi? "]")])))))
 
 (defn format
+  "Returns a HGVS string representing the given HGVS map. The second argument is
+  an optional map to specify style:
+    :show-bases? - displays additional bases, e.g. g.6_8delTGC, default false.
+    :amino-acid-format - amino acid style of protein HGVS, default :long. <:long|:short>
+    :ter-format - ter codon style of protein frame shift. <:long|:short>"
   ([hgvs] (format hgvs nil))
   ([hgvs opts]
    (apply str [(format-transcript (:transcript hgvs))

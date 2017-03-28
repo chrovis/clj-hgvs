@@ -1,4 +1,5 @@
 (ns clj-hgvs.coordinate
+  "Data structures and functions to handle HGVS coordinates."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clj-hgvs.internal :refer [parse-long]]))
 
