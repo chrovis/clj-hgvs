@@ -28,16 +28,22 @@ With Leiningen/Boot:
 
 hgvs1
 ;;=> {:transcript "NM_005228.3"
-      :kind :cdna
-      :mutations [#clj_hgvs.mutation.DNASubstitution
-                  {:coord #clj_hgvs.coordinate.CDNACoordinate {:position 2573
-                                                               :offset 0
-                                                               :region nil}
-                   :ref "T"
-                   :type ">"
-                   :alt "G"}]}
+;;    :kind :cdna
+;;    :mutations [#clj_hgvs.mutation.DNASubstitution
+;;                {:coord #clj_hgvs.coordinate.CDNACoordinate {:position 2573
+;;                                                             :offset 0
+;;                                                             :region nil}
+;;                 :ref "T"
+;;                 :type ">"
+;;                 :alt "G"}]}
 
 ;; `format` returns HGVS text.
 (hgvs/format hgvs1)
 ;;=> "NM_005228.3:c.2573T>G"
 ```
+
+## License
+
+Copyright 2017 [Xcoo, Inc.](https://xcoo.jp/)
+
+Licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
