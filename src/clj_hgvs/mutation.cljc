@@ -303,7 +303,7 @@
          "inv")))
 
 (def ^:private dna-inversion-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))inv")
+  #"([\d\-\+\*\?]+)_([\d\-\+\*\?]+)inv")
 
 (defn parse-dna-inversion
   [s kind]
