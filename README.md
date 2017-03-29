@@ -1,5 +1,8 @@
 # clj-hgvs
 
+[![Clojars Project](https://img.shields.io/clojars/v/clj-hgvs.svg)](https://clojars.org/clj-hgvs)
+[![Build Status](https://travis-ci.org/chrovis/clj-hgvs.svg?branch=master)](https://travis-ci.org/chrovis/clj-hgvs)
+
 Clojure(Script) library for handling [HGVS](http://varnomen.hgvs.org/).
 
 ## Features
