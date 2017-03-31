@@ -919,21 +919,31 @@
 (def protein-extension1 (mut/map->ProteinExtension {:ref "Met"
                                                     :coord (coord/protein-coordinate 1)
                                                     :alt nil
-                                                    :new-site -5}))
+                                                    :region :upstream
+                                                    :new-site (coord/protein-coordinate 5)}))
 
 (def protein-extension2s "Met1Valext-12")
 (def protein-extension2ss "M1Vext-12")
 (def protein-extension2 (mut/map->ProteinExtension {:ref "Met"
                                                     :coord (coord/protein-coordinate 1)
                                                     :alt "Val"
-                                                    :new-site -12}))
+                                                    :region :upstream
+                                                    :new-site (coord/protein-coordinate 12)}))
 
 (def protein-extension3s "Ter110Glnext*17")
 (def protein-extension3ss "*110Glnext*17")
 (def protein-extension3 (mut/map->ProteinExtension {:ref "Ter"
                                                     :coord (coord/protein-coordinate 110)
                                                     :alt "Gln"
-                                                    :new-site 17}))
+                                                    :region :downstream
+                                                    :new-site (coord/protein-coordinate 17)}))
+
+(def protein-extension4s "Ter327Argext*?")
+(def protein-extension4 (mut/map->ProteinExtension {:ref "Ter"
+                                                    :coord (coord/protein-coordinate 327)
+                                                    :alt "Arg"
+                                                    :region :downstream
+                                                    :new-site (coord/unknown-coordinate)}))
 
 (deftest format-protein-extension-test
   (testing "returns a string expression of a protein extension"
@@ -943,7 +953,8 @@
       protein-extension2 nil protein-extension2s
       protein-extension2 {:amino-acid-format :short} protein-extension2ss
       protein-extension3 nil protein-extension3s
-      protein-extension3 {:ter-format :short} protein-extension3ss)))
+      protein-extension3 {:ter-format :short} protein-extension3ss
+      protein-extension4 nil protein-extension4s)))
 
 (deftest parse-protein-extension-test
   (testing "returns a correct ProteinExtension"
@@ -953,4 +964,5 @@
       protein-extension2s protein-extension2
       protein-extension2ss protein-extension2
       protein-extension3s protein-extension3
-      protein-extension3ss protein-extension3)))
+      protein-extension3ss protein-extension3
+      protein-extension4s protein-extension4)))
