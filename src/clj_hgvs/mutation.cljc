@@ -916,30 +916,40 @@
 ;;;
 ;;; e.g. Met1ext-5
 ;;;      Met1Valext-12
-;;;      Ter110GlnextTer17
+;;;      Ter110Glnext*17
+;;;      *110Glnext*17
 
 (defrecord ProteinExtension [ref coord alt new-site]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (str (cond-> ref
-           (= amino-acid-format :short) ->short-amino-acid)
+  (format [this {:keys [amino-acid-format ter-format]
+                 :or {amino-acid-format :long}}]
+    (str (case ref
+           "Met" (cond-> ref (= amino-acid-format :short) ->short-amino-acid)
+           "Ter" (cond
+                   (= ter-format :short) (->short-amino-acid ref)
+                   (= ter-format :long) ref
+                   (= amino-acid-format :short) (->short-amino-acid ref)
+                   :else ref))
          (coord/format coord)
          (cond-> alt
            (= amino-acid-format :short) ->short-amino-acid)
          "ext"
-         new-site)))
+         (cond->> new-site (pos? new-site) (str "*")))))
 
 (def ^:private protein-extension-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?ext(.+)")
+  #"([A-Z\*](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?ext(\-|\*)(\d+)")
 
 (defn parse-protein-extension
   [s]
-  (let [[_ ref coord' alt new-site] (re-matches protein-extension-re s)]
+  (let [[_ ref coord' alt region new-site] (re-matches protein-extension-re s)
+        new-site' (parse-long new-site)]
     (map->ProteinExtension {:ref (->long-amino-acid ref)
                             :coord (coord/parse-protein-coordinate coord')
                             :alt (->long-amino-acid alt)
-                            :new-site new-site})))
+                            :new-site (case region
+                                        "-" (- new-site')
+                                        "*" new-site')})))
 
 (defn parse-protein
   [s]
