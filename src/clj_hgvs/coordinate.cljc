@@ -9,6 +9,23 @@
 (defprotocol ICDNACoordinate
   (in-exon? [this]))
 
+(defn ->region-keyword
+  [s]
+  (case s
+    "-" :upstream
+    "*" :downstream
+    "" nil
+    nil nil))
+
+(defn ->region-str
+  [k]
+  (case k
+    :upstream "-"
+    :downstream "*"
+    nil ""))
+
+;;; unknown coordinate
+
 (defrecord UnknownCoordinate []
   Coordinate
   (format [_] "?"))
@@ -85,10 +102,7 @@
                  (get {:upstream -1, :downstream 1} o-region 0)))))
   Coordinate
   (format [_]
-    (str (case region
-           :upstream "-"
-           :downstream "*"
-           nil)
+    (str (->region-str region)
          position
          (if-not (or (nil? offset) (zero? offset))
            (str (if (pos? offset) "+") offset))))
@@ -116,10 +130,7 @@
                        (if (some? offset)
                          (parse-long offset)
                          0)
-                       (case region
-                         "-" :upstream
-                         "*" :downstream
-                         nil)))))
+                       (->region-keyword region)))))
 
 ;;; non-coding DNA coordinate
 
@@ -160,10 +171,7 @@
                  (get {:upstream -1, :downstream 1} o-region 0)))))
   Coordinate
   (format [_]
-    (str (case region
-           :upstream "-"
-           :downstream "*"
-           nil)
+    (str (->region-str region)
          position
          (if-not (or (nil? offset) (zero? offset))
            (str (if (pos? offset) "+") offset))))
@@ -189,10 +197,7 @@
                       (if (some? offset)
                         (parse-long offset)
                         0)
-                      (case region
-                        "-" :upstream
-                        "*" :downstream
-                        nil))
+                      (->region-keyword region))
       (rna-coordinate (parse-long position) nil nil))))
 
 ;;; protein coordinate
