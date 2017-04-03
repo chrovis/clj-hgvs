@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.clojure/clojurescript "1.9.495" :scope "provided"]]
   :plugins [[lein-cljsbuild "1.1.5"]
+            [lein-codox "0.10.3"]
             [lein-doo "0.1.7"]]
   :profiles {:1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha15"]]}}
@@ -14,4 +15,6 @@
                                          :output-dir "target"
                                          :main clj-hgvs.runner
                                          :optimizations :simple}}}}
+  :codox {:namespaces [#"^clj-hgvs\.(?!internal)"]
+          :output-path "docs"}
   :doo {:build "test"})
