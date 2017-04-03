@@ -6,7 +6,8 @@
 
 (deftest ->long-amino-acid-test
   (testing "converts a short amino acid to a long one"
-    (is (= (mut/->long-amino-acid "S") "Ser")))
+    (is (= (mut/->long-amino-acid "S") "Ser"))
+    (is (= (mut/->long-amino-acid \S) "Ser")))
   (testing "returns itself when a long amino acid is passed"
     (is (= (mut/->long-amino-acid "Ser") "Ser")))
   (testing "returns nil when an illegal string is passed"
@@ -18,7 +19,8 @@
   (testing "converts a long amino acid to a short one"
     (is (= (mut/->short-amino-acid "Ser") "S")))
   (testing "returns itself when a short amino acid is passed"
-    (is (= (mut/->short-amino-acid "S") "S")))
+    (is (= (mut/->short-amino-acid "S") "S"))
+    (is (= (mut/->short-amino-acid \S) "S")))
   (testing "returns nil when an illegal string is passed"
     (is (nil? (mut/->short-amino-acid "Z")))
     (is (nil? (mut/->short-amino-acid "")))

@@ -85,15 +85,17 @@
 
 (defn ->long-amino-acid
   [s]
-  (if ((set long-amino-acids) s)
-    s
-    (get short-long-amino-acid-map s)))
+  (let [s (cond-> s (char? s) str)]
+    (if ((set long-amino-acids) s)
+      s
+      (get short-long-amino-acid-map s))))
 
 (defn ->short-amino-acid
   [s]
-  (if ((set short-amino-acids) s)
-    s
-    (get long-short-amino-acid-map s)))
+  (let [s (cond-> s (char? s) str)]
+    (if ((set short-amino-acids) s)
+      s
+      (get long-short-amino-acid-map s))))
 
 (defprotocol Mutation
   (format [this] [this opts]))
