@@ -84,6 +84,8 @@
   (zipmap long-amino-acids short-amino-acids))
 
 (defn ->long-amino-acid
+  "Converts a single-letter amino acid into a three-letter one. s must be String
+  or Character. Returns nil if s is not present in amino acid list."
   [s]
   (let [s (cond-> s (char? s) str)]
     (if ((set long-amino-acids) s)
@@ -91,6 +93,8 @@
       (get short-long-amino-acid-map s))))
 
 (defn ->short-amino-acid
+  "Converts a three-letter amino acid into a single-letter one. s must be String
+  or Character. Returns nil if s is not present in amino acid list."
   [s]
   (let [s (cond-> s (char? s) str)]
     (if ((set short-amino-acids) s)
