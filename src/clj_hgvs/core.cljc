@@ -58,6 +58,7 @@
   "Returns a HGVS string representing the given HGVS map. The second argument is
   an optional map to specify style:
     :show-bases? - displays additional bases, e.g. g.6_8delTGC, default false.
+    :range-format - range style, default :auto. <:auto|:bases|:coord>
     :amino-acid-format - amino acid style of protein HGVS, default :long. <:long|:short>
     :ter-format - ter codon style of protein frame shift. <:long|:short>"
   ([hgvs] (format hgvs nil))

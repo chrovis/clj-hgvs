@@ -393,24 +393,30 @@
 ;;; DNA - repeated sequences
 ;;;
 ;;; e.g. g.123_124[14]
+;;;      g.123TG[14]
 
-(defrecord DNARepeatedSeqs [coord-start coord-end ncopy]
+(defrecord DNARepeatedSeqs [coord-start coord-end ref ncopy]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
-    (apply str (flatten [(coord/format coord-start)
-                         "_" (coord/format coord-end)
-                         "[" ncopy "]"]))))
+  (format [this {:keys [range-format] :or {range-format :auto}}]
+    (let [should-show-end? (neg? (compare coord-start coord-end))]
+      (str (coord/format coord-start)
+           (case range-format
+             :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
+             :bases ref
+             :coord (if should-show-end? (str "_" (coord/format coord-end))))
+           "[" ncopy "]"))))
 
 (def ^:private dna-repeated-seqs-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))\[(\d+)\]")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[(\d+)\]")
 
 (defn parse-dna-repeated-seqs
   [s kind]
-  (let [[_ coord-s coord-e ncopy] (re-matches dna-repeated-seqs-re s)
+  (let [[_ coord-s coord-e ref ncopy] (re-matches dna-repeated-seqs-re s)
         parse-coord (coord-parser kind)]
     (map->DNARepeatedSeqs {:coord-start (parse-coord coord-s)
-                           :coord-end (parse-coord coord-e)
+                           :coord-end (some-> coord-e parse-coord)
+                           :ref ref
                            :ncopy (parse-long ncopy)})))
 
 (defn parse-dna
@@ -650,12 +656,15 @@
 (defrecord RNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
-    (str (coord/format coord-start)
-         (some->> coord-end coord/format (str "_"))
-         ref
-         "[" ncopy "]"
-         (if ncopy-other (str ";[" ncopy-other "]")))))
+  (format [this {:keys [range-format] :or {range-format :auto}}]
+    (let [should-show-end? (neg? (compare coord-start coord-end))]
+      (str (coord/format coord-start)
+           (case range-format
+             :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
+             :bases ref
+             :coord (if should-show-end? (str "_" (coord/format coord-end))))
+           "[" ncopy "]"
+           (if ncopy-other (str ";[" ncopy-other "]"))))))
 
 (def ^:private rna-repeated-seqs-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[(\d+)\](?:;\[(\d+)\])?")
