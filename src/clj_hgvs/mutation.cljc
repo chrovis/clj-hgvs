@@ -106,6 +106,10 @@
 
 ;;; DNA mutations
 
+(defn- dna-bases?
+  [s]
+  (and (string? s) (some? (re-matches #"[ACGT]+" s))))
+
 (defn- coord-parser
   [kind]
   (case kind
@@ -131,17 +135,23 @@
                          type
                          alt]))))
 
+(defn dna-substitution
+  ([coord ref typ] (dna-substitution coord ref typ nil))
+  ([coord ref typ alt]
+   {:pre [(satisfies? coord/Coordinate coord)
+          (dna-bases? ref)
+          (#{">" "=" "=/>" "=//>"} typ)
+          (or (nil? alt) (dna-bases? alt))]}
+   (DNASubstitution. coord ref typ alt)))
+
 (def ^:private dna-substitution-re
   #"([\d\-\+]+)([A-Z])([>=/]+)([A-Z])?")
 
 (defn parse-dna-substitution
   [s kind]
-  (let [[_ coord ref type alt] (re-matches dna-substitution-re s)
+  (let [[_ coord ref typ alt] (re-matches dna-substitution-re s)
         parse-coord (coord-parser kind)]
-    (map->DNASubstitution {:coord (parse-coord coord)
-                           :ref ref
-                           :type type
-                           :alt alt})))
+    (dna-substitution (parse-coord coord) ref typ alt)))
 
 ;;; DNA - deletion
 ;;;
@@ -169,6 +179,19 @@
                          "del"
                          (if show-bases? ref)]))))
 
+(defn dna-deletion
+  ([coord-start coord-end] (dna-deletion coord-start coord-end nil))
+  ([coord-start coord-end ref]
+   {:pre [(if (vector? coord-start)
+            (every? #(satisfies? coord/Coordinate %) coord-start)
+            (satisfies? coord/Coordinate coord-start))
+          (or (nil? coord-end)
+              (if (vector? coord-start)
+                (every? #(satisfies? coord/Coordinate %) coord-end)
+                (satisfies? coord/Coordinate coord-end)))
+          (or (nil? ref) (dna-bases? ref))]}
+   (DNADeletion. coord-start coord-end ref)))
+
 (def ^:private dna-deletion-re
   #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?")
 
@@ -176,9 +199,9 @@
   [s kind]
   (let [[_ coord-s coord-e ref] (re-matches dna-deletion-re s)
         parse-coord (coord-parser kind)]
-    (map->DNADeletion {:coord-start (parse-coord coord-s)
-                       :coord-end (some-> coord-e parse-coord)
-                       :ref ref})))
+    (dna-deletion (parse-coord coord-s)
+                  (some-> coord-e parse-coord)
+                  ref)))
 
 (def ^:private dna-deletion-range-re
   #"\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)del([A-Z]+)?")
@@ -187,9 +210,9 @@
   [s kind]
   (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-matches dna-deletion-range-re s)
         parse-coord (coord-parser kind)]
-    (map->DNADeletion {:coord-start (mapv parse-coord [coord-s1 coord-s2])
-                       :coord-end (mapv parse-coord [coord-e1 coord-e2])
-                       :ref ref})))
+    (dna-deletion (mapv parse-coord [coord-s1 coord-s2])
+                  (mapv parse-coord [coord-e1 coord-e2])
+                  ref)))
 
 (defn parse-dna-deletion
   [s kind]
@@ -224,6 +247,19 @@
                          "dup"
                          (if show-bases? ref)]))))
 
+(defn dna-duplication
+  ([coord-start coord-end] (dna-duplication coord-start coord-end nil))
+  ([coord-start coord-end ref]
+   {:pre [(if (vector? coord-start)
+            (every? #(satisfies? coord/Coordinate %) coord-start)
+            (satisfies? coord/Coordinate coord-start))
+          (or (nil? coord-end)
+              (if (vector? coord-start)
+                (every? #(satisfies? coord/Coordinate %) coord-end)
+                (satisfies? coord/Coordinate coord-end)))
+          (or (nil? ref) (dna-bases? ref))]}
+   (DNADuplication. coord-start coord-end ref)))
+
 (def ^:private dna-duplication-re
   #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?dup([A-Z]+)?")
 
@@ -231,9 +267,9 @@
   [s kind]
   (let [[_ coord-s coord-e ref] (re-matches dna-duplication-re s)
         parse-coord (coord-parser kind)]
-    (map->DNADuplication {:coord-start (parse-coord coord-s)
-                          :coord-end (some-> coord-e parse-coord)
-                          :ref ref})))
+    (dna-duplication (parse-coord coord-s)
+                     (some-> coord-e parse-coord)
+                     ref)))
 
 (def ^:private dna-duplication-range-re
   #"\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)dup([A-Z]+)?")
@@ -242,9 +278,9 @@
   [s kind]
   (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-matches dna-duplication-range-re s)
         parse-coord (coord-parser kind)]
-    (map->DNADuplication {:coord-start (mapv parse-coord [coord-s1 coord-s2])
-                          :coord-end (mapv parse-coord [coord-e1 coord-e2])
-                          :ref ref})))
+    (dna-duplication (mapv parse-coord [coord-s1 coord-s2])
+                     (mapv parse-coord [coord-e1 coord-e2])
+                     ref)))
 
 (defn parse-dna-duplication
   [s kind]
@@ -275,6 +311,13 @@
                                        "_"
                                        (coord/format (:coord-end alt))])]))))
 
+(defn dna-insertion
+  [coord-start coord-end alt]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (satisfies? coord/Coordinate coord-end)
+         (or (dna-bases? alt) (map? alt))]}
+  (DNAInsertion. coord-start coord-end alt))
+
 (def ^:private dna-insertion-re
   #"([\d\-\+\*\?]+)_([\d\-\+\*\?]+)ins(.+)")
 
@@ -285,14 +328,13 @@
   [s kind]
   (let [[_ coord-s coord-e alt] (re-matches dna-insertion-re s)
         parse-coord (coord-parser kind)]
-    (map->DNAInsertion
-     {:coord-start (parse-coord coord-s)
-      :coord-end (parse-coord coord-e)
-      :alt (or (re-matches #"[A-Z]+" alt)
-               (let [[_ transcript coord-s coord-e] (re-matches dna-insertion-alt-re alt)]
-                 {:transcript transcript
-                  :coord-start (parse-coord coord-s)
-                  :coord-end (parse-coord coord-e)}))})))
+    (dna-insertion (parse-coord coord-s)
+                   (parse-coord coord-e)
+                   (or (re-matches #"[A-Z]+" alt)
+                       (let [[_ transcript coord-s coord-e] (re-matches dna-insertion-alt-re alt)]
+                         {:transcript transcript
+                          :coord-start (parse-coord coord-s)
+                          :coord-end (parse-coord coord-e)})))))
 
 ;;; DNA - inversion
 ;;;
@@ -308,6 +350,13 @@
          (coord/format coord-end)
          "inv")))
 
+(defn dna-inversion
+  [coord-start coord-end]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (satisfies? coord/Coordinate coord-end)
+         (neg? (compare coord-start coord-end))]}
+  (DNAInversion. coord-start coord-end))
+
 (def ^:private dna-inversion-re
   #"([\d\-\+\*\?]+)_([\d\-\+\*\?]+)inv")
 
@@ -315,8 +364,7 @@
   [s kind]
   (let [[_ coord-s coord-e] (re-matches dna-inversion-re s)
         parse-coord (coord-parser kind)]
-    (map->DNAInversion {:coord-start (parse-coord coord-s)
-                        :coord-end (parse-coord coord-e)})))
+    (dna-inversion (parse-coord coord-s) (parse-coord coord-e))))
 
 ;;; DNA - conversion
 ;;;
@@ -338,27 +386,38 @@
                          "_"
                          (coord/format (:coord-end alt))]))))
 
+(defn dna-conversion
+  [coord-start coord-end alt]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (satisfies? coord/Coordinate coord-end)
+         (neg? (compare coord-start coord-end))
+         (map? alt)]}
+  (DNAConversion. coord-start coord-end alt))
+
 (def ^:private dna-conversion-re
   #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))con(.+)")
 
 (def ^:private dna-conversion-alt-re
   #"(?:([^:]+):)?(?:([gmcn])\.)?([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))")
 
+(defn- parse-dna-conversion-alt
+  [s kind default-coord-parser]
+  (let [[_ transcript kind coord-s coord-e] (re-matches dna-conversion-alt-re s)
+        parse-alt-coord (if kind
+                          (coord-parser (->kind-keyword kind))
+                          default-coord-parser)]
+    {:transcript transcript
+     :kind (some-> kind ->kind-keyword)
+     :coord-start (parse-alt-coord coord-s)
+     :coord-end (parse-alt-coord coord-e)}))
+
 (defn parse-dna-conversion
   [s kind]
   (let [[_ coord-s coord-e alt] (re-matches dna-conversion-re s)
         parse-coord (coord-parser kind)]
-    (map->DNAConversion
-     {:coord-start (parse-coord coord-s)
-      :coord-end (parse-coord coord-e)
-      :alt (let [[_ transcript kind coord-s coord-e] (re-matches dna-conversion-alt-re alt)
-                 parse-alt-coord (if kind
-                                   (coord-parser (->kind-keyword kind))
-                                   parse-coord)]
-             {:transcript transcript
-              :kind (some-> kind ->kind-keyword)
-              :coord-start (parse-alt-coord coord-s)
-              :coord-end (parse-alt-coord coord-e)})})))
+    (dna-conversion (parse-coord coord-s)
+                    (parse-coord coord-e)
+                    (parse-dna-conversion-alt alt kind parse-coord))))
 
 ;;; DNA - indel
 ;;;
@@ -378,6 +437,14 @@
                          "ins"
                          alt]))))
 
+(defn dna-indel
+  [coord-start coord-end ref alt]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (nil? ref) (dna-bases? ref))
+         (dna-bases? alt)]}
+  (DNAIndel. coord-start coord-end ref alt))
+
 (def ^:private dna-indel-re
   #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?ins([A-Z]+)")
 
@@ -385,10 +452,7 @@
   [s kind]
   (let [[_ coord-s coord-e ref alt] (re-matches dna-indel-re s)
         parse-coord (coord-parser kind)]
-    (map->DNAIndel {:coord-start (parse-coord coord-s)
-                    :coord-end (some-> coord-e parse-coord)
-                    :ref ref
-                    :alt alt})))
+    (dna-indel (parse-coord coord-s) (some-> coord-e parse-coord) ref alt)))
 
 ;;; DNA - repeated sequences
 ;;;
@@ -407,6 +471,14 @@
              :coord (if should-show-end? (str "_" (coord/format coord-end))))
            "[" ncopy "]"))))
 
+(defn dna-repeated-seqs
+  [coord-start coord-end ref ncopy]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (nil? ref) (dna-bases? ref))
+         (integer? ncopy)]}
+  (DNARepeatedSeqs. coord-start coord-end ref ncopy))
+
 (def ^:private dna-repeated-seqs-re
   #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[(\d+)\]")
 
@@ -414,10 +486,10 @@
   [s kind]
   (let [[_ coord-s coord-e ref ncopy] (re-matches dna-repeated-seqs-re s)
         parse-coord (coord-parser kind)]
-    (map->DNARepeatedSeqs {:coord-start (parse-coord coord-s)
-                           :coord-end (some-> coord-e parse-coord)
-                           :ref ref
-                           :ncopy (parse-long ncopy)})))
+    (dna-repeated-seqs (parse-coord coord-s)
+                       (some-> coord-e parse-coord)
+                       ref
+                       (parse-long ncopy))))
 
 (defn parse-dna
   [s kind]
@@ -434,6 +506,10 @@
 
 ;;; RNA mutations
 
+(defn- rna-bases?
+  [s]
+  (and (string? s) (some? (re-matches #"[acgu]+" s))))
+
 ;;; RNA - substitution
 ;;;
 ;;; e.g. r.76a>c
@@ -446,15 +522,20 @@
   (format [this _]
     (apply str (coord/format coord) ref ">" alt)))
 
+(defn rna-substitution
+  [coord ref alt]
+  {:pre [(satisfies? coord/Coordinate coord)
+         (rna-bases? ref)
+         (rna-bases? alt)]}
+  (RNASubstitution. coord ref alt))
+
 (def ^:private rna-substitution-re
   #"([\d\-\+\*]+)([a-z]?)>([a-z]?)")
 
 (defn parse-rna-substitution
   [s]
   (let [[_ coord ref alt] (re-matches rna-substitution-re s)]
-    (map->RNASubstitution {:coord (coord/parse-rna-coordinate coord)
-                           :ref ref
-                           :alt alt})))
+    (rna-substitution (coord/parse-rna-coordinate coord) ref alt)))
 
 ;;; RNA - deletion
 ;;;
@@ -473,15 +554,23 @@
          "del"
          (if show-bases? ref))))
 
+(defn rna-deletion
+  ([coord-start coord-end] (rna-deletion coord-start coord-end nil))
+  ([coord-start coord-end ref]
+   {:pre [(satisfies? coord/Coordinate coord-start)
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+          (or (nil? ref) (rna-bases? ref))]}
+   (RNADeletion. coord-start coord-end ref)))
+
 (def ^:private rna-deletion-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?")
 
 (defn parse-rna-deletion
   [s]
   (let [[_ coord-s coord-e ref] (re-matches rna-deletion-re s)]
-    (map->RNADeletion {:coord-start (coord/parse-rna-coordinate coord-s)
-                       :coord-end (some-> coord-e coord/parse-rna-coordinate)
-                       :ref ref})))
+    (rna-deletion (coord/parse-rna-coordinate coord-s)
+                  (some-> coord-e coord/parse-rna-coordinate)
+                  ref)))
 
 ;;; RNA - duplication
 ;;;
@@ -499,15 +588,23 @@
          "dup"
          (if show-bases? ref))))
 
+(defn rna-duplication
+  ([coord-start coord-end] (rna-duplication coord-start coord-end nil))
+  ([coord-start coord-end ref]
+   {:pre [(satisfies? coord/Coordinate coord-start)
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+          (or (nil? ref) (rna-bases? ref))]}
+   (RNADuplication. coord-start coord-end ref)))
+
 (def ^:private rna-duplication-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?dup([a-z]+)?")
 
 (defn parse-rna-duplication
   [s]
   (let [[_ coord-s coord-e ref] (re-matches rna-duplication-re s)]
-    (map->RNADuplication {:coord-start (coord/parse-rna-coordinate coord-s)
-                          :coord-end (some-> coord-e coord/parse-rna-coordinate)
-                          :ref ref})))
+    (rna-duplication (coord/parse-rna-coordinate coord-s)
+                     (some-> coord-e coord/parse-rna-coordinate)
+                     ref)))
 
 ;;; RNA - insertion
 ;;;
@@ -527,6 +624,13 @@
            (map? alt) (str (:genbank alt) ":" (:coord-start alt) "_" (:coord-end alt))
            (re-matches #"n{2,}" alt) (str "(" (count alt) ")")
            :else alt))))
+
+(defn rna-insertion
+  [coord-start coord-end alt]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (satisfies? coord/Coordinate coord-end)
+         (or (rna-bases? alt) (map? alt) (re-matches #"n{2,}" alt))]}
+  (RNAInsertion. coord-start coord-end alt))
 
 (defn- parse-rna-alt-n
   [s]
@@ -551,12 +655,12 @@
 (defn parse-rna-insertion
   [s]
   (let [[_ coord-s coord-e alt] (re-matches rna-insertion-re s)]
-    (map->RNAInsertion {:coord-start (coord/parse-rna-coordinate coord-s)
-                        :coord-end (some-> coord-e coord/parse-rna-coordinate)
-                        :alt (cond
-                               (re-find #"[a-z]+" alt) alt
-                               (re-find #"\(\d\)" alt) (parse-rna-alt-n alt)
-                               :else (parse-rna-alt-genbank alt))})))
+    (rna-insertion (coord/parse-rna-coordinate coord-s)
+                   (some-> coord-e coord/parse-rna-coordinate)
+                   (cond
+                     (re-find #"[a-z]+" alt) alt
+                     (re-find #"\(\d\)" alt) (parse-rna-alt-n alt)
+                     :else (parse-rna-alt-genbank alt)))))
 
 ;;; RNA - inversion
 ;;;
@@ -571,14 +675,21 @@
          (coord/format coord-end)
          "inv")))
 
+(defn rna-inversion
+  [coord-start coord-end]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (satisfies? coord/Coordinate coord-end)
+         (neg? (compare coord-start coord-end))]}
+  (RNAInversion. coord-start coord-end))
+
 (def ^:private rna-inversion-re
   #"([\d\-\+\*]+)_([\d\-\+\*]+)inv")
 
 (defn parse-rna-inversion
   [s]
   (let [[_ coord-s coord-e] (re-matches rna-inversion-re s)]
-    (map->RNAInversion {:coord-start (coord/parse-rna-coordinate coord-s)
-                        :coord-end (coord/parse-rna-coordinate coord-e)})))
+    (rna-inversion (coord/parse-rna-coordinate coord-s)
+                   (coord/parse-rna-coordinate coord-e))))
 
 ;;; RNA - conversion
 ;;;
@@ -598,6 +709,14 @@
          "_"
          (coord/format (:coord-end alt)))))
 
+(defn rna-conversion
+  [coord-start coord-end alt]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (satisfies? coord/Coordinate coord-end)
+         (neg? (compare coord-start coord-end))
+         (map? alt)]}
+  (RNAConversion. coord-start coord-end alt))
+
 (def ^:private rna-conversion-re
   #"([\d\-\+\*]+)_([\d\-\+\*]+)con(.+)")
 
@@ -614,9 +733,9 @@
 (defn parse-rna-conversion
   [s]
   (let [[_ coord-s coord-e alt] (re-matches rna-conversion-re s)]
-    (map->RNAConversion {:coord-start (coord/parse-rna-coordinate coord-s)
-                         :coord-end (coord/parse-rna-coordinate coord-e)
-                         :alt (parse-rna-conversion-alt alt)})))
+    (rna-conversion (coord/parse-rna-coordinate coord-s)
+                    (coord/parse-rna-coordinate coord-e)
+                    (parse-rna-conversion-alt alt))))
 
 ;;; RNA - indel
 ;;;
@@ -636,16 +755,24 @@
          "ins"
          alt)))
 
+(defn rna-indel
+  [coord-start coord-end ref alt]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (nil? ref) (rna-bases? ref))
+         (rna-bases? alt)]}
+  (RNAIndel. coord-start coord-end ref alt))
+
 (def ^:private rna-indel-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?ins([a-z]+)")
 
 (defn parse-rna-indel
   [s]
   (let [[_ coord-s coord-e ref alt] (re-matches rna-indel-re s)]
-    (map->RNAIndel {:coord-start (coord/parse-rna-coordinate coord-s)
-                    :coord-end (some-> coord-e coord/parse-rna-coordinate)
-                    :ref ref
-                    :alt alt})))
+    (rna-indel (coord/parse-rna-coordinate coord-s)
+               (some-> coord-e coord/parse-rna-coordinate)
+               ref
+               alt)))
 
 ;;; RNA - repeated sequences
 ;;;
@@ -666,17 +793,26 @@
            "[" ncopy "]"
            (if ncopy-other (str ";[" ncopy-other "]"))))))
 
+(defn rna-repeated-seqs
+  [coord-start coord-end ref ncopy ncopy-other]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (nil? ref) (rna-bases? ref))
+         (integer? ncopy)
+         (or (nil? ncopy-other) (integer? ncopy-other))]}
+  (RNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other))
+
 (def ^:private rna-repeated-seqs-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[(\d+)\](?:;\[(\d+)\])?")
 
 (defn parse-rna-repeated-seqs
   [s]
   (let [[_ coord-s coord-e ref ncopy1 ncopy2] (re-matches rna-repeated-seqs-re s)]
-    (map->RNARepeatedSeqs {:coord-start (coord/parse-rna-coordinate coord-s)
-                           :coord-end (some-> coord-e coord/parse-rna-coordinate)
-                           :ref ref
-                           :ncopy (parse-long ncopy1)
-                           :ncopy-other (some-> ncopy2 parse-long)})))
+    (rna-repeated-seqs (coord/parse-rna-coordinate coord-s)
+                       (some-> coord-e coord/parse-rna-coordinate)
+                       ref
+                       (parse-long ncopy1)
+                       (some-> ncopy2 parse-long))))
 
 (defn parse-rna
   [s]
@@ -693,6 +829,11 @@
 
 ;;; Protein mutations
 
+(defn- amino-acid?
+  [s]
+  (or (some? ((set short-amino-acids) s))
+      (some? ((set long-amino-acids) s))))
+
 (defn- should-show-end?
   [ref-start coord-start ref-end coord-end]
   (and (some? ref-end)
@@ -705,7 +846,7 @@
 ;;;      Trp26*
 ;;;      Cys123=
 
-(defrecord ProteinSubstitution [coord ref alt]
+(defrecord ProteinSubstitution [ref coord alt]
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
@@ -718,18 +859,25 @@
            (cond-> alt
              (= amino-acid-format :short) ->short-amino-acid)))))
 
+(defn protein-substitution
+  [ref coord alt]
+  {:pre [(amino-acid? ref)
+         (satisfies? coord/Coordinate coord)
+         (amino-acid? alt)]}
+  (ProteinSubstitution. ref coord alt))
+
 (def ^:private protein-substitution-re
   #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z\*=](?:[a-z]{2})?)")
 
 (defn parse-protein-substitution
   [s]
   (let [[_ ref coord' alt] (re-matches protein-substitution-re s)]
-    (map->ProteinSubstitution {:coord (coord/parse-protein-coordinate coord')
-                               :ref (->long-amino-acid ref)
-                               :alt (case alt
-                                      "=" (->long-amino-acid ref)
-                                      "*" "Ter"
-                                      (->long-amino-acid alt))})))
+    (protein-substitution (->long-amino-acid ref)
+                          (coord/parse-protein-coordinate coord')
+                          (case alt
+                            "=" (->long-amino-acid ref)
+                            "*" "Ter"
+                            (->long-amino-acid alt)))))
 
 ;;; Protein - deletion
 ;;;
@@ -750,16 +898,25 @@
                             (coord/format coord-end)])
                          "del"]))))
 
+(defn protein-deletion
+  ([ref-start coord-start] (protein-deletion ref-start coord-start nil nil))
+  ([ref-start coord-start ref-end coord-end]
+   {:pre [(amino-acid? ref-start)
+          (satisfies? coord/Coordinate coord-start)
+          (or (nil? ref-end) (amino-acid? ref-end))
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))]}
+   (ProteinDeletion. ref-start coord-start ref-end coord-end)))
+
 (def ^:private protein-deletion-re
   #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?del")
 
 (defn parse-protein-deletion
   [s]
   (let [[_ ref-s coord-s ref-e coord-e] (re-matches protein-deletion-re s)]
-    (map->ProteinDeletion {:ref-start (->long-amino-acid ref-s)
-                           :coord-start (coord/parse-protein-coordinate coord-s)
-                           :ref-end (->long-amino-acid ref-e)
-                           :coord-end (some-> coord-e coord/parse-protein-coordinate)})))
+    (protein-deletion (->long-amino-acid ref-s)
+                      (coord/parse-protein-coordinate coord-s)
+                      (->long-amino-acid ref-e)
+                      (some-> coord-e coord/parse-protein-coordinate))))
 
 ;;; Protein - duplication
 ;;;
@@ -780,16 +937,25 @@
                             (coord/format coord-end)])
                          "dup"]))))
 
+(defn protein-duplication
+  ([ref-start coord-start] (protein-duplication ref-start coord-start nil nil))
+  ([ref-start coord-start ref-end coord-end]
+   {:pre [(amino-acid? ref-start)
+          (satisfies? coord/Coordinate coord-start)
+          (or (nil? ref-end) (amino-acid? ref-end))
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))]}
+   (ProteinDuplication. ref-start coord-start ref-end coord-end)))
+
 (def ^:private protein-duplication-re
   #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?dup")
 
 (defn parse-protein-duplication
   [s]
   (let [[_ ref-s coord-s ref-e coord-e] (re-matches protein-duplication-re s)]
-    (map->ProteinDuplication {:ref-start (->long-amino-acid ref-s)
-                              :coord-start (coord/parse-protein-coordinate coord-s)
-                              :ref-end (->long-amino-acid ref-e)
-                              :coord-end (some-> coord-e coord/parse-protein-coordinate)})))
+    (protein-duplication (->long-amino-acid ref-s)
+                         (coord/parse-protein-coordinate coord-s)
+                         (->long-amino-acid ref-e)
+                         (some-> coord-e coord/parse-protein-coordinate))))
 
 ;;; Protein - insertion
 ;;;
@@ -810,17 +976,26 @@
                          (cond->> alts
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
+(defn protein-insertion
+  [ref-start coord-start ref-end coord-end alts]
+  {:pre [(amino-acid? ref-start)
+         (satisfies? coord/Coordinate coord-start)
+         (amino-acid? ref-end)
+         (satisfies? coord/Coordinate coord-end)
+         (every? amino-acid? alts)]}
+  (ProteinInsertion. ref-start coord-start ref-end coord-end alts))
+
 (def ^:private protein-insertion-re
   #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([A-Z][a-zA-Z]*)?")
 
 (defn parse-protein-insertion
   [s]
   (let [[_ ref-s coord-s ref-e coord-e alts] (re-matches protein-insertion-re s)]
-    (map->ProteinInsertion {:ref-start (->long-amino-acid ref-s)
-                            :coord-start (coord/parse-protein-coordinate coord-s)
-                            :ref-end (->long-amino-acid ref-e)
-                            :coord-end (some-> coord-e coord/parse-protein-coordinate)
-                            :alts (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?")))})))
+    (protein-insertion (->long-amino-acid ref-s)
+                       (coord/parse-protein-coordinate coord-s)
+                       (->long-amino-acid ref-e)
+                       (some-> coord-e coord/parse-protein-coordinate)
+                       (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?"))))))
 
 ;;; Protein - indel
 ;;;
@@ -843,17 +1018,26 @@
                          (cond->> alts
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
+(defn protein-indel
+  [ref-start coord-start ref-end coord-end alts]
+  {:pre [(amino-acid? ref-start)
+         (satisfies? coord/Coordinate coord-start)
+         (or (nil? ref-end) (amino-acid? ref-end))
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (every? amino-acid? alts)]}
+  (ProteinIndel. ref-start coord-start ref-end coord-end alts))
+
 (def ^:private protein-indel-re
   #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z][a-zA-Z]*)?")
 
 (defn parse-protein-indel
   [s]
   (let [[_ ref-s coord-s ref-e coord-e alts] (re-matches protein-indel-re s)]
-    (map->ProteinIndel {:ref-start (->long-amino-acid ref-s)
-                        :coord-start (coord/parse-protein-coordinate coord-s)
-                        :ref-end (->long-amino-acid ref-e)
-                        :coord-end (some-> coord-e coord/parse-protein-coordinate)
-                        :alts (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?")))})))
+    (protein-indel (->long-amino-acid ref-s)
+                   (coord/parse-protein-coordinate coord-s)
+                   (->long-amino-acid ref-e)
+                   (some-> coord-e coord/parse-protein-coordinate)
+                   (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?"))))))
 
 ;;; Protein - repeated sequences
 ;;;
@@ -877,18 +1061,28 @@
                          "[" ncopy "]"
                          (if ncopy-other [";[" ncopy-other "]"])]))))
 
+(defn protein-repeated-seqs
+  [ref-start coord-start ref-end coord-end ncopy ncopy-other]
+  {:pre [(amino-acid? ref-start)
+         (satisfies? coord/Coordinate coord-start)
+         (or (nil? ref-end) (amino-acid? ref-end))
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (integer? ncopy)
+         (or (nil? ncopy-other) (integer? ncopy-other))]}
+  (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy ncopy-other))
+
 (def ^:private protein-repeated-seqs-re
   #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[(\d+)\](?:;\[(\d+)\])?")
 
 (defn parse-protein-repeated-seqs
   [s]
   (let [[_ ref-s coord-s ref-e coord-e ncopy1 ncopy2] (re-matches protein-repeated-seqs-re s)]
-    (map->ProteinRepeatedSeqs {:ref-start (->long-amino-acid ref-s)
-                               :coord-start (coord/parse-protein-coordinate coord-s)
-                               :ref-end (->long-amino-acid ref-e)
-                               :coord-end (some-> coord-e coord/parse-protein-coordinate)
-                               :ncopy (parse-long ncopy1)
-                               :ncopy-other (if ncopy2 (parse-long ncopy2))})))
+    (protein-repeated-seqs (->long-amino-acid ref-s)
+                           (coord/parse-protein-coordinate coord-s)
+                           (->long-amino-acid ref-e)
+                           (some-> coord-e coord/parse-protein-coordinate)
+                           (parse-long ncopy1)
+                           (if ncopy2 (parse-long ncopy2)))))
 
 ;;; Protein - frame shift
 ;;;
@@ -916,16 +1110,24 @@
                   :else "Ter")
                 (coord/format new-ter-site))))))
 
+(defn protein-frame-shift
+  [ref coord alt new-ter-site]
+  {:pre [(amino-acid? ref)
+         (satisfies? coord/Coordinate coord)
+         (or (nil? alt) (amino-acid? alt))
+         (or (nil? new-ter-site) (satisfies? coord/Coordinate new-ter-site))]}
+  (ProteinFrameShift. ref coord alt new-ter-site))
+
 (def ^:private protein-frame-shift-re
   #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(?:Ter|\*)?(\?|\d+)?")
 
 (defn parse-protein-frame-shift
   [s]
   (let [[_ ref coord' alt new-ter-site] (re-matches protein-frame-shift-re s)]
-    (map->ProteinFrameShift {:ref (->long-amino-acid ref)
-                             :coord (coord/parse-protein-coordinate coord')
-                             :alt (->long-amino-acid alt)
-                             :new-ter-site (some-> new-ter-site coord/parse-protein-coordinate)})))
+    (protein-frame-shift (->long-amino-acid ref)
+                         (coord/parse-protein-coordinate coord')
+                         (->long-amino-acid alt)
+                         (some-> new-ter-site coord/parse-protein-coordinate))))
 
 ;;; Protein - extension
 ;;;
@@ -954,17 +1156,26 @@
          (coord/->region-str region)
          (coord/format new-site))))
 
+(defn protein-extension
+  [ref coord alt region new-site]
+  {:pre [(amino-acid? ref)
+         (satisfies? coord/Coordinate coord)
+         (or (nil? alt) (amino-acid? alt))
+         (#{:upstream :downstream} region)
+         (satisfies? coord/Coordinate coord)]}
+  (ProteinExtension. ref coord alt region new-site))
+
 (def ^:private protein-extension-re
   #"([A-Z\*](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?ext(\-|\*)(\?|\d+)")
 
 (defn parse-protein-extension
   [s]
   (let [[_ ref coord' alt region new-site] (re-matches protein-extension-re s)]
-    (map->ProteinExtension {:ref (->long-amino-acid ref)
-                            :coord (coord/parse-protein-coordinate coord')
-                            :alt (->long-amino-acid alt)
-                            :region (coord/->region-keyword region)
-                            :new-site (coord/parse-protein-coordinate new-site)})))
+    (protein-extension (->long-amino-acid ref)
+                       (coord/parse-protein-coordinate coord')
+                       (->long-amino-acid alt)
+                       (coord/->region-keyword region)
+                       (coord/parse-protein-coordinate new-site))))
 
 (defn parse-protein
   [s]
