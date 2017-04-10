@@ -869,7 +869,7 @@
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
-                         (if ref-end
+                         (if (should-show-end? ref-start coord-start ref-end coord-end)
                            ["_"
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
