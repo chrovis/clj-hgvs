@@ -5,32 +5,6 @@
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
 
-(defn- ->mutation-type-keyword
-  [s]
-  (case s
-    ">" :substitution
-    "del" :deletion
-    "ins" :insertion
-    "delins" :indel
-    "inv" :inversion
-    "con" :conversion
-    "fs" :frame-shift
-    "ext" :extension
-    "dup" :duplication))
-
-(defn- ->mutation-str
-  [k]
-  (case k
-    :substitution ">"
-    :deletion "del"
-    :insertion "ins"
-    :indel "delins"
-    :inversion "inv"
-    :conversion "con"
-    :frame-shift "fs"
-    :extension "ext"
-    :duplication "dup"))
-
 (def short-amino-acids
   ["A"
    "R"
