@@ -1,4 +1,7 @@
 language: clojure
+cache:
+  directories:
+    - $HOME/.m2
 jdk:
   - oraclejdk7
   - oraclejdk8
@@ -6,3 +9,6 @@ jdk:
 script:
   - lein with-profile dev:1.7:1.9 test
   - lein doo phantom test once
+after_success:
+  - CLOVERAGE_VERSION=1.0.9 lein cloverage --codecov
+  - bash <(curl -s https://codecov.io/bash) -f target/coverage/codecov.json
