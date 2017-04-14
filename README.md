@@ -23,6 +23,12 @@ With Leiningen/Boot:
 
 ## Usage
 
+### Documentation
+
+[API Reference](https://chrovis.github.io/clj-hgvs/)
+
+### Basics
+
 ```clojure
 (require '[clj-hgvs.core :as hgvs])
 
