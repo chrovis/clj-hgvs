@@ -346,37 +346,46 @@
 
 ;;; DNA - repeated sequences
 
-(def dna-repeated-seqss-c "123_124[14]")
-(def dna-repeated-seqss-b "123TG[14]")
-(def dna-repeated-seqsk :genome)
-(def dna-repeated-seqs-c (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
-                                                (coord/genomic-coordinate 124)
-                                                nil
-                                                14))
-(def dna-repeated-seqs-b (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
-                                                nil
-                                                "TG"
-                                                14))
-(def dna-repeated-seqs-a (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
-                                                (coord/genomic-coordinate 124)
-                                                "TG"
-                                                14))
+(def dna-repeated-seqs1s-c "123_124[14]")
+(def dna-repeated-seqs1s-b "123TG[14]")
+(def dna-repeated-seqs1k :genome)
+(def dna-repeated-seqs1-c (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
+                                                 (coord/genomic-coordinate 124)
+                                                 nil
+                                                 14))
+(def dna-repeated-seqs1-b (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
+                                                 nil
+                                                 "TG"
+                                                 14))
+(def dna-repeated-seqs1-a (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
+                                                 (coord/genomic-coordinate 124)
+                                                 "TG"
+                                                 14))
 
+(def dna-repeated-seqs2s "123_124[14];[18]")
+(def dna-repeated-seqs2k :genome)
+(def dna-repeated-seqs2 (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
+                                               (coord/genomic-coordinate 124)
+                                               nil
+                                               14
+                                               18))
 
 (deftest format-dna-repeated-seqs-test
   (testing "returns a string expression of a DNA repeated sequences"
     (are [m o s] (= (mut/format m o) s)
-      dna-repeated-seqs-c nil dna-repeated-seqss-c
-      dna-repeated-seqs-b nil dna-repeated-seqss-b
-      dna-repeated-seqs-a nil dna-repeated-seqss-b
-      dna-repeated-seqs-a {:range-format :bases} dna-repeated-seqss-b
-      dna-repeated-seqs-a {:range-format :coord} dna-repeated-seqss-c)))
+      dna-repeated-seqs1-c nil dna-repeated-seqs1s-c
+      dna-repeated-seqs1-b nil dna-repeated-seqs1s-b
+      dna-repeated-seqs1-a nil dna-repeated-seqs1s-b
+      dna-repeated-seqs1-a {:range-format :bases} dna-repeated-seqs1s-b
+      dna-repeated-seqs1-a {:range-format :coord} dna-repeated-seqs1s-c
+      dna-repeated-seqs2 nil dna-repeated-seqs2s)))
 
 (deftest parse-dna-repeated-seqs-test
   (testing "returns a correct DNARepeatedSeqs"
     (are [s k m] (= (mut/parse-dna-repeated-seqs s k) m)
-      dna-repeated-seqss-c dna-repeated-seqsk dna-repeated-seqs-c
-      dna-repeated-seqss-b dna-repeated-seqsk dna-repeated-seqs-b)))
+      dna-repeated-seqs1s-c dna-repeated-seqs1k dna-repeated-seqs1-c
+      dna-repeated-seqs1s-b dna-repeated-seqs1k dna-repeated-seqs1-b
+      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2)))
 
 ;;; RNA mutations
 
@@ -583,18 +592,15 @@
 (def rna-repeated-seqs1-c (mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
                                                  (coord/rna-coordinate 123 0 :upstream)
                                                  nil
-                                                 14
-                                                 nil))
+                                                 14))
 (def rna-repeated-seqs1-b (mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
                                                  nil
                                                  "ug"
-                                                 14
-                                                 nil))
+                                                 14))
 (def rna-repeated-seqs1-a (mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
                                                  (coord/rna-coordinate 123 0 :upstream)
                                                  "ug"
-                                                 14
-                                                 nil))
+                                                 14))
 
 (def rna-repeated-seqs2s "-124_-123[14];[18]")
 (def rna-repeated-seqs2 (mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
@@ -769,7 +775,7 @@
 (def protein-repeated-seqs1ss "A2[10]")
 (def protein-repeated-seqs1 (mut/protein-repeated-seqs "Ala" (coord/protein-coordinate 2)
                                                        nil nil
-                                                       10 nil))
+                                                       10))
 
 (def protein-repeated-seqs2s "Ala2[10];[11]")
 (def protein-repeated-seqs2ss "A2[10];[11]")
@@ -781,7 +787,7 @@
 (def protein-repeated-seqs3ss "R65_S67[12]")
 (def protein-repeated-seqs3 (mut/protein-repeated-seqs "Arg" (coord/protein-coordinate 65)
                                                        "Ser" (coord/protein-coordinate 67)
-                                                       12 nil))
+                                                       12))
 
 (deftest format-protein-repeated-seqs-test
   (testing "returns a string expression of a protein repeated-seqs"

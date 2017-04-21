@@ -432,8 +432,9 @@
 ;;;
 ;;; e.g. g.123_124[14]
 ;;;      g.123TG[14]
+;;;      g.123_124[14];[18]
 
-(defrecord DNARepeatedSeqs [coord-start coord-end ref ncopy]
+(defrecord DNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [range-format] :or {range-format :auto}}]
@@ -443,27 +444,32 @@
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
              :bases ref
              :coord (if should-show-end? (str "_" (coord/format coord-end))))
-           "[" ncopy "]"))))
+           "[" ncopy "]"
+           (if ncopy-other (str ";[" ncopy-other "]"))))))
 
 (defn dna-repeated-seqs
-  [coord-start coord-end ref ncopy]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (nil? ref) (dna-bases? ref))
-         (integer? ncopy)]}
-  (DNARepeatedSeqs. coord-start coord-end ref ncopy))
+  ([coord-start coord-end ref ncopy]
+   (dna-repeated-seqs coord-start coord-end ref ncopy nil))
+  ([coord-start coord-end ref ncopy ncopy-other]
+   {:pre [(satisfies? coord/Coordinate coord-start)
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+          (or (nil? ref) (dna-bases? ref))
+          (integer? ncopy)
+          (or (nil? ncopy-other) (integer? ncopy-other))]}
+   (DNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other)))
 
 (def ^:private dna-repeated-seqs-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[(\d+)\]")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[(\d+)\](?:;\[(\d+)\])?")
 
 (defn parse-dna-repeated-seqs
   [s kind]
-  (let [[_ coord-s coord-e ref ncopy] (re-matches dna-repeated-seqs-re s)
+  (let [[_ coord-s coord-e ref ncopy1 ncopy2] (re-matches dna-repeated-seqs-re s)
         parse-coord (coord-parser kind)]
     (dna-repeated-seqs (parse-coord coord-s)
                        (some-> coord-e parse-coord)
                        ref
-                       (parse-long ncopy))))
+                       (parse-long ncopy1)
+                       (some-> ncopy2 parse-long))))
 
 (defn parse-dna
   [s kind]
@@ -768,13 +774,15 @@
            (if ncopy-other (str ";[" ncopy-other "]"))))))
 
 (defn rna-repeated-seqs
-  [coord-start coord-end ref ncopy ncopy-other]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (nil? ref) (rna-bases? ref))
-         (integer? ncopy)
-         (or (nil? ncopy-other) (integer? ncopy-other))]}
-  (RNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other))
+  ([coord-start coord-end ref ncopy]
+   (rna-repeated-seqs coord-start coord-end ref ncopy nil))
+  ([coord-start coord-end ref ncopy ncopy-other]
+   {:pre [(satisfies? coord/Coordinate coord-start)
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+          (or (nil? ref) (rna-bases? ref))
+          (integer? ncopy)
+          (or (nil? ncopy-other) (integer? ncopy-other))]}
+   (RNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other)))
 
 (def ^:private rna-repeated-seqs-re
   #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[(\d+)\](?:;\[(\d+)\])?")
@@ -1036,14 +1044,16 @@
                          (if ncopy-other [";[" ncopy-other "]"])]))))
 
 (defn protein-repeated-seqs
-  [ref-start coord-start ref-end coord-end ncopy ncopy-other]
-  {:pre [(amino-acid? ref-start)
-         (satisfies? coord/Coordinate coord-start)
-         (or (nil? ref-end) (amino-acid? ref-end))
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (integer? ncopy)
-         (or (nil? ncopy-other) (integer? ncopy-other))]}
-  (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy ncopy-other))
+  ([ref-start coord-start ref-end coord-end ncopy]
+   (protein-repeated-seqs ref-start coord-start ref-end coord-end ncopy nil))
+  ([ref-start coord-start ref-end coord-end ncopy ncopy-other]
+   {:pre [(amino-acid? ref-start)
+          (satisfies? coord/Coordinate coord-start)
+          (or (nil? ref-end) (amino-acid? ref-end))
+          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+          (integer? ncopy)
+          (or (nil? ncopy-other) (integer? ncopy-other))]}
+   (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy ncopy-other)))
 
 (def ^:private protein-repeated-seqs-re
   #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[(\d+)\](?:;\[(\d+)\])?")
