@@ -20,6 +20,12 @@
       (coord/genomic-coordinate 3) (coord/genomic-coordinate 2) 1
       (coord/genomic-coordinate 2) (coord/genomic-coordinate 3) -1)))
 
+(deftest parse-genomic-coordinate-test
+  (testing "parses input string, returning GenomicCoordinate"
+    (is (= (coord/parse-genomic-coordinate "3") (coord/genomic-coordinate 3))))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-genomic-coordinate "?") (coord/unknown-coordinate)))))
+
 (deftest mitochondrial-coordinate-test
   (testing "validates an input and returns MitochondrialCoordinate"
     (is (= (coord/mitochondrial-coordinate 3) (coord/->MitochondrialCoordinate 3))))
@@ -36,6 +42,12 @@
       (coord/mitochondrial-coordinate 2) (coord/mitochondrial-coordinate 2) 0
       (coord/mitochondrial-coordinate 3) (coord/mitochondrial-coordinate 2) 1
       (coord/mitochondrial-coordinate 2) (coord/mitochondrial-coordinate 3) -1)))
+
+(deftest parse-mitochondrial-coordinate-test
+  (testing "parses input string, returning MitochondrialCoordinate"
+    (is (= (coord/parse-mitochondrial-coordinate "3") (coord/mitochondrial-coordinate 3))))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-mitochondrial-coordinate "?") (coord/unknown-coordinate)))))
 
 (deftest cdna-coordinate-test
   (testing "validates inputs and returns CDNACoordinate"
@@ -73,6 +85,20 @@
       (coord/cdna-coordinate 3 0 :upstream) (coord/cdna-coordinate 3 0 nil) -1
       (coord/cdna-coordinate 3 0 :downstream) (coord/cdna-coordinate 3 0 nil) 1)))
 
+(deftest parse-cdna-coordinate-test
+  (testing "parses input string, returning CDNACoordinate"
+    (are [s e] (= (coord/parse-cdna-coordinate s) e)
+      "3" (coord/cdna-coordinate 3 0 nil)
+      "-3" (coord/cdna-coordinate 3 0 :upstream)
+      "*3" (coord/cdna-coordinate 3 0 :downstream)
+      "87+3" (coord/cdna-coordinate 87 3 nil)
+      "88-1" (coord/cdna-coordinate 88 -1 nil)
+      "88" (coord/cdna-coordinate 88 0 nil)
+      "-85+3" (coord/cdna-coordinate 85 3 :upstream)
+      "*37+3" (coord/cdna-coordinate 37 3 :downstream)))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-cdna-coordinate "?") (coord/unknown-coordinate)))))
+
 (deftest format-cdna-coordinate-test
   (testing "returns a string expression of a CDNA coordinate"
     (are [m s] (= (coord/format m) s)
@@ -106,6 +132,12 @@
       (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 2) 0
       (coord/ncdna-coordinate 3) (coord/ncdna-coordinate 2) 1
       (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 3) -1)))
+
+(deftest parse-ncdna-coordinate-test
+  (testing "parses input string, returning NcdnaCoordinate"
+    (is (= (coord/parse-ncdna-coordinate "3") (coord/ncdna-coordinate 3))))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-ncdna-coordinate "?") (coord/unknown-coordinate)))))
 
 (deftest rna-coordinate-test
   (testing "validates inputs and returns RNACoordinate"
@@ -143,6 +175,32 @@
       (coord/rna-coordinate 3 0 :upstream) (coord/rna-coordinate 3 0 nil) -1
       (coord/rna-coordinate 3 0 :downstream) (coord/rna-coordinate 3 0 nil) 1)))
 
+(deftest parse-rna-coordinate-test
+  (testing "parses input string, returning RNACoordinate"
+    (are [s e] (= (coord/parse-rna-coordinate s) e)
+      "3" (coord/rna-coordinate 3 nil nil)
+      "-3" (coord/rna-coordinate 3 0 :upstream)
+      "*3" (coord/rna-coordinate 3 0 :downstream)
+      "87+3" (coord/rna-coordinate 87 3 nil)
+      "88-1" (coord/rna-coordinate 88 -1 nil)
+      "88" (coord/rna-coordinate 88 nil nil)
+      "-85+3" (coord/rna-coordinate 85 3 :upstream)
+      "*37+3" (coord/rna-coordinate 37 3 :downstream)))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-rna-coordinate "?") (coord/unknown-coordinate)))))
+
+(deftest format-rna-coordinate-test
+  (testing "returns a string expression of a RNA coordinate"
+    (are [m s] (= (coord/format m) s)
+      (coord/rna-coordinate 3 0 nil) "3"
+      (coord/rna-coordinate 3 0 :upstream) "-3"
+      (coord/rna-coordinate 3 0 :downstream) "*3"
+      (coord/rna-coordinate 87 3 nil) "87+3"
+      (coord/rna-coordinate 88 -1 nil) "88-1"
+      (coord/rna-coordinate 88 0 nil) "88"
+      (coord/rna-coordinate 85 3 :upstream) "-85+3"
+      (coord/rna-coordinate 37 3 :downstream) "*37+3")))
+
 (deftest rna-in-exon?-test
   (testing "detects a coordinate is in exon ranges"
     (is (true? (coord/in-exon? (coord/rna-coordinate 3 0 nil))))
@@ -165,3 +223,9 @@
       (coord/protein-coordinate 2) (coord/protein-coordinate 2) 0
       (coord/protein-coordinate 3) (coord/protein-coordinate 2) 1
       (coord/protein-coordinate 2) (coord/protein-coordinate 3) -1)))
+
+(deftest parse-protein-coordinate-test
+  (testing "parses input string, returning ProteinCoordinate"
+    (is (= (coord/parse-protein-coordinate "3") (coord/protein-coordinate 3))))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-protein-coordinate "?") (coord/unknown-coordinate)))))

@@ -191,14 +191,16 @@
 
 (defn parse-rna-coordinate
   [s]
-  (let [[_ region position offset] (re-find rna-coordinate-re s)]
-    (if (or (some? region) (some? offset))
-      (rna-coordinate (parse-long position)
-                      (if (some? offset)
-                        (parse-long offset)
-                        0)
-                      (->region-keyword region))
-      (rna-coordinate (parse-long position) nil nil))))
+  (if (= s "?")
+    (unknown-coordinate)
+    (let [[_ region position offset] (re-find rna-coordinate-re s)]
+      (if (or (some? region) (some? offset))
+        (rna-coordinate (parse-long position)
+                        (if (some? offset)
+                          (parse-long offset)
+                          0)
+                        (->region-keyword region))
+        (rna-coordinate (parse-long position) nil nil)))))
 
 ;;; protein coordinate
 
