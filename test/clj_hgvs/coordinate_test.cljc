@@ -3,6 +3,14 @@
                :cljs [cljs.test :refer-macros [deftest are is testing]])
             [clj-hgvs.coordinate :as coord]))
 
+;;; unknown coordinate
+
+(deftest format-unknown-coordinate-test
+  (testing "returns a string expression of UnknownCoordinate"
+    (is (= (coord/format (coord/unknown-coordinate)) "?"))))
+
+;;; genomic coordinate
+
 (deftest genomic-coordinate-test
   (testing "validates an input and returns GenomicCoordinate"
     (is (= (coord/genomic-coordinate 3) (coord/->GenomicCoordinate 3))))
@@ -26,6 +34,12 @@
   (testing "returns UnknownCoordinate if input is \"?\""
     (is (= (coord/parse-genomic-coordinate "?") (coord/unknown-coordinate)))))
 
+(deftest format-genomic-coordinate-test
+  (testing "returns a string expression of GenomicCoordinate"
+    (is (= (coord/format (coord/genomic-coordinate 3)) "3"))))
+
+;;; mitochondrial coordinate
+
 (deftest mitochondrial-coordinate-test
   (testing "validates an input and returns MitochondrialCoordinate"
     (is (= (coord/mitochondrial-coordinate 3) (coord/->MitochondrialCoordinate 3))))
@@ -48,6 +62,12 @@
     (is (= (coord/parse-mitochondrial-coordinate "3") (coord/mitochondrial-coordinate 3))))
   (testing "returns UnknownCoordinate if input is \"?\""
     (is (= (coord/parse-mitochondrial-coordinate "?") (coord/unknown-coordinate)))))
+
+(deftest format-mitochondrial-coordinate-test
+  (testing "returns a string expression of MitochondrialCoordinate"
+    (is (= (coord/format (coord/mitochondrial-coordinate 3)) "3"))))
+
+;;; coding DNA coordinate
 
 (deftest cdna-coordinate-test
   (testing "validates inputs and returns CDNACoordinate"
@@ -116,6 +136,8 @@
     (is (true? (coord/in-exon? (coord/cdna-coordinate 3 0 nil))))
     (is (false? (coord/in-exon? (coord/cdna-coordinate 87 3 nil))))))
 
+;;; non-coding DNA coordinate
+
 (deftest ncdna-coordinate-test
   (testing "validates an input and returns NCDNACoordinate"
     (is (= (coord/ncdna-coordinate 3) (coord/->NCDNACoordinate 3))))
@@ -134,10 +156,16 @@
       (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 3) -1)))
 
 (deftest parse-ncdna-coordinate-test
-  (testing "parses input string, returning NcdnaCoordinate"
+  (testing "parses input string, returning NCDNACoordinate"
     (is (= (coord/parse-ncdna-coordinate "3") (coord/ncdna-coordinate 3))))
   (testing "returns UnknownCoordinate if input is \"?\""
     (is (= (coord/parse-ncdna-coordinate "?") (coord/unknown-coordinate)))))
+
+(deftest format-ncdna-coordinate-test
+  (testing "returns a string expression of NCDNACoordinate"
+    (is (= (coord/format (coord/ncdna-coordinate 3)) "3"))))
+
+;;; RNA coordinate
 
 (deftest rna-coordinate-test
   (testing "validates inputs and returns RNACoordinate"
@@ -207,6 +235,8 @@
     (is (true? (coord/in-exon? (coord/rna-coordinate 3 nil nil))))
     (is (false? (coord/in-exon? (coord/rna-coordinate 87 3 nil))))))
 
+;;; protein coordinate
+
 (deftest protein-coordinate-test
   (testing "validates an input and returns ProteinCoordinate"
     (is (= (coord/protein-coordinate 3) (coord/->ProteinCoordinate 3))))
@@ -229,3 +259,7 @@
     (is (= (coord/parse-protein-coordinate "3") (coord/protein-coordinate 3))))
   (testing "returns UnknownCoordinate if input is \"?\""
     (is (= (coord/parse-protein-coordinate "?") (coord/unknown-coordinate)))))
+
+(deftest format-protein-coordinate-test
+  (testing "returns a string expression of ProteinCoordinate"
+    (is (= (coord/format (coord/protein-coordinate 3)) "3"))))
