@@ -4,10 +4,10 @@
   (:require [clj-hgvs.internal :refer [parse-long]]))
 
 (defprotocol Coordinate
-  (format [this]))
+  (format [this] "Returns a string representing the given coordinate."))
 
 (defprotocol ICDNACoordinate
-  (in-exon? [this]))
+  (in-exon? [this] "Returns true if the coordinate is located in exon, else false."))
 
 (defn ->region-keyword
   [s]
@@ -31,6 +31,7 @@
   (format [_] "?"))
 
 (defn unknown-coordinate
+  "Returns UnknownCoordinate instance."
   []
   (UnknownCoordinate.))
 
@@ -45,11 +46,15 @@
     (str position)))
 
 (defn genomic-coordinate
+  "Returns GenomicCoordinate instance having position. Throws an exception if
+  position is illegal."
   [position]
   {:pre [(integer? position) (pos? position)]}
   (GenomicCoordinate. position))
 
 (defn parse-genomic-coordinate
+  "Parses a coordinate string used in genomic mutations, returning a
+  GenomicCoordinate or UnknownCoordinate."
   [s]
   (if (= s "?")
     (unknown-coordinate)
@@ -66,11 +71,15 @@
     (str position)))
 
 (defn mitochondrial-coordinate
+  "Returns MitochondrialCoordinate instance having position. Throws an exception
+  if position is illegal."
   [position]
   {:pre [(integer? position) (pos? position)]}
   (MitochondrialCoordinate. position))
 
 (defn parse-mitochondrial-coordinate
+  "Parses a coordinate string used in mitochondrial mutations, returning a
+  MitochondrialCoordinate or UnknownCoordinate."
   [s]
   (if (= s "?")
     (unknown-coordinate)
@@ -111,6 +120,8 @@
     (or (nil? offset) (zero? offset))))
 
 (defn cdna-coordinate
+  "Returns CDNACoordinate instance having position, offset, and region. Throws
+  an exception if any input is illegal."
   ([position] (cdna-coordinate position 0 nil))
   ([position offset region]
    {:pre [(integer? position) (pos? position)
@@ -122,6 +133,8 @@
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
 (defn parse-cdna-coordinate
+  "Parses a coordinate string used in coding DNA mutations, returning a
+  CDNACoordinate or UnknownCoordinate."
   [s]
   (if (= s "?")
     (unknown-coordinate)
@@ -143,11 +156,15 @@
     (str position)))
 
 (defn ncdna-coordinate
+  "Returns NCDNACoordinate instance having position. Throws an exception if
+  position is illegal."
   [position]
   {:pre [(integer? position) (pos? position)]}
   (NCDNACoordinate. position))
 
 (defn parse-ncdna-coordinate
+  "Parses a coordinate string used in non-coding DNA mutations, returning a
+  NCDNACoordinate or UnknownCoordinate."
   [s]
   (if (= s "?")
     (unknown-coordinate)
@@ -180,6 +197,8 @@
     (or (nil? offset) (zero? offset))))
 
 (defn rna-coordinate
+  "Returns RNACoordinate instance having position, offset, and region. Throws an
+  exception if any input is illegal."
   [position offset region]
   {:pre [(integer? position) (pos? position)
          (or (nil? offset) (integer? offset))
@@ -190,6 +209,8 @@
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
 (defn parse-rna-coordinate
+  "Parses a coordinate string used in RNA mutations, returning a RNACoordinate
+  or UnknownCoordinate."
   [s]
   (if (= s "?")
     (unknown-coordinate)
@@ -213,11 +234,15 @@
     (str position)))
 
 (defn protein-coordinate
+  "Returns ProteinCoordinate instance having position. Throws an exception if
+  position is illegal."
   [position]
   {:pre [(integer? position) (pos? position)]}
   (ProteinCoordinate. position))
 
 (defn parse-protein-coordinate
+  "Parses a coordinate string used in protein mutations, returning a
+  ProteinCoordinate or UnknownCoordinate."
   [s]
   (if (= s "?")
     (unknown-coordinate)

@@ -76,7 +76,10 @@
       (get long-short-amino-acid-map s))))
 
 (defprotocol Mutation
-  (format [this] [this opts]))
+  (format [this] [this opts]
+    "Returns a string representing the given mutation. The second argument is an
+  optional map to specify style. See document of clj-hgvs.core/format for
+  details of the option."))
 
 ;;; DNA mutations
 
@@ -110,6 +113,7 @@
                          alt]))))
 
 (defn dna-substitution
+  "Constructor of DNASubstitution. Throws an exception if any input is illegal."
   ([coord ref typ] (dna-substitution coord ref typ nil))
   ([coord ref typ alt]
    {:pre [(satisfies? coord/Coordinate coord)
@@ -154,6 +158,7 @@
                          (if show-bases? ref)]))))
 
 (defn dna-deletion
+  "Constructor of DNADeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
    {:pre [(if (vector? coord-start)
@@ -222,6 +227,7 @@
                          (if show-bases? ref)]))))
 
 (defn dna-duplication
+  "Constructor of DNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
    {:pre [(if (vector? coord-start)
@@ -286,6 +292,7 @@
                                        (coord/format (:coord-end alt))])]))))
 
 (defn dna-insertion
+  "Constructor of DNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
@@ -325,6 +332,7 @@
          "inv")))
 
 (defn dna-inversion
+  "Constructor of DNAInversion. Throws an exception if any input is illegal."
   [coord-start coord-end]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
@@ -361,6 +369,7 @@
                          (coord/format (:coord-end alt))]))))
 
 (defn dna-conversion
+  "Constructor of DNAConversion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
@@ -412,6 +421,7 @@
                          alt]))))
 
 (defn dna-indel
+  "Constructor of DNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
@@ -448,6 +458,7 @@
            (if ncopy-other (str ";[" ncopy-other "]"))))))
 
 (defn dna-repeated-seqs
+  "Constructor of DNARepeatedSeqs. Throws an exception if any input is illegal."
   ([coord-start coord-end ref ncopy]
    (dna-repeated-seqs coord-start coord-end ref ncopy nil))
   ([coord-start coord-end ref ncopy ncopy-other]
@@ -503,6 +514,7 @@
     (apply str (coord/format coord) ref ">" alt)))
 
 (defn rna-substitution
+  "Constructor of RNASubstitution. Throws an exception if any input is illegal."
   [coord ref alt]
   {:pre [(satisfies? coord/Coordinate coord)
          (rna-bases? ref)
@@ -535,6 +547,7 @@
          (if show-bases? ref))))
 
 (defn rna-deletion
+  "Constructor of DNAdeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
    {:pre [(satisfies? coord/Coordinate coord-start)
@@ -569,6 +582,7 @@
          (if show-bases? ref))))
 
 (defn rna-duplication
+  "Constructor of RNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
    {:pre [(satisfies? coord/Coordinate coord-start)
@@ -606,6 +620,7 @@
            :else alt))))
 
 (defn rna-insertion
+  "Constructor of RNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
@@ -656,6 +671,7 @@
          "inv")))
 
 (defn rna-inversion
+  "Constructor of RNAInversion. Throws an exception if any input is illegal."
   [coord-start coord-end]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
@@ -690,6 +706,7 @@
          (coord/format (:coord-end alt)))))
 
 (defn rna-conversion
+  "Constructor of RNAConversion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
@@ -736,6 +753,7 @@
          alt)))
 
 (defn rna-indel
+  "Constructor of RNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
@@ -774,6 +792,7 @@
            (if ncopy-other (str ";[" ncopy-other "]"))))))
 
 (defn rna-repeated-seqs
+  "Constructor of RNARepeatedSeqs. Throws an exception if any input is illegal."
   ([coord-start coord-end ref ncopy]
    (rna-repeated-seqs coord-start coord-end ref ncopy nil))
   ([coord-start coord-end ref ncopy ncopy-other]
@@ -842,6 +861,7 @@
              (= amino-acid-format :short) ->short-amino-acid)))))
 
 (defn protein-substitution
+  "Constructor of ProteinSubstitution. Throws an exception if any input is illegal."
   [ref coord alt]
   {:pre [(amino-acid? ref)
          (satisfies? coord/Coordinate coord)
@@ -881,6 +901,7 @@
                          "del"]))))
 
 (defn protein-deletion
+  "Constructor of ProteinDeletion. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-deletion ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
    {:pre [(amino-acid? ref-start)
@@ -920,6 +941,7 @@
                          "dup"]))))
 
 (defn protein-duplication
+  "Constructor of ProteinDuplication. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-duplication ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
    {:pre [(amino-acid? ref-start)
@@ -959,6 +981,7 @@
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (defn protein-insertion
+  "Constructor of ProteinInsertion. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
   {:pre [(amino-acid? ref-start)
          (satisfies? coord/Coordinate coord-start)
@@ -1001,6 +1024,7 @@
                            (= amino-acid-format :short) (map ->short-amino-acid))]))))
 
 (defn protein-indel
+  "Constructor of ProteinIndel. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
   {:pre [(amino-acid? ref-start)
          (satisfies? coord/Coordinate coord-start)
@@ -1044,6 +1068,7 @@
                          (if ncopy-other [";[" ncopy-other "]"])]))))
 
 (defn protein-repeated-seqs
+  "Constructor of ProteinRepeatedSeqs. Throws an exception if any input is illegal."
   ([ref-start coord-start ref-end coord-end ncopy]
    (protein-repeated-seqs ref-start coord-start ref-end coord-end ncopy nil))
   ([ref-start coord-start ref-end coord-end ncopy ncopy-other]
@@ -1095,6 +1120,7 @@
                 (coord/format new-ter-site))))))
 
 (defn protein-frame-shift
+  "Constructor of ProteinFrameShift. Throws an exception if any input is illegal."
   [ref coord alt new-ter-site]
   {:pre [(amino-acid? ref)
          (satisfies? coord/Coordinate coord)
@@ -1141,6 +1167,7 @@
          (coord/format new-site))))
 
 (defn protein-extension
+  "Constructor of ProteinExtension. Throws an exception if any input is illegal."
   [ref coord alt region new-site]
   {:pre [(amino-acid? ref)
          (satisfies? coord/Coordinate coord)

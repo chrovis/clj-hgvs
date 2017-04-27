@@ -45,6 +45,9 @@
   (str (->kind-str kind) "."))
 
 (defn format-mutations
+  "Returns a string representing mutations. The second argument is an optional
+  map to specify style. See document of clj-hgvs.core/format for details of the
+  option."
   ([mutations] (format-mutations mutations nil))
   ([mutations opts]
    (let [multi? (> (count mutations) 1)]
