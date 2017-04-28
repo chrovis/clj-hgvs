@@ -69,3 +69,20 @@
    (apply str [(format-transcript (:transcript hgvs))
                (format-kind (:kind hgvs))
                (format-mutations (:mutations hgvs) opts)])))
+
+(defn plain
+  "Returns a plain map representing the given HGVS. This function is useful for
+  sending data through another codec. Use restore to retrieve original HGVS
+  data."
+  [hgvs]
+  (-> hgvs
+      (update :kind name)
+      (update :mutations #(map mut/plain %))))
+
+(defn restore
+  "Restores a plain map to a suitable HGVS data structure. This function is
+  useful for sending data through another codec."
+  [m]
+  (-> m
+      (update :kind keyword)
+      (update :mutations #(map mut/restore %))))

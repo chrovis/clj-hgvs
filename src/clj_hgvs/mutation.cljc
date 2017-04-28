@@ -2,6 +2,7 @@
   "Data structures and functions to handle HGVS mutations."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.string :as string]
+            [clojure.walk :as walk]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
 
@@ -75,11 +76,33 @@
       s
       (get long-short-amino-acid-map s))))
 
+(defn- plain-coords
+  [m]
+  (walk/prewalk (fn [x]
+                  (if (and (vector? x) (satisfies? coord/Coordinate (second x)))
+                    (update x 1 coord/plain)
+                    x))
+                m))
+
+(defn- restore-coords
+  [m]
+  (walk/prewalk (fn [x]
+                  (if (and (vector? x) (:coordinate (second x)))
+                    (update x 1 coord/restore)
+                    x))
+                m))
+
 (defprotocol Mutation
   (format [this] [this opts]
     "Returns a string representing the given mutation. The second argument is an
   optional map to specify style. See document of clj-hgvs.core/format for
-  details of the option."))
+  details of the option.")
+  (plain [this] "Returns a plain map representing the given mutation."))
+
+(defmulti restore
+  "Restores a plain map to a suitable mutation record."
+  {:arglists '([m])}
+  :mutation)
 
 ;;; DNA mutations
 
@@ -110,7 +133,9 @@
     (apply str (flatten [(coord/format coord)
                          ref
                          type
-                         alt]))))
+                         alt])))
+  (plain [this]
+    (into {:mutation "dna-substitution"} (plain-coords this))))
 
 (defn dna-substitution
   "Constructor of DNASubstitution. Throws an exception if any input is illegal."
@@ -130,6 +155,11 @@
   (let [[_ coord ref typ alt] (re-matches dna-substitution-re s)
         parse-coord (coord-parser kind)]
     (dna-substitution (parse-coord coord) ref typ alt)))
+
+(defmethod restore "dna-substitution"
+  [m]
+  (let [{:keys [coord ref type alt]} (restore-coords m)]
+    (dna-substitution coord ref type alt)))
 
 ;;; DNA - deletion
 ;;;
@@ -155,7 +185,9 @@
                             "_" (coord/format (second coord-end)) ")"]
                            (some-> coord-end coord/format))
                          "del"
-                         (if show-bases? ref)]))))
+                         (if show-bases? ref)])))
+  (plain [this]
+    (into {:mutation "dna-deletion"} (plain-coords this))))
 
 (defn dna-deletion
   "Constructor of DNADeletion. Throws an exception if any input is illegal."
@@ -199,6 +231,11 @@
     (parse-dna-deletion-range s kind)
     (parse-dna-deletion* s kind)))
 
+(defmethod restore "dna-deletion"
+  [m]
+  (let [{:keys [coord-start coord-end ref]} (restore-coords m)]
+    (dna-deletion coord-start coord-end ref)))
+
 ;;; DNA - duplication
 ;;;
 ;;; e.g. g.7dup
@@ -224,7 +261,9 @@
                                "_" (coord/format (second coord-end)) ")"]
                               (coord/format coord-end))])
                          "dup"
-                         (if show-bases? ref)]))))
+                         (if show-bases? ref)])))
+  (plain [this]
+    (into {:mutation "dna-duplication"} (plain-coords this))))
 
 (defn dna-duplication
   "Constructor of DNADuplication. Throws an exception if any input is illegal."
@@ -268,6 +307,11 @@
     (parse-dna-duplication-range s kind)
     (parse-dna-duplication* s kind)))
 
+(defmethod restore "dna-duplication"
+  [m]
+  (let [{:keys [coord-start coord-end ref]} (restore-coords m)]
+    (dna-duplication coord-start coord-end ref)))
+
 ;;; DNA - insertion
 ;;;
 ;;; e.g. g.5756_5757insAGG
@@ -289,7 +333,9 @@
                                        ":"
                                        (coord/format (:coord-start alt))
                                        "_"
-                                       (coord/format (:coord-end alt))])]))))
+                                       (coord/format (:coord-end alt))])])))
+  (plain [this]
+    (into {:mutation "dna-insertion"} (plain-coords this))))
 
 (defn dna-insertion
   "Constructor of DNAInsertion. Throws an exception if any input is illegal."
@@ -317,6 +363,11 @@
                           :coord-start (parse-coord coord-s)
                           :coord-end (parse-coord coord-e)})))))
 
+(defmethod restore "dna-insertion"
+  [m]
+  (let [{:keys [coord-start coord-end alt]} (restore-coords m)]
+    (dna-insertion coord-start coord-end alt)))
+
 ;;; DNA - inversion
 ;;;
 ;;; e.g. g.1077_1080inv
@@ -329,7 +380,9 @@
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
-         "inv")))
+         "inv"))
+  (plain [this]
+    (into {:mutation "dna-inversion"} (plain-coords this))))
 
 (defn dna-inversion
   "Constructor of DNAInversion. Throws an exception if any input is illegal."
@@ -347,6 +400,11 @@
   (let [[_ coord-s coord-e] (re-matches dna-inversion-re s)
         parse-coord (coord-parser kind)]
     (dna-inversion (parse-coord coord-s) (parse-coord coord-e))))
+
+(defmethod restore "dna-inversion"
+  [m]
+  (let [{:keys [coord-start coord-end]} (restore-coords m)]
+    (dna-inversion coord-start coord-end)))
 
 ;;; DNA - conversion
 ;;;
@@ -366,7 +424,9 @@
                          (if (:kind alt) [(->kind-str (:kind alt)) "."])
                          (coord/format (:coord-start alt))
                          "_"
-                         (coord/format (:coord-end alt))]))))
+                         (coord/format (:coord-end alt))])))
+  (plain [this]
+    (into {:mutation "dna-conversion"} (plain-coords this))))
 
 (defn dna-conversion
   "Constructor of DNAConversion. Throws an exception if any input is illegal."
@@ -402,6 +462,11 @@
                     (parse-coord coord-e)
                     (parse-dna-conversion-alt alt kind parse-coord))))
 
+(defmethod restore "dna-conversion"
+  [m]
+  (let [{:keys [coord-start coord-end alt]} (restore-coords m)]
+    (dna-conversion coord-start coord-end alt)))
+
 ;;; DNA - indel
 ;;;
 ;;; e.g. g.6775delinsGA
@@ -418,7 +483,9 @@
                          "del"
                          (if show-bases? ref)
                          "ins"
-                         alt]))))
+                         alt])))
+  (plain [this]
+    (into {:mutation "dna-indel"} (plain-coords this))))
 
 (defn dna-indel
   "Constructor of DNAIndel. Throws an exception if any input is illegal."
@@ -438,6 +505,11 @@
         parse-coord (coord-parser kind)]
     (dna-indel (parse-coord coord-s) (some-> coord-e parse-coord) ref alt)))
 
+(defmethod restore "dna-indel"
+  [m]
+  (let [{:keys [coord-start coord-end ref alt]} (restore-coords m)]
+    (dna-indel coord-start coord-end ref alt)))
+
 ;;; DNA - repeated sequences
 ;;;
 ;;; e.g. g.123_124[14]
@@ -455,7 +527,9 @@
              :bases ref
              :coord (if should-show-end? (str "_" (coord/format coord-end))))
            "[" ncopy "]"
-           (if ncopy-other (str ";[" ncopy-other "]"))))))
+           (if ncopy-other (str ";[" ncopy-other "]")))))
+  (plain [this]
+    (into {:mutation "dna-repeated-seqs"} (plain-coords this))))
 
 (defn dna-repeated-seqs
   "Constructor of DNARepeatedSeqs. Throws an exception if any input is illegal."
@@ -481,6 +555,11 @@
                        ref
                        (parse-long ncopy1)
                        (some-> ncopy2 parse-long))))
+
+(defmethod restore "dna-repeated-seqs"
+  [m]
+  (let [{:keys [coord-start coord-end ref ncopy ncopy-other]} (restore-coords m)]
+    (dna-repeated-seqs coord-start coord-end ref ncopy ncopy-other)))
 
 (defn parse-dna
   [s kind]
@@ -511,7 +590,9 @@
   Mutation
   (format [this] (format this nil))
   (format [this _]
-    (apply str (coord/format coord) ref ">" alt)))
+    (apply str (coord/format coord) ref ">" alt))
+  (plain [this]
+    (into {:mutation "rna-substitution"} (plain-coords this))))
 
 (defn rna-substitution
   "Constructor of RNASubstitution. Throws an exception if any input is illegal."
@@ -529,6 +610,11 @@
   (let [[_ coord ref alt] (re-matches rna-substitution-re s)]
     (rna-substitution (coord/parse-rna-coordinate coord) ref alt)))
 
+(defmethod restore "rna-substitution"
+  [m]
+  (let [{:keys [coord ref alt]} (restore-coords m)]
+    (rna-substitution coord ref alt)))
+
 ;;; RNA - deletion
 ;;;
 ;;; e.g. r.7del
@@ -544,7 +630,9 @@
          (if coord-end
            (str "_" (coord/format coord-end)))
          "del"
-         (if show-bases? ref))))
+         (if show-bases? ref)))
+  (plain [this]
+    (into {:mutation "rna-deletion"} (plain-coords this))))
 
 (defn rna-deletion
   "Constructor of DNAdeletion. Throws an exception if any input is illegal."
@@ -565,6 +653,11 @@
                   (some-> coord-e coord/parse-rna-coordinate)
                   ref)))
 
+(defmethod restore "rna-deletion"
+  [m]
+  (let [{:keys [coord-start coord-end ref]} (restore-coords m)]
+    (rna-deletion coord-start coord-end ref)))
+
 ;;; RNA - duplication
 ;;;
 ;;; e.g. r.7dup
@@ -579,7 +672,9 @@
          (if coord-end
            (str "_" (coord/format coord-end)))
          "dup"
-         (if show-bases? ref))))
+         (if show-bases? ref)))
+  (plain [this]
+    (into {:mutation "rna-duplication"} (plain-coords this))))
 
 (defn rna-duplication
   "Constructor of RNADuplication. Throws an exception if any input is illegal."
@@ -600,6 +695,11 @@
                      (some-> coord-e coord/parse-rna-coordinate)
                      ref)))
 
+(defmethod restore "rna-duplication"
+  [m]
+  (let [{:keys [coord-start coord-end ref]} (restore-coords m)]
+    (rna-duplication coord-start coord-end ref)))
+
 ;;; RNA - insertion
 ;;;
 ;;; e.g. r.756_757insacu
@@ -617,7 +717,9 @@
          (cond
            (map? alt) (str (:genbank alt) ":" (:coord-start alt) "_" (:coord-end alt))
            (re-matches #"n{2,}" alt) (str "(" (count alt) ")")
-           :else alt))))
+           :else alt)))
+  (plain [this]
+    (into {:mutation "rna-insertion"} (plain-coords this))))
 
 (defn rna-insertion
   "Constructor of RNAInsertion. Throws an exception if any input is illegal."
@@ -657,6 +759,11 @@
                      (re-find #"\(\d\)" alt) (parse-rna-alt-n alt)
                      :else (parse-rna-alt-genbank alt)))))
 
+(defmethod restore "rna-insertion"
+  [m]
+  (let [{:keys [coord-start coord-end alt]} (restore-coords m)]
+    (rna-insertion coord-start coord-end alt)))
+
 ;;; RNA - inversion
 ;;;
 ;;; e.g. r.177_180inv
@@ -668,7 +775,9 @@
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
-         "inv")))
+         "inv"))
+  (plain [this]
+    (into {:mutation "rna-inversion"} (plain-coords this))))
 
 (defn rna-inversion
   "Constructor of RNAInversion. Throws an exception if any input is illegal."
@@ -687,6 +796,11 @@
     (rna-inversion (coord/parse-rna-coordinate coord-s)
                    (coord/parse-rna-coordinate coord-e))))
 
+(defmethod restore "rna-inversion"
+  [m]
+  (let [{:keys [coord-start coord-end]} (restore-coords m)]
+    (rna-inversion coord-start coord-end)))
+
 ;;; RNA - conversion
 ;;;
 ;;; e.g. r.123_345con888_1110
@@ -703,7 +817,9 @@
          (some-> (:transcript alt) (str ":"))
          (coord/format (:coord-start alt))
          "_"
-         (coord/format (:coord-end alt)))))
+         (coord/format (:coord-end alt))))
+  (plain [this]
+    (into {:mutation "rna-conversion"} (plain-coords this))))
 
 (defn rna-conversion
   "Constructor of RNAConversion. Throws an exception if any input is illegal."
@@ -734,6 +850,11 @@
                     (coord/parse-rna-coordinate coord-e)
                     (parse-rna-conversion-alt alt))))
 
+(defmethod restore "rna-conversion"
+  [m]
+  (let [{:keys [coord-start coord-end alt]} (restore-coords m)]
+    (rna-conversion coord-start coord-end alt)))
+
 ;;; RNA - indel
 ;;;
 ;;; e.g. r.775delinsga
@@ -750,7 +871,9 @@
          "del"
          (if show-bases? ref)
          "ins"
-         alt)))
+         alt))
+  (plain [this]
+    (into {:mutation "rna-indel"} (plain-coords this))))
 
 (defn rna-indel
   "Constructor of RNAIndel. Throws an exception if any input is illegal."
@@ -772,6 +895,11 @@
                ref
                alt)))
 
+(defmethod restore "rna-indel"
+  [m]
+  (let [{:keys [coord-start coord-end ref alt]} (restore-coords m)]
+    (rna-indel coord-start coord-end ref alt)))
+
 ;;; RNA - repeated sequences
 ;;;
 ;;; e.g. r.-124_-123[14]
@@ -789,7 +917,9 @@
              :bases ref
              :coord (if should-show-end? (str "_" (coord/format coord-end))))
            "[" ncopy "]"
-           (if ncopy-other (str ";[" ncopy-other "]"))))))
+           (if ncopy-other (str ";[" ncopy-other "]")))))
+  (plain [this]
+    (into {:mutation "rna-repeated-seqs"} (plain-coords this))))
 
 (defn rna-repeated-seqs
   "Constructor of RNARepeatedSeqs. Throws an exception if any input is illegal."
@@ -814,6 +944,11 @@
                        ref
                        (parse-long ncopy1)
                        (some-> ncopy2 parse-long))))
+
+(defmethod restore "rna-repeated-seqs"
+  [m]
+  (let [{:keys [coord-start coord-end ref ncopy ncopy-other]} (restore-coords m)]
+    (rna-repeated-seqs coord-start coord-end ref ncopy ncopy-other)))
 
 (defn parse-rna
   [s]
@@ -858,7 +993,9 @@
          (if (= ref alt)
            "="
            (cond-> alt
-             (= amino-acid-format :short) ->short-amino-acid)))))
+             (= amino-acid-format :short) ->short-amino-acid))))
+  (plain [this]
+    (into {:mutation "protein-substitution"} (plain-coords this))))
 
 (defn protein-substitution
   "Constructor of ProteinSubstitution. Throws an exception if any input is illegal."
@@ -881,6 +1018,11 @@
                             "*" "Ter"
                             (->long-amino-acid alt)))))
 
+(defmethod restore "protein-substitution"
+  [m]
+  (let [{:keys [ref coord alt]} (restore-coords m)]
+    (protein-substitution ref coord alt)))
+
 ;;; Protein - deletion
 ;;;
 ;;; e.g. Ala3del
@@ -898,7 +1040,9 @@
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
                             (coord/format coord-end)])
-                         "del"]))))
+                         "del"])))
+  (plain [this]
+    (into {:mutation "protein-deletion"} (plain-coords this))))
 
 (defn protein-deletion
   "Constructor of ProteinDeletion. Throws an exception if any input is illegal."
@@ -921,6 +1065,11 @@
                       (->long-amino-acid ref-e)
                       (some-> coord-e coord/parse-protein-coordinate))))
 
+(defmethod restore "protein-deletion"
+  [m]
+  (let [{:keys [ref-start coord-start ref-end coord-end]} (restore-coords m)]
+    (protein-deletion ref-start coord-start ref-end coord-end)))
+
 ;;; Protein - duplication
 ;;;
 ;;; e.g. Ala3dup
@@ -938,7 +1087,9 @@
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
                             (coord/format coord-end)])
-                         "dup"]))))
+                         "dup"])))
+  (plain [this]
+    (into {:mutation "protein-duplication"} (plain-coords this))))
 
 (defn protein-duplication
   "Constructor of ProteinDuplication. Throws an exception if any input is illegal."
@@ -961,6 +1112,11 @@
                          (->long-amino-acid ref-e)
                          (some-> coord-e coord/parse-protein-coordinate))))
 
+(defmethod restore "protein-duplication"
+  [m]
+  (let [{:keys [ref-start coord-start ref-end coord-end]} (restore-coords m)]
+    (protein-duplication ref-start coord-start ref-end coord-end)))
+
 ;;; Protein - insertion
 ;;;
 ;;; e.g. Lys23_Leu24insArgSerGln
@@ -978,7 +1134,9 @@
                          (coord/format coord-end)
                          "ins"
                          (cond->> alts
-                           (= amino-acid-format :short) (map ->short-amino-acid))]))))
+                           (= amino-acid-format :short) (map ->short-amino-acid))])))
+  (plain [this]
+    (into {:mutation "protein-insertion"} (plain-coords this))))
 
 (defn protein-insertion
   "Constructor of ProteinInsertion. Throws an exception if any input is illegal."
@@ -1002,6 +1160,11 @@
                        (some-> coord-e coord/parse-protein-coordinate)
                        (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?"))))))
 
+(defmethod restore "protein-insertion"
+  [m]
+  (let [{:keys [ref-start coord-start ref-end coord-end alts]} (restore-coords m)]
+    (protein-insertion ref-start coord-start ref-end coord-end alts)))
+
 ;;; Protein - indel
 ;;;
 ;;; e.g. Cys28delinsTrpVal
@@ -1021,7 +1184,9 @@
                             (coord/format coord-end)])
                          "delins"
                          (cond->> alts
-                           (= amino-acid-format :short) (map ->short-amino-acid))]))))
+                           (= amino-acid-format :short) (map ->short-amino-acid))])))
+  (plain [this]
+    (into {:mutation "protein-indel"} (plain-coords this))))
 
 (defn protein-indel
   "Constructor of ProteinIndel. Throws an exception if any input is illegal."
@@ -1045,6 +1210,11 @@
                    (some-> coord-e coord/parse-protein-coordinate)
                    (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?"))))))
 
+(defmethod restore "protein-indel"
+  [m]
+  (let [{:keys [ref-start coord-start ref-end coord-end alts]} (restore-coords m)]
+    (protein-indel ref-start coord-start ref-end coord-end alts)))
+
 ;;; Protein - repeated sequences
 ;;;
 ;;; e.g. Ala2[10]
@@ -1065,7 +1235,9 @@
                               (= amino-acid-format :short) ->short-amino-acid)
                             (coord/format coord-end)])
                          "[" ncopy "]"
-                         (if ncopy-other [";[" ncopy-other "]"])]))))
+                         (if ncopy-other [";[" ncopy-other "]"])])))
+  (plain [this]
+    (into {:mutation "protein-repeated-seqs"} (plain-coords this))))
 
 (defn protein-repeated-seqs
   "Constructor of ProteinRepeatedSeqs. Throws an exception if any input is illegal."
@@ -1093,6 +1265,11 @@
                            (parse-long ncopy1)
                            (if ncopy2 (parse-long ncopy2)))))
 
+(defmethod restore "protein-repeated-seqs"
+  [m]
+  (let [{:keys [ref-start coord-start ref-end coord-end ncopy ncopy-other]} (restore-coords m)]
+    (protein-repeated-seqs ref-start coord-start ref-end coord-end ncopy ncopy-other)))
+
 ;;; Protein - frame shift
 ;;;
 ;;; e.g. Arg97ProfsTer23
@@ -1117,7 +1294,9 @@
                   (= ter-format :long) "Ter"
                   (= amino-acid-format :short) (->short-amino-acid "Ter")
                   :else "Ter")
-                (coord/format new-ter-site))))))
+                (coord/format new-ter-site)))))
+  (plain [this]
+    (into {:mutation "protein-frame-shift"} (plain-coords this))))
 
 (defn protein-frame-shift
   "Constructor of ProteinFrameShift. Throws an exception if any input is illegal."
@@ -1138,6 +1317,11 @@
                          (coord/parse-protein-coordinate coord')
                          (->long-amino-acid alt)
                          (some-> new-ter-site coord/parse-protein-coordinate))))
+
+(defmethod restore "protein-frame-shift"
+  [m]
+  (let [{:keys [ref coord alt new-ter-site]} (restore-coords m)]
+    (protein-frame-shift ref coord alt new-ter-site)))
 
 ;;; Protein - extension
 ;;;
@@ -1164,7 +1348,9 @@
            (= amino-acid-format :short) ->short-amino-acid)
          "ext"
          (coord/->region-str region)
-         (coord/format new-site))))
+         (coord/format new-site)))
+  (plain [this]
+    (into {:mutation "protein-extension"} (plain-coords this))))
 
 (defn protein-extension
   "Constructor of ProteinExtension. Throws an exception if any input is illegal."
@@ -1187,6 +1373,11 @@
                        (->long-amino-acid alt)
                        (coord/->region-keyword region)
                        (coord/parse-protein-coordinate new-site))))
+
+(defmethod restore "protein-extension"
+  [m]
+  (let [{:keys [ref coord alt region new-site]} (restore-coords m)]
+    (protein-extension ref coord alt region new-site)))
 
 (defn parse-protein
   [s]

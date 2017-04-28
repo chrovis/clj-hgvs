@@ -11,6 +11,12 @@
                                                     :ref "G"
                                                     :type ">"
                                                     :alt "A"})]})
+(def hgvs1pm {:transcript "NM_005228.3", :kind "cdna",
+              :mutations [{:mutation "dna-substitution"
+                           :coord (coord/plain (coord/cdna-coordinate 2361))
+                           :ref "G"
+                           :type ">"
+                           :alt "A"}]})
 
 (def hgvs2s "c.2361G>A")
 (def hgvs2m {:transcript nil, :kind :cdna,
@@ -125,3 +131,11 @@
       hgvs9m hgvs9s)
     (is (= (hgvs/format hgvs4m {:show-bases? true}) hgvs4s))
     (is (= (hgvs/format hgvs7m {:amino-acid-format :short}) hgvs7ss))))
+
+(deftest plain-test
+  (testing "returns a plain map representing HGVS"
+    (is (= (hgvs/plain hgvs1m) hgvs1pm))))
+
+(deftest restore-test
+  (testing "restores a plain map to HGVS"
+    (is (= (hgvs/restore hgvs1pm) hgvs1m))))

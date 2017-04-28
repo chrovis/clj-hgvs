@@ -33,6 +33,11 @@
 (def dna-substitution1s "45576A>C")
 (def dna-substitution1k :genome)
 (def dna-substitution1 (mut/dna-substitution (coord/genomic-coordinate 45576) "A" ">" "C"))
+(def dna-substitution1m {:mutation "dna-substitution"
+                         :coord (coord/plain (coord/genomic-coordinate 45576))
+                         :ref "A"
+                         :type ">"
+                         :alt "C"})
 
 (def dna-substitution2s "88+1G>T")
 (def dna-substitution2k :cdna)
@@ -68,11 +73,23 @@
       dna-substitution4s dna-substitution4k dna-substitution4
       dna-substitution5s dna-substitution5k dna-substitution5)))
 
+(deftest plain-dna-substitution-test
+  (testing "returns a plain map representing DNASubstitution"
+    (is (= (mut/plain dna-substitution1) dna-substitution1m))))
+
+(deftest restore-dna-substitution-test
+  (testing "restores a plain map to DNASubstitution"
+    (is (= (mut/restore dna-substitution1m) dna-substitution1))))
+
 ;;; DNA - deletion
 
 (def dna-deletion1s "7del")
 (def dna-deletion1k :genome)
 (def dna-deletion1 (mut/dna-deletion (coord/genomic-coordinate 7) nil))
+(def dna-deletion1m {:mutation "dna-deletion"
+                     :coord-start (coord/plain (coord/genomic-coordinate 7))
+                     :coord-end nil
+                     :ref nil})
 
 (def dna-deletion2s "6_8del")
 (def dna-deletion2k :genome)
@@ -135,11 +152,23 @@
       dna-deletion6s dna-deletion6k dna-deletion6
       dna-deletion7s dna-deletion7k dna-deletion7)))
 
+(deftest plain-dna-deletion-test
+  (testing "returns a plain map representing DNADeletion"
+    (is (= (mut/plain dna-deletion1) dna-deletion1m))))
+
+(deftest restore-dna-deletion-test
+  (testing "restores a plain map to DNADeletion"
+    (is (= (mut/restore dna-deletion1m) dna-deletion1))))
+
 ;;; DNA - duplication
 
 (def dna-duplication1s "7dup")
 (def dna-duplication1k :genome)
 (def dna-duplication1 (mut/dna-duplication (coord/genomic-coordinate 7) nil))
+(def dna-duplication1m {:mutation "dna-duplication"
+                        :coord-start (coord/plain (coord/genomic-coordinate 7))
+                        :coord-end nil
+                        :ref nil})
 
 (def dna-duplication2s "6_8dup")
 (def dna-duplication2k :genome)
@@ -202,6 +231,14 @@
       dna-duplication6s dna-duplication6k dna-duplication6
       dna-duplication7s dna-duplication7k dna-duplication7)))
 
+(deftest plain-dna-duplication-test
+  (testing "returns a plain map representing DNADuplication"
+    (is (= (mut/plain dna-duplication1) dna-duplication1m))))
+
+(deftest restore-dna-duplication-test
+  (testing "restores a plain map to DNADuplication"
+    (is (= (mut/restore dna-duplication1m) dna-duplication1))))
+
 ;;; DNA - insertion
 
 (def dna-insertion1s "5756_5757insAGG")
@@ -209,6 +246,10 @@
 (def dna-insertion1 (mut/dna-insertion (coord/genomic-coordinate 5756)
                                        (coord/genomic-coordinate 5757)
                                        "AGG"))
+(def dna-insertion1m {:mutation "dna-insertion"
+                      :coord-start (coord/plain (coord/genomic-coordinate 5756))
+                      :coord-end (coord/plain (coord/genomic-coordinate 5757))
+                      :alt "AGG"})
 
 (def dna-insertion2s "123_124insL37425.1:23_361")
 (def dna-insertion2k :genome)
@@ -244,6 +285,15 @@
       ;; dna-insertion4s dna-insertion4k dna-insertion4 ; TODO
       )))
 
+(deftest plain-dna-insertion-test
+  (testing "returns a plain map representing DNAInsertion"
+    (is (= (mut/plain dna-insertion1) dna-insertion1m))))
+
+(deftest restore-dna-insertion-test
+  (testing "restores a plain map to DNAInsertion"
+    (is (= (mut/restore dna-insertion1m) dna-insertion1))))
+
+
 ;;; DNA - inversion
 
 (def dna-inversion1s "1077_1080inv")
@@ -278,6 +328,13 @@
                                           :kind nil
                                           :coord-start (coord/genomic-coordinate 1844)
                                           :coord-end (coord/genomic-coordinate 2101)}))
+(def dna-conversion1m {:mutation "dna-conversion"
+                       :coord-start (coord/plain (coord/genomic-coordinate 333))
+                       :coord-end (coord/plain (coord/genomic-coordinate 590))
+                       :alt {:transcript nil
+                             :kind nil
+                             :coord-start (coord/plain (coord/genomic-coordinate 1844))
+                             :coord-end (coord/plain (coord/genomic-coordinate 2101))}})
 
 (def dna-conversion2s "415_1655conAC096506.5:g.409_1683")
 (def dna-conversion2k :genome)
@@ -311,11 +368,25 @@
       dna-conversion2s dna-conversion2k dna-conversion2
       dna-conversion3s dna-conversion3k dna-conversion3)))
 
+(deftest plain-dna-conversion-test
+  (testing "returns a plain map representing DNAConversion"
+    (is (= (mut/plain dna-conversion1) dna-conversion1m))))
+
+(deftest restore-dna-conversion-test
+  (testing "restores a plain map to DNAConversion"
+    (is (= (mut/restore dna-conversion1m) dna-conversion1))))
+
+
 ;;; DNA - indel
 
 (def dna-indel1s "6775delinsGA")
 (def dna-indel1k :genome)
 (def dna-indel1 (mut/dna-indel (coord/genomic-coordinate 6775) nil nil "GA"))
+(def dna-indel1m {:mutation "dna-indel"
+                  :coord-start (coord/plain (coord/genomic-coordinate 6775))
+                  :coord-end nil
+                  :ref nil
+                  :alt "GA"})
 
 (def dna-indel2s "6775delTinsGA")
 (def dna-indel2ss "6775delinsGA")
@@ -344,6 +415,14 @@
       dna-indel2s dna-indel2k dna-indel2
       dna-indel3s dna-indel3k dna-indel3)))
 
+(deftest plain-dna-indel-test
+  (testing "returns a plain map representing DNAIndel"
+    (is (= (mut/plain dna-indel1) dna-indel1m))))
+
+(deftest restore-dna-indel-test
+  (testing "restores a plain map to DNAIndel"
+    (is (= (mut/restore dna-indel1m) dna-indel1))))
+
 ;;; DNA - repeated sequences
 
 (def dna-repeated-seqs1s-c "123_124[14]")
@@ -361,6 +440,12 @@
                                                  (coord/genomic-coordinate 124)
                                                  "TG"
                                                  14))
+(def dna-repeated-seqs1m-c {:mutation "dna-repeated-seqs"
+                            :coord-start (coord/plain (coord/genomic-coordinate 123))
+                            :coord-end (coord/plain (coord/genomic-coordinate 124))
+                            :ref nil
+                            :ncopy 14
+                            :ncopy-other nil})
 
 (def dna-repeated-seqs2s "123_124[14];[18]")
 (def dna-repeated-seqs2k :genome)
@@ -387,12 +472,24 @@
       dna-repeated-seqs1s-b dna-repeated-seqs1k dna-repeated-seqs1-b
       dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2)))
 
+(deftest plain-dna-repeated-seqs-test
+  (testing "returns a plain map representing DNARepeatedSeqs"
+    (is (= (mut/plain dna-repeated-seqs1-c) dna-repeated-seqs1m-c))))
+
+(deftest restore-dna-repeated-seqs-test
+  (testing "restores a plain map to DNARepeatedSeqs"
+    (is (= (mut/restore dna-repeated-seqs1m-c) dna-repeated-seqs1-c))))
+
 ;;; RNA mutations
 
 ;;; RNA - substitution
 
 (def rna-substitution1s "76a>c")
 (def rna-substitution1 (mut/rna-substitution (coord/rna-coordinate 76 nil nil) "a" "c"))
+(def rna-substitution1m {:mutation "rna-substitution"
+                         :coord (coord/plain (coord/rna-coordinate 76 nil nil))
+                         :ref "a"
+                         :alt "c"})
 
 (def rna-substitution2s "-14g>c")
 (def rna-substitution2 (mut/rna-substitution (coord/rna-coordinate 14 0 :upstream) "g" "c"))
@@ -414,10 +511,22 @@
       rna-substitution2s rna-substitution2
       rna-substitution3s rna-substitution3)))
 
+(deftest plain-rna-substitution-test
+  (testing "returns a plain map representing RNASubstitution"
+    (is (= (mut/plain rna-substitution1) rna-substitution1m))))
+
+(deftest restore-rna-substitution-test
+  (testing "restores a plain map to RNASubstitution"
+    (is (= (mut/restore rna-substitution1m) rna-substitution1))))
+
 ;;; RNA - deletion
 
 (def rna-deletion1s "7del")
 (def rna-deletion1 (mut/rna-deletion (coord/rna-coordinate 7 nil nil) nil))
+(def rna-deletion1m {:mutation "rna-deletion"
+                     :coord-start (coord/plain (coord/rna-coordinate 7 nil nil))
+                     :coord-end nil
+                     :ref nil})
 
 (def rna-deletion2s "7delu")
 (def rna-deletion2ss "7del")
@@ -449,10 +558,22 @@
       ;; rna-deletion4s rna-deletion4 ; TODO
       )))
 
+(deftest plain-rna-deletion-test
+  (testing "returns a plain map representing RNADeletion"
+    (is (= (mut/plain rna-deletion1) rna-deletion1m))))
+
+(deftest restore-rna-deletion-test
+  (testing "restores a plain map to RNADeletion"
+    (is (= (mut/restore rna-deletion1m) rna-deletion1))))
+
 ;;; RNA - duplication
 
 (def rna-duplication1s "7dup")
 (def rna-duplication1 (mut/rna-duplication (coord/rna-coordinate 7 nil nil) nil))
+(def rna-duplication1m {:mutation "rna-duplication"
+                        :coord-start (coord/plain (coord/rna-coordinate 7 nil nil))
+                        :coord-end nil
+                        :ref nil})
 
 (def rna-duplication2s "7dupu")
 (def rna-duplication2ss "7dup")
@@ -477,12 +598,24 @@
       rna-duplication2s rna-duplication2
       rna-duplication3s rna-duplication3)))
 
+(deftest plain-rna-duplication-test
+  (testing "returns a plain map representing RNADuplication"
+    (is (= (mut/plain rna-duplication1) rna-duplication1m))))
+
+(deftest restore-rna-duplication-test
+  (testing "restores a plain map to RNADuplication"
+    (is (= (mut/restore rna-duplication1m) rna-duplication1))))
+
 ;;; RNA - insertion
 
 (def rna-insertion1s "756_757insacu")
 (def rna-insertion1 (mut/rna-insertion (coord/rna-coordinate 756 nil nil)
                                        (coord/rna-coordinate 757 nil nil)
                                        "acu"))
+(def rna-insertion1m {:mutation "rna-insertion"
+                      :coord-start (coord/plain (coord/rna-coordinate 756 nil nil))
+                      :coord-end (coord/plain (coord/rna-coordinate 757 nil nil))
+                      :alt "acu"})
 
 (def rna-insertion2s "431_432ins(5)")
 (def rna-insertion2 (mut/rna-insertion (coord/rna-coordinate 431 nil nil)
@@ -510,11 +643,22 @@
       rna-insertion2s rna-insertion2
       rna-insertion3s rna-insertion3)))
 
+(deftest plain-rna-insertion-test
+  (testing "returns a plain map representing RNAInsertion"
+    (is (= (mut/plain rna-insertion1) rna-insertion1m))))
+
+(deftest restore-rna-insertion-test
+  (testing "restores a plain map to RNAInsertion"
+    (is (= (mut/restore rna-insertion1m) rna-insertion1))))
+
 ;;; RNA - inversion
 
 (def rna-inversion1s "177_180inv")
 (def rna-inversion1 (mut/rna-inversion (coord/rna-coordinate 177 nil nil)
                                        (coord/rna-coordinate 180 nil nil)))
+(def rna-inversion1m {:mutation "rna-inversion"
+                      :coord-start (coord/plain (coord/rna-coordinate 177 nil nil))
+                      :coord-end (coord/plain (coord/rna-coordinate 180 nil nil))})
 
 (deftest format-rna-inversion-test
   (testing "returns a string expression of a RNA inversion"
@@ -526,6 +670,14 @@
     (are [s m] (= (mut/parse-rna-inversion s) m)
       rna-inversion1s rna-inversion1)))
 
+(deftest plain-rna-inversion-test
+  (testing "returns a plain map representing RNAInversion"
+    (is (= (mut/plain rna-inversion1) rna-inversion1m))))
+
+(deftest restore-rna-inversion-test
+  (testing "restores a plain map to RNAInversion"
+    (is (= (mut/restore rna-inversion1m) rna-inversion1))))
+
 ;;; RNA - conversion
 
 (def rna-conversion1s "123_345con888_1110")
@@ -534,6 +686,12 @@
                                          {:transcript nil
                                           :coord-start (coord/rna-coordinate 888 nil nil)
                                           :coord-end (coord/rna-coordinate 1110 nil nil)}))
+(def rna-conversion1m {:mutation "rna-conversion"
+                       :coord-start (coord/plain (coord/rna-coordinate 123 nil nil))
+                       :coord-end (coord/plain (coord/rna-coordinate 345 nil nil))
+                       :alt {:transcript nil
+                             :coord-start (coord/plain (coord/rna-coordinate 888 nil nil))
+                             :coord-end (coord/plain (coord/rna-coordinate 1110 nil nil))}})
 
 (def rna-conversion2s "415_1655conAC096506.5:409_1649")
 (def rna-conversion2 (mut/rna-conversion (coord/rna-coordinate 415 nil nil)
@@ -554,10 +712,23 @@
       rna-conversion1s rna-conversion1
       rna-conversion2s rna-conversion2)))
 
+(deftest plain-rna-conversion-test
+  (testing "returns a plain map representing RNAConversion"
+    (is (= (mut/plain rna-conversion1) rna-conversion1m))))
+
+(deftest restore-rna-conversion-test
+  (testing "restores a plain map to RNAConversion"
+    (is (= (mut/restore rna-conversion1m) rna-conversion1))))
+
 ;;; RNA - indel
 
 (def rna-indel1s "775delinsga")
 (def rna-indel1 (mut/rna-indel (coord/rna-coordinate 775 nil nil) nil nil "ga"))
+(def rna-indel1m {:mutation "rna-indel"
+                  :coord-start (coord/plain (coord/rna-coordinate 775 nil nil))
+                  :coord-end nil
+                  :ref nil
+                  :alt "ga"})
 
 (def rna-indel2s "775deluinsga")
 (def rna-indel2ss "775delinsga")
@@ -585,6 +756,14 @@
       rna-indel2s rna-indel2
       rna-indel3s rna-indel3)))
 
+(deftest plain-rna-indel-test
+  (testing "returns a plain map representing RNAIndel"
+    (is (= (mut/plain rna-indel1) rna-indel1m))))
+
+(deftest restore-rna-indel-test
+  (testing "restores a plain map to RNAIndel"
+    (is (= (mut/restore rna-indel1m) rna-indel1))))
+
 ;;; RNA - repeated sequences
 
 (def rna-repeated-seqs1s-c "-124_-123[14]")
@@ -601,6 +780,12 @@
                                                  (coord/rna-coordinate 123 0 :upstream)
                                                  "ug"
                                                  14))
+(def rna-repeated-seqs1m-c {:mutation "rna-repeated-seqs"
+                            :coord-start (coord/plain (coord/rna-coordinate 124 0 :upstream))
+                            :coord-end (coord/plain (coord/rna-coordinate 123 0 :upstream))
+                            :ref nil
+                            :ncopy 14
+                            :ncopy-other nil})
 
 (def rna-repeated-seqs2s "-124_-123[14];[18]")
 (def rna-repeated-seqs2 (mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
@@ -626,6 +811,14 @@
       rna-repeated-seqs1s-b rna-repeated-seqs1-b
       rna-repeated-seqs2s rna-repeated-seqs2)))
 
+(deftest plain-rna-repeated-seqs-test
+  (testing "returns a plain map representing RNARepeatedSeqs"
+    (is (= (mut/plain rna-repeated-seqs1-c) rna-repeated-seqs1m-c))))
+
+(deftest restore-rna-repeated-seqs-test
+  (testing "restores a plain map to RNARepeatedSeqs"
+    (is (= (mut/restore rna-repeated-seqs1m-c) rna-repeated-seqs1-c))))
+
 ;;; Protein mutations
 
 ;;; Protein - substitution
@@ -635,6 +828,10 @@
 (def protein-substitution1 (mut/protein-substitution "Arg"
                                                      (coord/protein-coordinate 54)
                                                      "Ser"))
+(def protein-substitution1m {:mutation "protein-substitution"
+                             :ref "Arg"
+                             :coord (coord/plain (coord/protein-coordinate 54))
+                             :alt "Ser"})
 
 (def protein-substitution2s "Cys123=")
 (def protein-substitution2ss "C123=")
@@ -658,11 +855,24 @@
       protein-substitution2s protein-substitution2
       protein-substitution2ss protein-substitution2)))
 
+(deftest plain-protein-substitution-test
+  (testing "returns a plain map representing ProteinSubstitution"
+    (is (= (mut/plain protein-substitution1) protein-substitution1m))))
+
+(deftest restore-protein-substitution-test
+  (testing "restores a plain map to ProteinSubstitution"
+    (is (= (mut/restore protein-substitution1m) protein-substitution1))))
+
 ;;; Protein - deletion
 
 (def protein-deletion1s "Ala3del")
 (def protein-deletion1ss "A3del")
 (def protein-deletion1 (mut/protein-deletion "Ala" (coord/protein-coordinate 3)))
+(def protein-deletion1m {:mutation "protein-deletion"
+                         :ref-start "Ala"
+                         :coord-start (coord/plain (coord/protein-coordinate 3))
+                         :ref-end nil
+                         :coord-end nil})
 
 (def protein-deletion2s "Cys76_Glu79del")
 (def protein-deletion2ss "C76_E79del")
@@ -688,11 +898,24 @@
       protein-deletion2s protein-deletion2
       protein-deletion2ss protein-deletion2)))
 
+(deftest plain-protein-deletion-test
+  (testing "returns a plain map representing ProteinDeletion"
+    (is (= (mut/plain protein-deletion1) protein-deletion1m))))
+
+(deftest restore-protein-deletion-test
+  (testing "restores a plain map to ProteinDeletion"
+    (is (= (mut/restore protein-deletion1m) protein-deletion1))))
+
 ;;; Protein - duplication
 
 (def protein-duplication1s "Ala3dup")
 (def protein-duplication1ss "A3dup")
 (def protein-duplication1 (mut/protein-duplication "Ala" (coord/protein-coordinate 3)))
+(def protein-duplication1m {:mutation "protein-duplication"
+                            :ref-start "Ala"
+                            :coord-start (coord/plain (coord/protein-coordinate 3))
+                            :ref-end nil
+                            :coord-end nil})
 
 (def protein-duplication2s "Ala3_Ser5dup")
 (def protein-duplication2ss "A3_S5dup")
@@ -719,6 +942,14 @@
       protein-duplication2s protein-duplication2
       protein-duplication2ss protein-duplication2)))
 
+(deftest plain-protein-duplication-test
+  (testing "returns a plain map representing ProteinDuplication"
+    (is (= (mut/plain protein-duplication1) protein-duplication1m))))
+
+(deftest restore-protein-duplication-test
+  (testing "restores a plain map to ProteinDuplication"
+    (is (= (mut/restore protein-duplication1m) protein-duplication1))))
+
 ;;; Protein - insertion
 
 (def protein-insertions "Lys23_Leu24insArgSerGln")
@@ -726,6 +957,12 @@
 (def protein-insertion (mut/protein-insertion "Lys" (coord/protein-coordinate 23)
                                               "Leu" (coord/protein-coordinate 24)
                                               ["Arg" "Ser" "Gln"]))
+(def protein-insertionm {:mutation "protein-insertion"
+                         :ref-start "Lys"
+                         :coord-start (coord/plain (coord/protein-coordinate 23))
+                         :ref-end "Leu"
+                         :coord-end (coord/plain (coord/protein-coordinate 24))
+                         :alts ["Arg" "Ser" "Gln"]})
 
 (deftest format-protein-insertion-test
   (testing "returns a string expression of a protein insertion"
@@ -739,6 +976,14 @@
       protein-insertions protein-insertion
       protein-insertionss protein-insertion)))
 
+(deftest plain-protein-insertion-test
+  (testing "returns a plain map representing ProteinInsertion"
+    (is (= (mut/plain protein-insertion) protein-insertionm))))
+
+(deftest restore-protein-insertion-test
+  (testing "restores a plain map to ProteinInsertion"
+    (is (= (mut/restore protein-insertionm) protein-insertion))))
+
 ;;; Protein - indel
 
 (def protein-indel1s "Cys28delinsTrpVal")
@@ -746,6 +991,12 @@
 (def protein-indel1 (mut/protein-indel "Cys" (coord/protein-coordinate 28)
                                        nil nil
                                        ["Trp" "Val"]))
+(def protein-indel1m {:mutation "protein-indel"
+                      :ref-start "Cys"
+                      :coord-start (coord/plain (coord/protein-coordinate 28))
+                      :ref-end nil
+                      :coord-end nil
+                      :alts ["Trp" "Val"]})
 
 (def protein-indel2s "Cys28_Lys29delinsTrp")
 (def protein-indel2ss "C28_K29delinsW")
@@ -769,6 +1020,14 @@
       protein-indel2s protein-indel2
       protein-indel2ss protein-indel2)))
 
+(deftest plain-protein-indel-test
+  (testing "returns a plain map representing ProteinIndel"
+    (is (= (mut/plain protein-indel1) protein-indel1m))))
+
+(deftest restore-protein-indel-test
+  (testing "restores a plain map to ProteinIndel"
+    (is (= (mut/restore protein-indel1m) protein-indel1))))
+
 ;;; Protein - repeated sequences
 
 (def protein-repeated-seqs1s "Ala2[10]")
@@ -776,6 +1035,13 @@
 (def protein-repeated-seqs1 (mut/protein-repeated-seqs "Ala" (coord/protein-coordinate 2)
                                                        nil nil
                                                        10))
+(def protein-repeated-seqs1m {:mutation "protein-repeated-seqs"
+                              :ref-start "Ala"
+                              :coord-start (coord/plain (coord/protein-coordinate 2))
+                              :ref-end nil
+                              :coord-end nil
+                              :ncopy 10
+                              :ncopy-other nil})
 
 (def protein-repeated-seqs2s "Ala2[10];[11]")
 (def protein-repeated-seqs2ss "A2[10];[11]")
@@ -809,6 +1075,14 @@
       protein-repeated-seqs3s protein-repeated-seqs3
       protein-repeated-seqs3ss protein-repeated-seqs3)))
 
+(deftest plain-protein-repeated-seqs-test
+  (testing "returns a plain map representing ProteinRepeatedSeqs"
+    (is (= (mut/plain protein-repeated-seqs1) protein-repeated-seqs1m))))
+
+(deftest restore-protein-repeated-seqs-test
+  (testing "restores a plain map to ProteinRepeatedSeqs"
+    (is (= (mut/restore protein-repeated-seqs1m) protein-repeated-seqs1))))
+
 ;;; Protein - frame shift
 
 (def protein-frame-shift1s "Arg97ProfsTer23")
@@ -816,6 +1090,11 @@
                                                    (coord/protein-coordinate 97)
                                                    "Pro"
                                                    (coord/protein-coordinate 23)))
+(def protein-frame-shift1m {:mutation "protein-frame-shift"
+                            :ref "Arg"
+                            :coord (coord/plain (coord/protein-coordinate 97))
+                            :alt "Pro"
+                            :new-ter-site (coord/plain (coord/protein-coordinate 23))})
 
 (def protein-frame-shift2s "Arg97fs")
 (def protein-frame-shift2ss "R97fs")
@@ -853,6 +1132,14 @@
       protein-frame-shift3s protein-frame-shift3
       protein-frame-shift4s protein-frame-shift4)))
 
+(deftest plain-protein-frame-shift-test
+  (testing "returns a plain map representing ProteinFrameShift"
+    (is (= (mut/plain protein-frame-shift1) protein-frame-shift1m))))
+
+(deftest restore-protein-frame-shift-test
+  (testing "restores a plain map to ProteinFrameShift"
+    (is (= (mut/restore protein-frame-shift1m) protein-frame-shift1))))
+
 ;;; Protein - extension
 
 (def protein-extension1s "Met1ext-5")
@@ -862,6 +1149,12 @@
                                                nil
                                                :upstream
                                                (coord/protein-coordinate 5)))
+(def protein-extension1m {:mutation "protein-extension"
+                          :ref "Met"
+                          :coord (coord/plain (coord/protein-coordinate 1))
+                          :alt nil
+                          :region :upstream
+                          :new-site (coord/plain (coord/protein-coordinate 5))})
 
 (def protein-extension2s "Met1Valext-12")
 (def protein-extension2ss "M1Vext-12")
@@ -907,3 +1200,11 @@
       protein-extension3s protein-extension3
       protein-extension3ss protein-extension3
       protein-extension4s protein-extension4)))
+
+(deftest plain-protein-extension-test
+  (testing "returns a plain map representing ProteinExtension"
+    (is (= (mut/plain protein-extension1) protein-extension1m))))
+
+(deftest restore-protein-extension-test
+  (testing "restores a plain map to ProteinExtension"
+    (is (= (mut/restore protein-extension1m) protein-extension1))))

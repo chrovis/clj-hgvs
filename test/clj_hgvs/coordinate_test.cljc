@@ -9,6 +9,14 @@
   (testing "returns a string expression of UnknownCoordinate"
     (is (= (coord/format (coord/unknown-coordinate)) "?"))))
 
+(deftest plain-unknown-coordinate-test
+  (testing "returns a plain map representing UnknownCoordinate"
+    (is (= (coord/plain (coord/unknown-coordinate)) {:coordinate "unknown"}))))
+
+(deftest restore-unknown-coordinate-test
+  (testing "restores a plain map to UnknownCoordinate"
+    (is (= (coord/restore {:coordinate "unknown"}) (coord/unknown-coordinate)))))
+
 ;;; genomic coordinate
 
 (deftest genomic-coordinate-test
@@ -38,6 +46,16 @@
   (testing "returns a string expression of GenomicCoordinate"
     (is (= (coord/format (coord/genomic-coordinate 3)) "3"))))
 
+(deftest plain-genomic-coordinate-test
+  (testing "returns a plain map representing GenomicCoordinate"
+    (is (= (coord/plain (coord/genomic-coordinate 3))
+           {:coordinate "genomic", :position 3}))))
+
+(deftest restore-genomic-coordinate-test
+  (testing "restores a plain map to GenomicCoordinate"
+    (is (= (coord/restore {:coordinate "genomic", :position 3})
+           (coord/genomic-coordinate 3)))))
+
 ;;; mitochondrial coordinate
 
 (deftest mitochondrial-coordinate-test
@@ -66,6 +84,16 @@
 (deftest format-mitochondrial-coordinate-test
   (testing "returns a string expression of MitochondrialCoordinate"
     (is (= (coord/format (coord/mitochondrial-coordinate 3)) "3"))))
+
+(deftest plain-mitochondrial-coordinate-test
+  (testing "returns a plain map representing MitochondrialCoordinate"
+    (is (= (coord/plain (coord/mitochondrial-coordinate 3))
+           {:coordinate "mitochondrial", :position 3}))))
+
+(deftest restore-mitochondrial-coordinate-test
+  (testing "restores a plain map to MitochondrialCoordinate"
+    (is (= (coord/restore {:coordinate "mitochondrial", :position 3})
+           (coord/mitochondrial-coordinate 3)))))
 
 ;;; coding DNA coordinate
 
@@ -136,6 +164,16 @@
     (is (true? (coord/in-exon? (coord/cdna-coordinate 3 0 nil))))
     (is (false? (coord/in-exon? (coord/cdna-coordinate 87 3 nil))))))
 
+(deftest plain-cdna-coordinate-test
+  (testing "returns a plain map representing CDNACoordinate"
+    (is (= (coord/plain (coord/cdna-coordinate 3 0 nil))
+           {:coordinate "cdna", :position 3, :offset 0, :region nil}))))
+
+(deftest restore-cdna-coordinate-test
+  (testing "restores a plain map to CDNACoordinate"
+    (is (= (coord/restore {:coordinate "cdna", :position 3, :offset 0, :region nil})
+           (coord/cdna-coordinate 3 0 nil)))))
+
 ;;; non-coding DNA coordinate
 
 (deftest ncdna-coordinate-test
@@ -164,6 +202,16 @@
 (deftest format-ncdna-coordinate-test
   (testing "returns a string expression of NCDNACoordinate"
     (is (= (coord/format (coord/ncdna-coordinate 3)) "3"))))
+
+(deftest plain-ncdna-coordinate-test
+  (testing "returns a plain map representing NCDNACoordinate"
+    (is (= (coord/plain (coord/ncdna-coordinate 3))
+           {:coordinate "ncdna", :position 3}))))
+
+(deftest restore-ncdna-coordinate-test
+  (testing "restores a plain map to NCDNACoordinate"
+    (is (= (coord/restore {:coordinate "ncdna", :position 3})
+           (coord/ncdna-coordinate 3)))))
 
 ;;; RNA coordinate
 
@@ -235,6 +283,16 @@
     (is (true? (coord/in-exon? (coord/rna-coordinate 3 nil nil))))
     (is (false? (coord/in-exon? (coord/rna-coordinate 87 3 nil))))))
 
+(deftest plain-rna-coordinate-test
+  (testing "returns a plain map representing RNACoordinate"
+    (is (= (coord/plain (coord/rna-coordinate 3 0 nil))
+           {:coordinate "rna", :position 3, :offset 0, :region nil}))))
+
+(deftest restore-rna-coordinate-test
+  (testing "restores a plain map to RNACoordinate"
+    (is (= (coord/restore {:coordinate "rna", :position 3, :offset 0, :region nil})
+           (coord/rna-coordinate 3 0 nil)))))
+
 ;;; protein coordinate
 
 (deftest protein-coordinate-test
@@ -263,3 +321,13 @@
 (deftest format-protein-coordinate-test
   (testing "returns a string expression of ProteinCoordinate"
     (is (= (coord/format (coord/protein-coordinate 3)) "3"))))
+
+(deftest plain-protein-coordinate-test
+  (testing "returns a plain map representing ProteinCoordinate"
+    (is (= (coord/plain (coord/protein-coordinate 3))
+           {:coordinate "protein", :position 3}))))
+
+(deftest restore-protein-coordinate-test
+  (testing "restores a plain map to ProteinCoordinate"
+    (is (= (coord/restore {:coordinate "protein", :position 3})
+           (coord/protein-coordinate 3)))))

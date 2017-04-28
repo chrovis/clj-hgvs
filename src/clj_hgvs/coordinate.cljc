@@ -4,7 +4,13 @@
   (:require [clj-hgvs.internal :refer [parse-long]]))
 
 (defprotocol Coordinate
-  (format [this] "Returns a string representing the given coordinate."))
+  (format [this] "Returns a string representing the given coordinate.")
+  (plain [this] "Returns a plain map representing the given coordinate."))
+
+(defmulti restore
+  "Restores a plain map to a suitable coordinate record."
+  {:arglists '([m])}
+  :coordinate)
 
 (defprotocol ICDNACoordinate
   (in-exon? [this] "Returns true if the coordinate is located in exon, else false."))
@@ -28,12 +34,17 @@
 
 (defrecord UnknownCoordinate []
   Coordinate
-  (format [_] "?"))
+  (format [_] "?")
+  (plain [_] {:coordinate "unknown"}))
 
 (defn unknown-coordinate
   "Returns UnknownCoordinate instance."
   []
   (UnknownCoordinate.))
+
+(defmethod restore "unknown"
+  [m]
+  (unknown-coordinate))
 
 ;;; genomic coordinate
 
@@ -42,8 +53,8 @@
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
   Coordinate
-  (format [_]
-    (str position)))
+  (format [_] (str position))
+  (plain [this] (into {:coordinate "genomic"} this)))
 
 (defn genomic-coordinate
   "Returns GenomicCoordinate instance having position. Throws an exception if
@@ -60,6 +71,10 @@
     (unknown-coordinate)
     (genomic-coordinate (parse-long s))))
 
+(defmethod restore "genomic"
+  [m]
+  (genomic-coordinate (:position m)))
+
 ;;; mitochondrial coordinate
 
 (defrecord MitochondrialCoordinate [position]
@@ -67,8 +82,8 @@
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
   Coordinate
-  (format [_]
-    (str position)))
+  (format [_] (str position))
+  (plain [this] (into {:coordinate "mitochondrial"} this)))
 
 (defn mitochondrial-coordinate
   "Returns MitochondrialCoordinate instance having position. Throws an exception
@@ -84,6 +99,10 @@
   (if (= s "?")
     (unknown-coordinate)
     (mitochondrial-coordinate (parse-long s))))
+
+(defmethod restore "mitochondrial"
+  [m]
+  (mitochondrial-coordinate (:position m)))
 
 ;;; coding DNA coordinate
 ;;;
@@ -115,6 +134,8 @@
          position
          (if-not (or (nil? offset) (zero? offset))
            (str (if (pos? offset) "+") offset))))
+  (plain [this]
+    (into {:coordinate "cdna"} (update this :region #(some-> % name))))
   ICDNACoordinate
   (in-exon? [this]
     (or (nil? offset) (zero? offset))))
@@ -145,6 +166,10 @@
                          0)
                        (->region-keyword region)))))
 
+(defmethod restore "cdna"
+  [m]
+  (cdna-coordinate (:position m) (:offset m) (keyword (:region m))))
+
 ;;; non-coding DNA coordinate
 
 (defrecord NCDNACoordinate [position]
@@ -152,8 +177,8 @@
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
   Coordinate
-  (format [_]
-    (str position)))
+  (format [_] (str position))
+  (plain [this] (into {:coordinate "ncdna"} this)))
 
 (defn ncdna-coordinate
   "Returns NCDNACoordinate instance having position. Throws an exception if
@@ -169,6 +194,10 @@
   (if (= s "?")
     (unknown-coordinate)
     (ncdna-coordinate (parse-long s))))
+
+(defmethod restore "ncdna"
+  [m]
+  (ncdna-coordinate (:position m)))
 
 ;;; RNA coordinate
 
@@ -192,6 +221,8 @@
          position
          (if-not (or (nil? offset) (zero? offset))
            (str (if (pos? offset) "+") offset))))
+  (plain [this]
+    (into {:coordinate "rna"} (update this :region #(some-> % name))))
   ICDNACoordinate
   (in-exon? [this]
     (or (nil? offset) (zero? offset))))
@@ -223,6 +254,10 @@
                         (->region-keyword region))
         (rna-coordinate (parse-long position) nil nil)))))
 
+(defmethod restore "rna"
+  [m]
+  (rna-coordinate (:position m) (:offset m) (keyword (:region m))))
+
 ;;; protein coordinate
 
 (defrecord ProteinCoordinate [position]
@@ -230,8 +265,8 @@
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
   Coordinate
-  (format [_]
-    (str position)))
+  (format [_] (str position))
+  (plain [this] (into {:coordinate "protein"} this)))
 
 (defn protein-coordinate
   "Returns ProteinCoordinate instance having position. Throws an exception if
@@ -247,3 +282,7 @@
   (if (= s "?")
     (unknown-coordinate)
     (protein-coordinate (parse-long s))))
+
+(defmethod restore "protein"
+  [m]
+  (protein-coordinate (:position m)))
