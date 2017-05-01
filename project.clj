@@ -4,8 +4,8 @@
   :license {:name "Apache License, Version 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0"}
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
-                 [org.clojure/clojurescript "1.9.518" :scope "provided"]]
-  :plugins [[lein-cljsbuild "1.1.5"]
+                 [org.clojure/clojurescript "1.9.521" :scope "provided"]]
+  :plugins [[lein-cljsbuild "1.1.6"]
             [lein-cloverage "1.0.9"]
             [lein-codox "0.10.3"]
             [lein-doo "0.1.7"]]
