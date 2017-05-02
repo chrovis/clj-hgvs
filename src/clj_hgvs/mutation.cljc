@@ -148,7 +148,7 @@
    (DNASubstitution. coord ref typ alt)))
 
 (def ^:private dna-substitution-re
-  #"([\d\-\+\*]+)([A-Z])([>=/]+)([A-Z])?")
+  #"([\d\-\+\*\?]+)([A-Z])([>=/]+)([A-Z])?")
 
 (defn parse-dna-substitution
   [s kind]
