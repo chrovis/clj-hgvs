@@ -564,7 +564,7 @@
 (defn parse-dna
   [s kind]
   ((condp re-find s
-     #"delins" parse-dna-indel
+     #"del[ACGT]*ins" parse-dna-indel
      #"del" parse-dna-deletion
      #"dup" parse-dna-duplication
      #"ins" parse-dna-insertion
