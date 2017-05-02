@@ -5,6 +5,20 @@
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]))
 
+(deftest split-mutations-test
+  (testing "splits multiple mutations, returning a vector"
+    (are [s e] (= (#'hgvs/split-mutations s) e)
+      "123456A>G" ["123456A>G"]
+      "[123456A>G;345678G>C]" ["123456A>G" "345678G>C"]
+      "[123456A>G];[345678G>C]" ["123456A>G" "345678G>C"]
+      "112GAT[14]" ["112GAT[14]"]
+      "[112GAT[14];113ATC[15]]" ["112GAT[14]" "113ATC[15]"]
+      "[112GAT[14]];[113ATC[15]]" ["112GAT[14]" "113ATC[15]"]))
+  (testing "throws Exception when an illegal string is passed"
+    (are [s] (thrown? #?(:clj Error, :cljs js/Error) (#'hgvs/split-mutations s))
+      "[123456A>G;345678G>C"
+      "[123456A>G;[345678G>C]")))
+
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m {:transcript "NM_005228.3", :kind :cdna,
              :mutations [(mut/map->DNASubstitution {:coord (coord/cdna-coordinate 2361)

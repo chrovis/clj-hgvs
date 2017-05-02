@@ -13,9 +13,17 @@
     (= kind :rna) mut/parse-rna
     (= kind :protein) mut/parse-protein))
 
+;; [123456A>G;345678G>C]
+;; [123456A>G];[345678G>C]
+;; 112GAT[14]
 (defn- split-mutations
   [s]
-  (map #(string/replace % #"[\[\]]" "") (string/split s #";")))
+  {:pre [(= (count (re-seq #"\[" s)) (count (re-seq #"\]" s)))]}
+  (if (re-find #";" s)
+    (condp re-find s
+      #"\];\[" (mapv #(subs % 1 (dec (count %))) (string/split s #";"))
+      #";" (string/split (subs s 1 (dec (count s))) #";"))
+    [s]))
 
 (defn hgvs
   "Constructor of HGVS map."
