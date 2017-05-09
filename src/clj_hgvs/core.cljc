@@ -6,6 +6,14 @@
             [clj-hgvs.internal :refer [->kind-keyword ->kind-str]]
             [clj-hgvs.mutation :as mut]))
 
+(defn- transcript?
+  [s]
+  (some? (re-matches #"(NC|LRG|NG|NM|NR|NP)_\d+(\.\d+)?" s)))
+
+(defn- kind?
+  [k]
+  (some? (#{:genome :mitochondria :cdna :ncdna :rna :protein} k)))
+
 (defn- mutation-parser
   [kind]
   (cond
@@ -26,8 +34,10 @@
     [s]))
 
 (defn hgvs
-  "Constructor of HGVS map."
+  "Constructor of HGVS map. Throws an exception if any input is illegal."
   [transcript kind mutation & mutations]
+  {:pre [(or (nil? transcript) (transcript? transcript))
+         (kind? kind)]}
   {:transcript transcript
    :kind kind
    :mutations (cond
