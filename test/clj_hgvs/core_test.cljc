@@ -89,7 +89,7 @@
                                                       :new-ter-site nil})]})
 
 (deftest hgvs-test
-  (testing "allows mutation maps"
+  (testing "allows mutation records"
     (is (= (hgvs/hgvs "NM_005228.3" :cdna
                       (mut/map->DNASubstitution {:coord (coord/cdna-coordinate 2361)
                                                  :ref "G"
@@ -105,9 +105,18 @@
                                              :coord-end nil
                                              :ref nil}))
            hgvs3m)))
-  (testing "allows mutation string"
+  (testing "allows mutation strings"
     (is (= (hgvs/hgvs "NM_005228.3" :cdna "2361G>A") hgvs1m))
-    (is (= (hgvs/hgvs nil :genome "[2376A>C;3103del]") hgvs3m))))
+    (is (= (hgvs/hgvs nil :genome "2376A>C" "3103del") hgvs3m))
+    (is (= (hgvs/hgvs nil :genome "[2376A>C;3103del]") hgvs3m)))
+  (testing "allows mix of records and strings"
+    (is (= (hgvs/hgvs nil :genome
+                      (mut/map->DNASubstitution {:coord (coord/genomic-coordinate 2376)
+                                                 :ref "A"
+                                                 :type ">"
+                                                 :alt "C"})
+                      "3103del")
+           hgvs3m))))
 
 (deftest parse-test
   (testing "returns HGVS map"

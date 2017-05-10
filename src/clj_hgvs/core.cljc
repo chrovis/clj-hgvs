@@ -35,14 +35,17 @@
 
 (defn hgvs
   "Constructor of HGVS map. Throws an exception if any input is illegal."
-  [transcript kind mutation & mutations]
+  [transcript kind & mutations]
   {:pre [(or (nil? transcript) (transcript? transcript))
-         (kind? kind)]}
+         (kind? kind)
+         (every? true? (map #(or (satisfies? mut/Mutation %) (string? %)) mutations))]}
   {:transcript transcript
    :kind kind
-   :mutations (cond
-                (map? mutation) (cons mutation mutations)
-                (string? mutation) (mapv (mutation-parser kind) (split-mutations mutation)))})
+   :mutations (vec (mapcat (fn [mutation]
+                             (cond
+                               (satisfies? mut/Mutation mutation) [mutation]
+                               (string? mutation) (map (mutation-parser kind) (split-mutations mutation))))
+                           mutations))})
 
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 
