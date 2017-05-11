@@ -27,7 +27,8 @@
    "W"
    "Y"
    "V"
-   "*"])
+   "*"
+   "X"])
 
 (def long-amino-acids
   ["Ala"
@@ -50,7 +51,8 @@
    "Trp"
    "Tyr"
    "Val"
-   "Ter"])
+   "Ter"
+   "Xaa"])
 
 (def ^:private short-long-amino-acid-map
   (zipmap short-amino-acids long-amino-acids))
