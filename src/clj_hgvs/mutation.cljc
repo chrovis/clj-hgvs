@@ -110,7 +110,7 @@
 
 (defn- dna-bases?
   [s]
-  (and (string? s) (some? (re-matches #"[ACGT]+" s))))
+  (and (string? s) (some? (re-matches #"[ACGNT]+" s))))
 
 (defn- coord-parser
   [kind]
@@ -320,6 +320,8 @@
 ;;;      g.123_124insL37425.1:23_361
 ;;;      g.122_123ins123_234inv (TODO)
 ;;;      g.122_123ins213_234invinsAins123_211inv (TODO)
+;;;      g.549_550insN
+;;;      g.1134_1135ins(100) (TODO)
 
 (defrecord DNAInsertion [coord-start coord-end alt]
   Mutation
@@ -347,11 +349,22 @@
          (or (dna-bases? alt) (map? alt))]}
   (DNAInsertion. coord-start coord-end alt))
 
+(defn- parse-dna-insertion-alt
+  [s kind]
+  (or (re-matches #"[ACGNT]+" s)
+      (some-> (re-matches #"\((\d+)\)" s)
+              (second)
+              (parse-long)
+              (repeat "N")
+              (#(apply str %)))
+      (let [[_ transcript coord-s coord-e] (re-matches  #"(?:([^:]+):)([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))" s)
+            parse-coord (coord-parser kind)]
+        {:transcript transcript
+         :coord-start (parse-coord coord-s)
+         :coord-end (parse-coord coord-e)})))
+
 (def ^:private dna-insertion-re
   #"([\d\-\+\*\?]+)_([\d\-\+\*\?]+)ins(.+)")
-
-(def ^:private dna-insertion-alt-re
-  #"(?:([^:]+):)([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))")
 
 (defn parse-dna-insertion
   [s kind]
@@ -359,11 +372,7 @@
         parse-coord (coord-parser kind)]
     (dna-insertion (parse-coord coord-s)
                    (parse-coord coord-e)
-                   (or (re-matches #"[A-Z]+" alt)
-                       (let [[_ transcript coord-s coord-e] (re-matches dna-insertion-alt-re alt)]
-                         {:transcript transcript
-                          :coord-start (parse-coord coord-s)
-                          :coord-end (parse-coord coord-e)})))))
+                   (parse-dna-insertion-alt alt kind))))
 
 (defmethod restore "dna-insertion"
   [m]

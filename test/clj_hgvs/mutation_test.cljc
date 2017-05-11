@@ -267,6 +267,18 @@
 (def dna-insertion4k :genome)
 (def dna-insertion4 "TODO")
 
+(def dna-insertion5s "549_550insN")
+(def dna-insertion5k :genome)
+(def dna-insertion5 (mut/dna-insertion (coord/genomic-coordinate 549)
+                                       (coord/genomic-coordinate 550)
+                                       "N"))
+
+(def dna-insertion6s "1134_1135ins(10)")
+(def dna-insertion6k :genome)
+(def dna-insertion6 (mut/dna-insertion (coord/genomic-coordinate 1134)
+                                       (coord/genomic-coordinate 1135)
+                                       "NNNNNNNNNN"))
+
 (deftest format-dna-insertion-test
   (testing "returns a string expression of a DNA insertion"
     (are [m s] (= (mut/format m nil) s)
@@ -274,6 +286,8 @@
       dna-insertion2 dna-insertion2s
       ;; dna-insertion3 dna-insertion3s ; TODO
       ;; dna-insertion4 dna-insertion4s ; TODO
+      dna-insertion5 dna-insertion5s
+      ;; dna-insertion6 dna-insertion6s ; TODO
       )))
 
 (deftest parse-dna-insertion-test
@@ -283,6 +297,8 @@
       dna-insertion2s dna-insertion2k dna-insertion2
       ;; dna-insertion3s dna-insertion3k dna-insertion3 ; TODO
       ;; dna-insertion4s dna-insertion4k dna-insertion4 ; TODO
+      dna-insertion5s dna-insertion5k dna-insertion5
+      dna-insertion6s dna-insertion6k dna-insertion6
       )))
 
 (deftest plain-dna-insertion-test
