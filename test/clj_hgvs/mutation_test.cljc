@@ -952,37 +952,44 @@
 
 ;;; Protein - insertion
 
-(def protein-insertions "Lys23_Leu24insArgSerGln")
-(def protein-insertionss "K23_L24insRSQ")
-(def protein-insertion (mut/protein-insertion "Lys" (coord/protein-coordinate 23)
-                                              "Leu" (coord/protein-coordinate 24)
-                                              ["Arg" "Ser" "Gln"]))
-(def protein-insertionm {:mutation "protein-insertion"
-                         :ref-start "Lys"
-                         :coord-start (coord/plain (coord/protein-coordinate 23))
-                         :ref-end "Leu"
-                         :coord-end (coord/plain (coord/protein-coordinate 24))
-                         :alts ["Arg" "Ser" "Gln"]})
+(def protein-insertion1s "Lys23_Leu24insArgSerGln")
+(def protein-insertion1ss "K23_L24insRSQ")
+(def protein-insertion1 (mut/protein-insertion "Lys" (coord/protein-coordinate 23)
+                                               "Leu" (coord/protein-coordinate 24)
+                                               ["Arg" "Ser" "Gln"]))
+(def protein-insertion1m {:mutation "protein-insertion"
+                          :ref-start "Lys"
+                          :coord-start (coord/plain (coord/protein-coordinate 23))
+                          :ref-end "Leu"
+                          :coord-end (coord/plain (coord/protein-coordinate 24))
+                          :alts ["Arg" "Ser" "Gln"]})
+
+(def protein-insertion2s "Arg78_Gly79ins5")
+(def protein-insertion2 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
+                                               "Gly" (coord/protein-coordinate 79)
+                                               ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
 
 (deftest format-protein-insertion-test
   (testing "returns a string expression of a protein insertion"
     (are [m o s] (= (mut/format m o) s)
-      protein-insertion nil protein-insertions
-      protein-insertion {:amino-acid-format :short} protein-insertionss)))
+      protein-insertion1 nil protein-insertion1s
+      protein-insertion1 {:amino-acid-format :short} protein-insertion1ss
+      protein-insertion2 nil protein-insertion2s)))
 
 (deftest parse-protein-insertion-test
   (testing "returns a correct ProteinInsertion"
     (are [s m] (= (mut/parse-protein-insertion s) m)
-      protein-insertions protein-insertion
-      protein-insertionss protein-insertion)))
+      protein-insertion1s protein-insertion1
+      protein-insertion1ss protein-insertion1
+      protein-insertion2s protein-insertion2)))
 
 (deftest plain-protein-insertion-test
   (testing "returns a plain map representing ProteinInsertion"
-    (is (= (mut/plain protein-insertion) protein-insertionm))))
+    (is (= (mut/plain protein-insertion1) protein-insertion1m))))
 
 (deftest restore-protein-insertion-test
   (testing "restores a plain map to ProteinInsertion"
-    (is (= (mut/restore protein-insertionm) protein-insertion))))
+    (is (= (mut/restore protein-insertion1m) protein-insertion1))))
 
 ;;; Protein - indel
 
