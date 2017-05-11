@@ -17,11 +17,11 @@
 
 (defn ->region-keyword
   [s]
-  (case s
-    "-" :upstream
-    "*" :downstream
-    "" nil
-    nil nil))
+  (if s
+    (case s
+      "-" :upstream
+      "*" :downstream
+      "" nil)))
 
 (defn ->region-str
   [k]
