@@ -78,6 +78,17 @@
       s
       (get long-short-amino-acid-map s))))
 
+;; "1_2" => ("1" "2")
+;; "(1_2)_(3_4)" => ("(1_2)" "(3_4)")
+(defn- split-coord-range
+  [s]
+  (condp re-find s
+    #"\)_\(" (re-seq #"\([\*\-\+\d\?_]+\)" s)
+    #"\)_" (next (re-find #"(\([\*\-\+\d\?_]+\))_([\*\-\+\d\?]+)" s))
+    #"_\(" (next (re-find #"([\*\-\+\d\?]+)_(\([\*\-\+\d\?_]+\))" s))
+    #"\([\*\-\+\d\?_]+\)" s
+    (re-seq #"[\*\-\+\d\?]+" s)))
+
 (defn- plain-coords
   [m]
   (walk/prewalk (fn [x]
@@ -206,32 +217,16 @@
    (DNADeletion. coord-start coord-end ref)))
 
 (def ^:private dna-deletion-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?")
-
-(defn- parse-dna-deletion*
-  [s kind]
-  (let [[_ coord-s coord-e ref] (re-matches dna-deletion-re s)
-        parse-coord (coord-parser kind)]
-    (dna-deletion (parse-coord coord-s)
-                  (some-> coord-e parse-coord)
-                  ref)))
-
-(def ^:private dna-deletion-range-re
-  #"\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)del([A-Z]+)?")
-
-(defn- parse-dna-deletion-range
-  [s kind]
-  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-matches dna-deletion-range-re s)
-        parse-coord (coord-parser kind)]
-    (dna-deletion (mapv parse-coord [coord-s1 coord-s2])
-                  (mapv parse-coord [coord-e1 coord-e2])
-                  ref)))
+  #"([\(\)\*\-\+\d\?_]+)del([ACGNT]+)?")
 
 (defn parse-dna-deletion
   [s kind]
-  (if (re-matches #"\(.+\)_\(.+\)del[A-Z]*" s)
-    (parse-dna-deletion-range s kind)
-    (parse-dna-deletion* s kind)))
+  (let [[_ coord ref] (re-matches dna-deletion-re s)
+        parse-coord (coord-parser kind)
+        [coord-s coord-e] (split-coord-range coord)]
+    (dna-deletion (parse-coord coord-s)
+                  (some-> coord-e parse-coord)
+                  ref)))
 
 (defmethod restore "dna-deletion"
   [m]
@@ -282,32 +277,16 @@
    (DNADuplication. coord-start coord-end ref)))
 
 (def ^:private dna-duplication-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?dup([A-Z]+)?")
-
-(defn- parse-dna-duplication*
-  [s kind]
-  (let [[_ coord-s coord-e ref] (re-matches dna-duplication-re s)
-        parse-coord (coord-parser kind)]
-    (dna-duplication (parse-coord coord-s)
-                     (some-> coord-e parse-coord)
-                     ref)))
-
-(def ^:private dna-duplication-range-re
-  #"\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)_\(([\d\-\+\?\*]+)_([\d\-\+\?\*]+)\)dup([A-Z]+)?")
-
-(defn- parse-dna-duplication-range
-  [s kind]
-  (let [[_ coord-s1 coord-s2 coord-e1 coord-e2 ref] (re-matches dna-duplication-range-re s)
-        parse-coord (coord-parser kind)]
-    (dna-duplication (mapv parse-coord [coord-s1 coord-s2])
-                     (mapv parse-coord [coord-e1 coord-e2])
-                     ref)))
+  #"([\(\)\*\-\+\d\?_]+)dup([A-Z]+)?")
 
 (defn parse-dna-duplication
   [s kind]
-  (if (re-matches #"\(.+\)_\(.+\)dup[A-Z]*" s)
-    (parse-dna-duplication-range s kind)
-    (parse-dna-duplication* s kind)))
+  (let [[_ coord ref] (re-matches dna-duplication-re s)
+        parse-coord (coord-parser kind)
+        [coord-s coord-e] (split-coord-range coord)]
+    (dna-duplication (parse-coord coord-s)
+                     (some-> coord-e parse-coord)
+                     ref)))
 
 (defmethod restore "dna-duplication"
   [m]
@@ -322,6 +301,7 @@
 ;;;      g.122_123ins213_234invinsAins123_211inv (TODO)
 ;;;      g.549_550insN
 ;;;      g.1134_1135ins(100)
+;;;      g.?_?insNC_000023.10:(12345_23456)_(34567_45678)
 
 (defrecord DNAInsertion [coord-start coord-end alt]
   Mutation
@@ -363,8 +343,9 @@
               (parse-long)
               (repeat "N")
               (#(apply str %)))
-      (let [[_ transcript coord-s coord-e] (re-matches  #"(?:([^:]+):)([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))" s)
-            parse-coord (coord-parser kind)]
+      (let [[_ transcript coord] (re-matches #"(?:([^:]+):)([\(\)\*\-\+\d\?_]+)" s)
+            parse-coord (coord-parser kind)
+            [coord-s coord-e] (split-coord-range coord)]
         {:transcript transcript
          :coord-start (parse-coord coord-s)
          :coord-end (parse-coord coord-e)})))

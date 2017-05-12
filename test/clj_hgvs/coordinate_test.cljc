@@ -3,6 +3,64 @@
                :cljs [cljs.test :refer-macros [deftest are is testing]])
             [clj-hgvs.coordinate :as coord]))
 
+;;; uncertain coordinate
+
+(deftest uncertain-coordinate-test
+  (testing "validates an input and returns UncertainCoordinate"
+    (are [s e] (= (coord/uncertain-coordinate s e) (coord/->UncertainCoordinate s e))
+      (coord/genomic-coordinate 123456) (coord/genomic-coordinate 234567)
+      (coord/unknown-coordinate) (coord/genomic-coordinate 1)))
+  (testing "throws an error if an input is illegal"
+    (are [s e] (thrown? #?(:clj Error, :cljs js/Error)
+                        (coord/uncertain-coordinate s e))
+      "123456" "234567"
+      (coord/genomic-coordinate 123456) (coord/protein-coordinate 234567))))
+
+(deftest parse-uncertain-coordinate-test
+  (testing "parses input string, returning UncertainCoordinate"
+    (are [s t e] (= (coord/parse-uncertain-coordinate s t) e)
+      "(123456_234567)" :genomic
+      (coord/uncertain-coordinate (coord/genomic-coordinate 123456)
+                                  (coord/genomic-coordinate 234567))
+
+      "(?_1)" :genomic
+      (coord/uncertain-coordinate (coord/unknown-coordinate)
+                                  (coord/genomic-coordinate 1))))
+  (testing "throws an error if any input is illegal"
+    (are [s t] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (coord/parse-uncertain-coordinate s t))
+      "(123456_234567" :genomic
+      "(123456_234567)" :illegal)))
+
+(deftest format-uncertain-coordinate-test
+  (testing "returns a string expression of a uncertain coordinate"
+    (are [m s] (= (coord/format m) s)
+      (coord/uncertain-coordinate (coord/genomic-coordinate 123456)
+                                  (coord/genomic-coordinate 234567))
+      "(123456_234567)"
+
+      (coord/uncertain-coordinate (coord/unknown-coordinate)
+                                  (coord/genomic-coordinate 1))
+      "(?_1)")))
+
+(deftest plain-uncertain-coordinate-test
+  (testing "returns a plain map representing UncertainCoordinate"
+    (is (= (coord/plain (coord/uncertain-coordinate (coord/unknown-coordinate)
+                                                    (coord/genomic-coordinate 1)))
+           {:coordinate "uncertain"
+            :start {:coordinate "unknown"}
+            :end {:coordinate "genomic"
+                  :position 1}}))))
+
+(deftest restore-uncertain-coordinate-test
+  (testing "restores a plain map to UncertainCoordinate"
+    (is (= (coord/restore {:coordinate "uncertain"
+                           :start {:coordinate "unknown"}
+                           :end {:coordinate "genomic"
+                                 :position 1}})
+           (coord/uncertain-coordinate (coord/unknown-coordinate)
+                                       (coord/genomic-coordinate 1))))))
+
 ;;; unknown coordinate
 
 (deftest format-unknown-coordinate-test

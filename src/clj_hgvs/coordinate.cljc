@@ -3,6 +3,8 @@
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clj-hgvs.internal :refer [parse-long]]))
 
+(declare parser parse-coordinate)
+
 (defprotocol Coordinate
   (format [this] "Returns a string representing the given coordinate.")
   (plain [this] "Returns a plain map representing the given coordinate."))
@@ -46,6 +48,48 @@
   [m]
   (unknown-coordinate))
 
+;;; uncertain coordinate
+;;;
+;;; e.g. (123456_234567)
+;;;      (?_1)
+
+(defrecord UncertainCoordinate [start end]
+  Coordinate
+  (format [this] (str "(" (format start) "_" (format end) ")"))
+  (plain [this]
+    {:coordinate "uncertain"
+     :start (plain start)
+     :end (plain end)}))
+
+(defn uncertain-coordinate
+  "Returns UncertainCoordinate instance having start and end. Throws an
+  exception if any input is illegal."
+  [start end]
+  {:pre [(satisfies? Coordinate start)
+         (satisfies? Coordinate end)
+         (not (instance? UncertainCoordinate start))
+         (not (instance? UncertainCoordinate end))
+         (or (some #(instance? UnknownCoordinate %) [start end])
+             (= (type start) (type end)))]}
+  (UncertainCoordinate. start end))
+
+(def ^:private uncertain-coordinate-re
+  #"\(([\*\+\-\d\?]+)_([\*\+\-\d\?]+)\)")
+
+(defn parse-uncertain-coordinate
+  [s t]
+  (let [[_ start end] (re-matches uncertain-coordinate-re s)
+        parse (parser t)]
+    (uncertain-coordinate (parse start) (parse end))))
+
+(defmethod restore "uncertain"
+  [m]
+  (uncertain-coordinate (restore (:start m)) (restore (:end m))))
+
+(defn- uncertain-coordinate-string?
+  [s]
+  (some? (re-matches uncertain-coordinate-re s)))
+
 ;;; genomic coordinate
 
 (defrecord GenomicCoordinate [position]
@@ -67,9 +111,10 @@
   "Parses a coordinate string used in genomic mutations, returning a
   GenomicCoordinate or UnknownCoordinate."
   [s]
-  (if (= s "?")
-    (unknown-coordinate)
-    (genomic-coordinate (parse-long s))))
+  (cond
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :genomic)
+    (= s "?") (unknown-coordinate)
+    :else (genomic-coordinate (parse-long s))))
 
 (defmethod restore "genomic"
   [m]
@@ -96,9 +141,10 @@
   "Parses a coordinate string used in mitochondrial mutations, returning a
   MitochondrialCoordinate or UnknownCoordinate."
   [s]
-  (if (= s "?")
-    (unknown-coordinate)
-    (mitochondrial-coordinate (parse-long s))))
+  (cond
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :mitochondrial)
+    (= s "?") (unknown-coordinate)
+    :else (mitochondrial-coordinate (parse-long s))))
 
 (defmethod restore "mitochondrial"
   [m]
@@ -157,14 +203,15 @@
   "Parses a coordinate string used in coding DNA mutations, returning a
   CDNACoordinate or UnknownCoordinate."
   [s]
-  (if (= s "?")
-    (unknown-coordinate)
-    (let [[_ region position offset] (re-find cdna-coordinate-re s)]
-      (cdna-coordinate (parse-long position)
-                       (if (some? offset)
-                         (parse-long offset)
-                         0)
-                       (->region-keyword region)))))
+  (cond
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :cdna)
+    (= s "?") (unknown-coordinate)
+    :else (let [[_ region position offset] (re-find cdna-coordinate-re s)]
+            (cdna-coordinate (parse-long position)
+                             (if (some? offset)
+                               (parse-long offset)
+                               0)
+                             (->region-keyword region)))))
 
 (defmethod restore "cdna"
   [m]
@@ -191,9 +238,10 @@
   "Parses a coordinate string used in non-coding DNA mutations, returning a
   NCDNACoordinate or UnknownCoordinate."
   [s]
-  (if (= s "?")
-    (unknown-coordinate)
-    (ncdna-coordinate (parse-long s))))
+  (cond
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :ncdna)
+    (= s "?") (unknown-coordinate)
+    :else (ncdna-coordinate (parse-long s))))
 
 (defmethod restore "ncdna"
   [m]
@@ -286,3 +334,19 @@
 (defmethod restore "protein"
   [m]
   (protein-coordinate (:position m)))
+
+;;; general parser
+
+(defn- parser
+  [t]
+  (case t
+    :genomic parse-genomic-coordinate
+    :mitochondrial parse-mitochondrial-coordinate
+    :cdna parse-cdna-coordinate
+    :ncdna parse-ncdna-coordinate
+    :rna parse-rna-coordinate
+    :protein parse-protein-coordinate))
+
+(defn parse-coordinate
+  [s t]
+  ((parser t) s))
