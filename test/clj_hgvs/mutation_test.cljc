@@ -1128,14 +1128,20 @@
                                                    nil
                                                    nil))
 
-(def protein-frame-shift3s "Ile327Argfs*?")
-(def protein-frame-shift3 (mut/protein-frame-shift "Ile"
+(def protein-frame-shift3s "Pro661=fs")
+(def protein-frame-shift3 (mut/protein-frame-shift "Pro"
+                                                   (coord/protein-coordinate 661)
+                                                   "Pro"
+                                                   nil))
+
+(def protein-frame-shift4s "Ile327Argfs*?")
+(def protein-frame-shift4 (mut/protein-frame-shift "Ile"
                                                    (coord/protein-coordinate 327)
                                                    "Arg"
                                                    (coord/unknown-coordinate)))
 
-(def protein-frame-shift4s "Gln151Thrfs*9")
-(def protein-frame-shift4 (mut/protein-frame-shift "Gln"
+(def protein-frame-shift5s "Gln151Thrfs*9")
+(def protein-frame-shift5 (mut/protein-frame-shift "Gln"
                                                    (coord/protein-coordinate 151)
                                                    "Thr"
                                                    (coord/protein-coordinate 9)))
@@ -1145,8 +1151,9 @@
       protein-frame-shift1 nil protein-frame-shift1s
       protein-frame-shift2 nil protein-frame-shift2s
       protein-frame-shift2 {:amino-acid-format :short} protein-frame-shift2ss
-      protein-frame-shift3 {:ter-format :short} protein-frame-shift3s
-      protein-frame-shift4 {:ter-format :short} protein-frame-shift4s)))
+      protein-frame-shift3 nil protein-frame-shift3s
+      protein-frame-shift4 {:ter-format :short} protein-frame-shift4s
+      protein-frame-shift5 {:ter-format :short} protein-frame-shift5s)))
 
 (deftest parse-protein-frame-shift-test
   (testing "returns a correct ProteinFrameShift"
@@ -1155,7 +1162,8 @@
       protein-frame-shift2s protein-frame-shift2
       protein-frame-shift2ss protein-frame-shift2
       protein-frame-shift3s protein-frame-shift3
-      protein-frame-shift4s protein-frame-shift4)))
+      protein-frame-shift4s protein-frame-shift4
+      protein-frame-shift5s protein-frame-shift5)))
 
 (deftest plain-protein-frame-shift-test
   (testing "returns a plain map representing ProteinFrameShift"

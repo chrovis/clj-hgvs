@@ -1300,6 +1300,7 @@
 ;;;
 ;;; e.g. Arg97ProfsTer23
 ;;;      Arg97fs
+;;;      Pro661=fs
 ;;;      Ile327Argfs*?
 ;;;      Gln151Thrfs*9
 
@@ -1311,8 +1312,10 @@
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
-         (cond-> alt
-           (= amino-acid-format :short) ->short-amino-acid)
+         (if (= ref alt)
+           "="
+           (cond-> alt
+             (= amino-acid-format :short) ->short-amino-acid))
          "fs"
          (if (some? new-ter-site)
            (str (cond
@@ -1334,14 +1337,14 @@
   (ProteinFrameShift. ref coord alt new-ter-site))
 
 (def ^:private protein-frame-shift-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z](?:[a-z]{2})?)?fs(?:Ter|\*)?(\?|\d+)?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z=](?:[a-z]{2})?)?fs(?:Ter|\*)?(\?|\d+)?")
 
 (defn parse-protein-frame-shift
   [s]
   (let [[_ ref coord' alt new-ter-site] (re-matches protein-frame-shift-re s)]
     (protein-frame-shift (->long-amino-acid ref)
                          (coord/parse-protein-coordinate coord')
-                         (->long-amino-acid alt)
+                         (->long-amino-acid (if (= alt "=") ref alt))
                          (some-> new-ter-site coord/parse-protein-coordinate))))
 
 (defmethod restore "protein-frame-shift"
