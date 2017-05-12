@@ -321,18 +321,24 @@
 ;;;      g.122_123ins123_234inv (TODO)
 ;;;      g.122_123ins213_234invinsAins123_211inv (TODO)
 ;;;      g.549_550insN
-;;;      g.1134_1135ins(100) (TODO)
+;;;      g.1134_1135ins(100)
 
 (defrecord DNAInsertion [coord-start coord-end alt]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
+  (format [this {:keys [ins-format] :or {ins-format :auto}}]
     (apply str (flatten [(coord/format coord-start)
                          "_"
                          (coord/format coord-end)
                          "ins"
                          (cond
-                           (string? alt) alt
+                           (string? alt) (case ins-format
+                                           :auto (if (and (every? #(= % \N) alt)
+                                                          (>= (count alt) 10))
+                                                   (str "(" (count alt) ")")
+                                                   alt)
+                                           :bases alt
+                                           :count (str "(" (count alt) ")"))
                            (map? alt) [(:transcript alt)
                                        ":"
                                        (coord/format (:coord-start alt))
