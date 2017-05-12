@@ -6,6 +6,8 @@
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
 
+(declare parse-dna parse-rna parse-protein)
+
 (def short-amino-acids
   ["A"
    "R"
@@ -510,6 +512,49 @@
   (let [{:keys [coord-start coord-end ref alt]} (restore-coords m)]
     (dna-indel coord-start coord-end ref alt)))
 
+;;; DNA - allels
+;;;
+;;; e.g. g.[123G>A;345del]
+;;;      g.[123G>A];[345del]
+;;;      c.2376G>C(;)3103del (TODO)
+;;;      c.2376[G>C];[(G>C)] (TODO)
+;;;      c.2376[G>C];[=] (TODO)
+;;;      c.[2376G>C];[?] (TODO)
+;;;      c.[296T>G;476C>T;1083A>C];[296T>G;1083A>C] (TODO)
+;;;      c.[296T>G;476C>T];[476C>T](;)1083A>C (TODO)
+;;;      c.[296T>G];[476C>T](;)1083G>C(;)1406del (TODO)
+;;;      c.[NM_000167.5:94A>G;NM_004006.2:76A>C] (TODO)
+
+(defrecord DNAAlleles [mutations1 mutations2]
+  Mutation
+  (format [this] (format this nil))
+  (format [this opts]
+    (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
+         (if (seq mutations2)
+           (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]"))))
+  (plain [this]
+    {:mutation "dna-alleles"
+     :mutations1 (mapv plain mutations1)
+     :mutations2 (mapv plain mutations2)}))
+
+(defn dna-alleles
+  [mutations1 mutations2]
+  {:pre [(every? #(satisfies? Mutation %) mutations1)
+         (every? #(satisfies? Mutation %) mutations2)]}
+  (DNAAlleles. mutations1 mutations2))
+
+(defn parse-dna-alleles
+  [s kind]
+  (let [[mut1 mut2] (map second (re-seq #"\[(.+?)\]" s))]
+    (dna-alleles (mapv #(parse-dna % kind) (string/split mut1 #";"))
+                 (if mut2
+                   (mapv #(parse-dna % kind) (string/split mut2 #";"))))))
+
+(defmethod restore "dna-alleles"
+  [m]
+  (dna-alleles (mapv restore (:mutations1 m))
+               (mapv restore (:mutations2 m))))
+
 ;;; DNA - repeated sequences
 ;;;
 ;;; e.g. g.123_124[14]
@@ -564,6 +609,7 @@
 (defn parse-dna
   [s kind]
   ((condp re-find s
+     #"^\[.+\]$" parse-dna-alleles
      #"del[ACGT]*ins" parse-dna-indel
      #"del" parse-dna-deletion
      #"dup" parse-dna-duplication
@@ -900,6 +946,46 @@
   (let [{:keys [coord-start coord-end ref alt]} (restore-coords m)]
     (rna-indel coord-start coord-end ref alt)))
 
+;;; RNA - alleles
+;;;
+;;; e.g. r.[76a>u;103del]
+;;;      r.[76a>u];[103del]
+;;;      r.76[a>u];[a>u] (TODO)
+;;;      r.76a>u(;)103del (TODO)
+;;;      r.76[a>u];[(a>u)] (TODO)
+;;;      r.76[a>u];[=] (TODO)
+;;;      r.[76a>u];[?] (TODO)
+
+(defrecord RNAAlleles [mutations1 mutations2]
+  Mutation
+  (format [this] (format this nil))
+  (format [this opts]
+    (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
+         (if (seq mutations2)
+           (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]"))))
+  (plain [this]
+    {:mutation "rna-alleles"
+     :mutations1 (mapv plain mutations1)
+     :mutations2 (mapv plain mutations2)}))
+
+(defn rna-alleles
+  [mutations1 mutations2]
+  {:pre [(every? #(satisfies? Mutation %) mutations1)
+         (every? #(satisfies? Mutation %) mutations2)]}
+  (RNAAlleles. mutations1 mutations2))
+
+(defn parse-rna-alleles
+  [s]
+  (let [[muts1 muts2] (map second (re-seq #"\[(.+?)\]" s))]
+    (rna-alleles (mapv parse-rna (string/split muts1 #";"))
+                 (if muts2
+                   (mapv parse-rna (string/split muts2 #";"))))))
+
+(defmethod restore "rna-alleles"
+  [m]
+  (rna-alleles (mapv restore (:mutations1 m))
+               (mapv restore (:mutations2 m))))
+
 ;;; RNA - repeated sequences
 ;;;
 ;;; e.g. r.-124_-123[14]
@@ -953,6 +1039,7 @@
 (defn parse-rna
   [s]
   ((condp re-find s
+     #"^\[.+\]$" parse-rna-alleles
      #"delins" parse-rna-indel
      #"del" parse-rna-deletion
      #"dup" parse-rna-duplication
@@ -1224,6 +1311,50 @@
   (let [{:keys [ref-start coord-start ref-end coord-end alts]} (restore-coords m)]
     (protein-indel ref-start coord-start ref-end coord-end alts)))
 
+;;; Protein - alleles
+;;;
+;;; e.g. p.[Ser73Arg;Asn603del]
+;;;      p.[(Ser73Arg;Asn603del)] (TODO)
+;;;      p.[Ser73Arg;(Asn603del)] (TODO)
+;;;      p.[Ser73Arg];[Asn603del]
+;;;      p.[(Ser73Arg)];[(Asn603del)] (TODO)
+;;;      p.(Ser73Arg)(;)(Asn603del) (TODO)
+;;;      p.[Ser73Arg];[Ser73=] (TODO)
+;;;      p.[Ser73Arg];[(?)] (TODO)
+;;;      p.[Asn26His,Ala25_Gly29del] (TODO)
+;;;      p.[Arg83=/Arg83Ser] (TODO)
+;;;      p.[Arg83=//Arg83Ser] (TODO)
+
+(defrecord ProteinAlleles [mutations1 mutations2]
+  Mutation
+  (format [this] (format this nil))
+  (format [this opts]
+    (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
+         (if (seq mutations2)
+           (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]"))))
+  (plain [this]
+    {:mutation "protein-alleles"
+     :mutations1 (mapv plain mutations1)
+     :mutations2 (mapv plain mutations2)}))
+
+(defn protein-alleles
+  [mutations1 mutations2]
+  {:pre [(every? #(satisfies? Mutation %) mutations1)
+         (every? #(satisfies? Mutation %) mutations2)]}
+  (ProteinAlleles. mutations1 mutations2))
+
+(defn parse-protein-alleles
+  [s]
+  (let [[mut1 mut2] (map second (re-seq #"\[(.+?)\]" s))]
+    (protein-alleles (mapv parse-protein (string/split mut1 #";"))
+                     (if mut2
+                       (mapv parse-protein (string/split mut2 #";"))))))
+
+(defmethod restore "protein-alleles"
+  [m]
+  (protein-alleles (mapv restore (:mutations1 m))
+                   (mapv restore (:mutations2 m))))
+
 ;;; Protein - repeated sequences
 ;;;
 ;;; e.g. Ala2[10]
@@ -1394,6 +1525,7 @@
 (defn parse-protein
   [s]
   ((condp re-find s
+     #"^\[.+\]$" parse-protein-alleles
      #"delins" parse-protein-indel
      #"del" parse-protein-deletion
      #"dup" parse-protein-duplication

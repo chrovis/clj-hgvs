@@ -467,6 +467,31 @@
   (testing "restores a plain map to DNAIndel"
     (is (= (mut/restore dna-indel1m) dna-indel1))))
 
+;;; DNA - alleles
+
+(def dna-alleles1s "[123G>A;345del]")
+(def dna-alleles1k :genome)
+(def dna-alleles1 (mut/dna-alleles [(mut/dna-substitution (coord/genomic-coordinate 123) "G" ">" "A")
+                                    (mut/dna-deletion (coord/genomic-coordinate 345) nil)]
+                                   nil))
+
+(def dna-alleles2s "[123G>A];[345del]")
+(def dna-alleles2k :genome)
+(def dna-alleles2 (mut/dna-alleles [(mut/dna-substitution (coord/genomic-coordinate 123) "G" ">" "A")]
+                                   [(mut/dna-deletion (coord/genomic-coordinate 345) nil)]))
+
+(deftest format-dna-alleles-test
+  (testing "returns a string expression of a DNA alleles"
+    (are [m s] (= (mut/format m) s)
+      dna-alleles1 dna-alleles1s
+      dna-alleles2 dna-alleles2s)))
+
+(deftest parse-dna-alleles-test
+  (testing "returns a correct DNAAlleles"
+    (are [s k m] (= (mut/parse-dna-alleles s k) m)
+      dna-alleles1s dna-alleles1k dna-alleles1
+      dna-alleles2s dna-alleles2k dna-alleles2)))
+
 ;;; DNA - repeated sequences
 
 (def dna-repeated-seqs1s-c "123_124[14]")
@@ -808,6 +833,29 @@
   (testing "restores a plain map to RNAIndel"
     (is (= (mut/restore rna-indel1m) rna-indel1))))
 
+;;; RNA - alleles
+
+(def rna-alleles1s "[76a>u;103del]")
+(def rna-alleles1 (mut/rna-alleles [(mut/rna-substitution (coord/rna-coordinate 76 nil nil) "a" "u")
+                                    (mut/rna-deletion (coord/rna-coordinate 103 nil nil) nil)]
+                                   nil))
+
+(def rna-alleles2s "[76a>u];[103del]")
+(def rna-alleles2 (mut/rna-alleles [(mut/rna-substitution (coord/rna-coordinate 76 nil nil) "a" "u")]
+                                   [(mut/rna-deletion (coord/rna-coordinate 103 nil nil) nil)]))
+
+(deftest format-rna-alleles-test
+  (testing "returns a string expression of a RNA alleles"
+    (are [m s] (= (mut/format m) s)
+      rna-alleles1 rna-alleles1s
+      rna-alleles2 rna-alleles2s)))
+
+(deftest parse-rna-alleles-test
+  (testing "returns a correct RNAAlleles"
+    (are [s m] (= (mut/parse-rna-alleles s) m)
+      rna-alleles1s rna-alleles1
+      rna-alleles2s rna-alleles2)))
+
 ;;; RNA - repeated sequences
 
 (def rna-repeated-seqs1s-c "-124_-123[14]")
@@ -1078,6 +1126,31 @@
 (deftest restore-protein-indel-test
   (testing "restores a plain map to ProteinIndel"
     (is (= (mut/restore protein-indel1m) protein-indel1))))
+
+;;; Protein - alleles
+
+(def protein-alleles1s "[Ser73Arg;Asn603del]")
+(def protein-alleles1 (mut/protein-alleles
+                       [(mut/protein-substitution "Ser" (coord/protein-coordinate 73) "Arg")
+                        (mut/protein-deletion "Asn" (coord/protein-coordinate 603))]
+                       nil))
+
+(def protein-alleles2s "[Ser73Arg];[Asn603del]")
+(def protein-alleles2 (mut/protein-alleles
+                       [(mut/protein-substitution "Ser" (coord/protein-coordinate 73) "Arg")]
+                       [(mut/protein-deletion "Asn" (coord/protein-coordinate 603))]))
+
+(deftest format-protein-alleles-test
+  (testing "returns a string expression of a protein alleles"
+    (are [m s] (= (mut/format m) s)
+      protein-alleles1 protein-alleles1s
+      protein-alleles2 protein-alleles2s)))
+
+(deftest parse-protein-alleles-test
+  (testing "returns a correct ProteinAlleles"
+    (are [s m] (= (mut/parse-protein-alleles s) m)
+      protein-alleles1s protein-alleles1
+      protein-alleles2s protein-alleles2)))
 
 ;;; Protein - repeated sequences
 

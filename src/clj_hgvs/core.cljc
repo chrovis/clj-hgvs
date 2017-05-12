@@ -2,8 +2,7 @@
   "Functions to handle HGVS. See http://varnomen.hgvs.org/ for the detail HGVS
   nomenclature."
   #?(:clj (:refer-clojure :exclude [format]))
-  (:require [clojure.string :as string]
-            [clj-hgvs.internal :refer [->kind-keyword ->kind-str]]
+  (:require [clj-hgvs.internal :refer [->kind-keyword ->kind-str]]
             [clj-hgvs.mutation :as mut]))
 
 (defn- transcript?
@@ -22,40 +21,26 @@
     (= kind :rna) mut/parse-rna
     (= kind :protein) mut/parse-protein))
 
-;; [123456A>G;345678G>C]
-;; [123456A>G];[345678G>C]
-;; 112GAT[14]
-(defn- split-mutations
-  [s]
-  {:pre [(= (count (re-seq #"\[" s)) (count (re-seq #"\]" s)))]}
-  (if (re-find #";" s)
-    (condp re-find s
-      #"\];\[" (mapv #(subs % 1 (dec (count %))) (string/split s #";"))
-      #";" (string/split (subs s 1 (dec (count s))) #";"))
-    [s]))
-
 (defn hgvs
   "Constructor of HGVS map. Throws an exception if any input is illegal."
-  [transcript kind & mutations]
+  [transcript kind mutation]
   {:pre [(or (nil? transcript) (transcript? transcript))
          (kind? kind)
-         (every? true? (map #(or (satisfies? mut/Mutation %) (string? %)) mutations))]}
+         (or (satisfies? mut/Mutation mutation) (string? mutation))]}
   {:transcript transcript
    :kind kind
-   :mutations (vec (mapcat (fn [mutation]
-                             (cond
-                               (satisfies? mut/Mutation mutation) [mutation]
-                               (string? mutation) (map (mutation-parser kind) (split-mutations mutation))))
-                           mutations))})
+   :mutation (if (string? mutation)
+               ((mutation-parser kind) mutation)
+               mutation)})
 
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
 
 (defn parse
   "Parses a HGVS string s, returning a map representing the HGVS."
   [s]
-  (let [[_ transcript kind mutations] (re-find hgvs-re s)
+  (let [[_ transcript kind mutation] (re-find hgvs-re s)
         kind-k (->kind-keyword kind)]
-    (hgvs transcript kind-k mutations)))
+    (hgvs transcript kind-k mutation)))
 
 (defn- format-transcript
   [transcript]
@@ -65,19 +50,6 @@
 (defn- format-kind
   [kind]
   (str (->kind-str kind) "."))
-
-(defn format-mutations
-  "Returns a string representing mutations. The second argument is an optional
-  map to specify style. See document of clj-hgvs.core/format for details of the
-  option."
-  ([mutations] (format-mutations mutations nil))
-  ([mutations opts]
-   (let [multi? (> (count mutations) 1)]
-     (apply str (flatten [(if multi? "[")
-                          (->> mutations
-                               (map #(mut/format % opts))
-                               (string/join ";"))
-                          (if multi? "]")])))))
 
 (defn format
   "Returns a HGVS string representing the given HGVS map. The second argument is
@@ -91,7 +63,7 @@
   ([hgvs opts]
    (apply str [(format-transcript (:transcript hgvs))
                (format-kind (:kind hgvs))
-               (format-mutations (:mutations hgvs) opts)])))
+               (mut/format (:mutation hgvs) opts)])))
 
 (defn plain
   "Returns a plain map representing the given HGVS. This function is useful for
@@ -100,7 +72,7 @@
   [hgvs]
   (-> hgvs
       (update :kind name)
-      (update :mutations #(map mut/plain %))))
+      (update :mutation mut/plain)))
 
 (defn restore
   "Restores a plain map to a suitable HGVS data structure. This function is
@@ -108,4 +80,4 @@
   [m]
   (-> m
       (update :kind keyword)
-      (update :mutations #(map mut/restore %))))
+      (update :mutation mut/restore)))
