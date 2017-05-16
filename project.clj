@@ -11,6 +11,9 @@
             [lein-doo "0.1.7"]]
   :profiles {:1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha15"]]}}
+  :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
+                                      :username [:env/clojars_username :gpg]
+                                      :password [:env/clojars_password :gpg]}]]
   :cljsbuild {:builds {:test {:source-paths ["src" "test"]
                               :compiler {:output-to "target/testable.js"
                                          :output-dir "target"
