@@ -8,7 +8,8 @@
 
 (defn- transcript?
   [s]
-  (some? (re-matches #"(NC|LRG|NG|NM|NR|NP)_\d+(\.\d+)?" s)))
+  (or (some? (re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" s))
+      (some? (re-matches #"LRG_\d+((t|p)\d+)?" s))))
 
 (defn- kind?
   [k]

@@ -5,6 +5,23 @@
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]))
 
+(deftest transcript?-test
+  (testing "returns true if string is transcript"
+    (are [s] (true? (#'clj-hgvs.core/transcript? s))
+      "NC_000023.10"
+      "NC_000023"
+      "LRG_199"
+      "LRG_199t1"
+      "LRG_199p1"
+      "NG_012232.1"
+      "NM_004006.2"
+      "NR_002196.1"
+      "NP_003997.1"))
+  (testing "returns false if string is not transcript"
+    (are [s] (false? (#'clj-hgvs.core/transcript? s))
+      "LRG_199.1"
+      "NT_000023.10")))
+
 (deftest split-mutations-test
   (testing "splits multiple mutations, returning a vector"
     (are [s e] (= (#'hgvs/split-mutations s) e)
