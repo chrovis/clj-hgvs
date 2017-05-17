@@ -3,7 +3,7 @@
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clj-hgvs.internal :refer [parse-long]]))
 
-(declare parser parse-coordinate)
+(declare parser parse-coordinate cdna-coordinate rna-coordinate)
 
 (defprotocol Coordinate
   (format [this] "Returns a string representing the given coordinate.")
@@ -73,14 +73,35 @@
              (= (type start) (type end)))]}
   (UncertainCoordinate. start end))
 
+;; (123456_234567)
 (def ^:private uncertain-coordinate-re
   #"\(([\*\+\-\d\?]+)_([\*\+\-\d\?]+)\)")
 
+;; 4072-?
+(def ^:private uncertain-coordinate-offset-re
+  #"(\-|\*)?(\d+)(\-|\+)\?")
+
 (defn parse-uncertain-coordinate
   [s t]
-  (let [[_ start end] (re-matches uncertain-coordinate-re s)
-        parse (parser t)]
-    (uncertain-coordinate (parse start) (parse end))))
+  (if-let [[_ start end] (re-matches uncertain-coordinate-re s)]
+    (let [parse (parser t)]
+      (uncertain-coordinate (parse start) (parse end)))
+    (if-let [[_ region position offset-direction]
+             (re-matches uncertain-coordinate-offset-re s)]
+      (let [coordinate (case t
+                         :cdna cdna-coordinate
+                         :rna rna-coordinate)]
+        (if (= offset-direction "+")
+          (uncertain-coordinate (coordinate (parse-long position)
+                                            1
+                                            (->region-keyword region))
+                                (unknown-coordinate))
+          (uncertain-coordinate (unknown-coordinate)
+                                (coordinate (parse-long position)
+                                            -1
+                                            (->region-keyword region)))))
+      (throw (#?(:clj Exception., :cljs js/Error.)
+              (str "Unable to parse string: " s))))))
 
 (defmethod restore "uncertain"
   [m]
@@ -88,7 +109,8 @@
 
 (defn- uncertain-coordinate-string?
   [s]
-  (some? (re-matches uncertain-coordinate-re s)))
+  (or (some? (re-matches uncertain-coordinate-re s))
+      (some? (re-matches uncertain-coordinate-offset-re s))))
 
 ;;; genomic coordinate
 

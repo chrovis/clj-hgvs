@@ -25,11 +25,20 @@
 
       "(?_1)" :genomic
       (coord/uncertain-coordinate (coord/unknown-coordinate)
-                                  (coord/genomic-coordinate 1))))
+                                  (coord/genomic-coordinate 1))
+
+      "4072-?" :cdna
+      (coord/uncertain-coordinate (coord/unknown-coordinate)
+                                  (coord/cdna-coordinate 4072 -1 nil))
+
+      "5154+?" :cdna
+      (coord/uncertain-coordinate (coord/cdna-coordinate 5154 1 nil)
+                                  (coord/unknown-coordinate))))
   (testing "throws an error if any input is illegal"
     (are [s t] (thrown? #?(:clj Throwable, :cljs js/Error)
                         (coord/parse-uncertain-coordinate s t))
       "(123456_234567" :genomic
+      "4072-1" :cdna
       "(123456_234567)" :illegal)))
 
 (deftest format-uncertain-coordinate-test
