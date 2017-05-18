@@ -39,13 +39,13 @@ With Leiningen/Boot:
 hgvs1
 ;;=> {:transcript "NM_005228.3"
 ;;    :kind :cdna
-;;    :mutations [#clj_hgvs.mutation.DNASubstitution
-;;                {:coord #clj_hgvs.coordinate.CDNACoordinate {:position 2573
-;;                                                             :offset 0
-;;                                                             :region nil}
-;;                 :ref "T"
-;;                 :type ">"
-;;                 :alt "G"}]}
+;;    :mutation #clj_hgvs.mutation.DNASubstitution
+;;              {:coord #clj_hgvs.coordinate.CDNACoordinate {:position 2573
+;;                                                           :offset 0
+;;                                                           :region nil}
+;;               :ref "T"
+;;               :type ">"
+;;               :alt "G"}}
 
 ;; `format` returns HGVS text.
 (hgvs/format hgvs1)
