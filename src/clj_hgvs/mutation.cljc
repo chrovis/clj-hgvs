@@ -93,6 +93,22 @@
          #"\([\*\-\+\d\?_]+\)" [s]
          (re-seq #"[\*\-\+\d\?]+" s))))
 
+;; "14" => 14
+;; "(600_800)" => [600 800]
+(defn- parse-ncopy
+  [s]
+  (if-let [[_ s1 s2] (re-matches #"\((\d+)_(\d+)\)" s)]
+    [(parse-long s1) (parse-long s2)]
+    (parse-long s)))
+
+;; 14 => "14"
+;; [600 800] => "(600_800)"
+(defn- format-ncopy
+  [x]
+  (cond
+    (vector? x) (str "(" (first x) "_" (second x) ")")
+    (integer? x) (str x)))
+
 (defn- plain-coords
   [m]
   (walk/prewalk (fn [x]
@@ -560,6 +576,7 @@
 ;;; e.g. g.123_124[14]
 ;;;      g.123TG[14]
 ;;;      g.123_124[14];[18]
+;;;      c.-128_-126[(600_800)]
 
 (defrecord DNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
   Mutation
@@ -571,8 +588,8 @@
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
              :bases ref
              :coord (if should-show-end? (str "_" (coord/format coord-end))))
-           "[" ncopy "]"
-           (if ncopy-other (str ";[" ncopy-other "]")))))
+           "[" (format-ncopy ncopy) "]"
+           (if ncopy-other (str ";[" (format-ncopy ncopy-other) "]")))))
   (plain [this]
     (into {:mutation "dna-repeated-seqs"} (plain-coords this))))
 
@@ -584,12 +601,12 @@
    {:pre [(satisfies? coord/Coordinate coord-start)
           (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
           (or (nil? ref) (dna-bases? ref))
-          (integer? ncopy)
-          (or (nil? ncopy-other) (integer? ncopy-other))]}
+          (or (integer? ncopy) (vector? ncopy))
+          (or (nil? ncopy-other) (integer? ncopy-other) (vector? ncopy-other))]}
    (DNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other)))
 
 (def ^:private dna-repeated-seqs-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[(\d+)\](?:;\[(\d+)\])?")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[([\d\(\)_]+)\](?:;\[([\d\(\)_]+)\])?")
 
 (defn parse-dna-repeated-seqs
   [s kind]
@@ -598,8 +615,8 @@
     (dna-repeated-seqs (parse-coord coord-s)
                        (some-> coord-e parse-coord)
                        ref
-                       (parse-long ncopy1)
-                       (some-> ncopy2 parse-long))))
+                       (parse-ncopy ncopy1)
+                       (some-> ncopy2 parse-ncopy))))
 
 (defmethod restore "dna-repeated-seqs"
   [m]
@@ -616,7 +633,7 @@
      #"ins" parse-dna-insertion
      #"inv" parse-dna-inversion
      #"con" parse-dna-conversion
-     #"\[\d+\]" parse-dna-repeated-seqs
+     #"\[[\d\(\)_]+\]" parse-dna-repeated-seqs
      parse-dna-substitution)
    s kind))
 
@@ -991,6 +1008,7 @@
 ;;; e.g. r.-124_-123[14]
 ;;;      r.-124ug[14]
 ;;;      r.-124_-123[14];[18]
+;;;      r.-128_-126[(600_800)]
 
 (defrecord RNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
   Mutation
@@ -1002,8 +1020,8 @@
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
              :bases ref
              :coord (if should-show-end? (str "_" (coord/format coord-end))))
-           "[" ncopy "]"
-           (if ncopy-other (str ";[" ncopy-other "]")))))
+           "[" (format-ncopy ncopy) "]"
+           (if ncopy-other (str ";[" (format-ncopy ncopy-other) "]")))))
   (plain [this]
     (into {:mutation "rna-repeated-seqs"} (plain-coords this))))
 
@@ -1015,12 +1033,12 @@
    {:pre [(satisfies? coord/Coordinate coord-start)
           (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
           (or (nil? ref) (rna-bases? ref))
-          (integer? ncopy)
-          (or (nil? ncopy-other) (integer? ncopy-other))]}
+          (or (integer? ncopy) (vector? ncopy))
+          (or (nil? ncopy-other) (integer? ncopy-other) (vector? ncopy-other))]}
    (RNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other)))
 
 (def ^:private rna-repeated-seqs-re
-  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[(\d+)\](?:;\[(\d+)\])?")
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[([\d\(\)_]+)\](?:;\[([\d\(\)_]+)\])?")
 
 (defn parse-rna-repeated-seqs
   [s]
@@ -1028,8 +1046,8 @@
     (rna-repeated-seqs (coord/parse-rna-coordinate coord-s)
                        (some-> coord-e coord/parse-rna-coordinate)
                        ref
-                       (parse-long ncopy1)
-                       (some-> ncopy2 parse-long))))
+                       (parse-ncopy ncopy1)
+                       (some-> ncopy2 parse-ncopy))))
 
 (defmethod restore "rna-repeated-seqs"
   [m]
@@ -1046,7 +1064,7 @@
      #"ins" parse-rna-insertion
      #"inv" parse-rna-inversion
      #"con" parse-rna-conversion
-     #"\[\d+\]" parse-rna-repeated-seqs
+     #"\[[\d\(\)_]+\]" parse-rna-repeated-seqs
      parse-rna-substitution)
    s))
 
@@ -1360,6 +1378,7 @@
 ;;; e.g. Ala2[10]
 ;;;      Ala2[10];[11]
 ;;;      Arg65_Ser67[12]
+;;;      (Gln18)[(70_80)]
 
 (defrecord ProteinRepeatedSeqs [ref-start coord-start ref-end coord-end ncopy
                                 ncopy-other]
@@ -1374,8 +1393,8 @@
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
                             (coord/format coord-end)])
-                         "[" ncopy "]"
-                         (if ncopy-other [";[" ncopy-other "]"])])))
+                         "[" (format-ncopy ncopy) "]"
+                         (if ncopy-other [";[" (format-ncopy ncopy-other) "]"])])))
   (plain [this]
     (into {:mutation "protein-repeated-seqs"} (plain-coords this))))
 
@@ -1388,12 +1407,12 @@
           (satisfies? coord/Coordinate coord-start)
           (or (nil? ref-end) (amino-acid? ref-end))
           (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-          (integer? ncopy)
-          (or (nil? ncopy-other) (integer? ncopy-other))]}
+          (or (integer? ncopy) (vector? ncopy))
+          (or (nil? ncopy-other) (integer? ncopy-other) (vector? ncopy-other))]}
    (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy ncopy-other)))
 
 (def ^:private protein-repeated-seqs-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[(\d+)\](?:;\[(\d+)\])?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[([\d\(\)_]+)\](?:;\[([\d\(\)_]+)\])?")
 
 (defn parse-protein-repeated-seqs
   [s]
@@ -1402,8 +1421,8 @@
                            (coord/parse-protein-coordinate coord-s)
                            (->long-amino-acid ref-e)
                            (some-> coord-e coord/parse-protein-coordinate)
-                           (parse-long ncopy1)
-                           (if ncopy2 (parse-long ncopy2)))))
+                           (parse-ncopy ncopy1)
+                           (if ncopy2 (parse-ncopy ncopy2)))))
 
 (defmethod restore "protein-repeated-seqs"
   [m]
@@ -1532,6 +1551,6 @@
      #"ins" parse-protein-insertion
      #"fs" parse-protein-frame-shift
      #"ext" parse-protein-extension
-     #"\[\d+\]" parse-protein-repeated-seqs
+     #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
      parse-protein-substitution)
    s))

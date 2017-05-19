@@ -524,6 +524,13 @@
                                                14
                                                18))
 
+(def dna-repeated-seqs3s "-128_-126[(600_800)]")
+(def dna-repeated-seqs3k :cdna)
+(def dna-repeated-seqs3 (mut/dna-repeated-seqs (coord/cdna-coordinate 128 0 :upstream)
+                                               (coord/cdna-coordinate 126 0 :upstream)
+                                               nil
+                                               [600 800]))
+
 (deftest format-dna-repeated-seqs-test
   (testing "returns a string expression of a DNA repeated sequences"
     (are [m o s] (= (mut/format m o) s)
@@ -532,14 +539,16 @@
       dna-repeated-seqs1-a nil dna-repeated-seqs1s-b
       dna-repeated-seqs1-a {:range-format :bases} dna-repeated-seqs1s-b
       dna-repeated-seqs1-a {:range-format :coord} dna-repeated-seqs1s-c
-      dna-repeated-seqs2 nil dna-repeated-seqs2s)))
+      dna-repeated-seqs2 nil dna-repeated-seqs2s
+      dna-repeated-seqs3 nil dna-repeated-seqs3s)))
 
 (deftest parse-dna-repeated-seqs-test
   (testing "returns a correct DNARepeatedSeqs"
     (are [s k m] (= (mut/parse-dna-repeated-seqs s k) m)
       dna-repeated-seqs1s-c dna-repeated-seqs1k dna-repeated-seqs1-c
       dna-repeated-seqs1s-b dna-repeated-seqs1k dna-repeated-seqs1-b
-      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2)))
+      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2
+      dna-repeated-seqs3s dna-repeated-seqs3k dna-repeated-seqs3)))
 
 (deftest plain-dna-repeated-seqs-test
   (testing "returns a plain map representing DNARepeatedSeqs"
@@ -886,6 +895,12 @@
                                                14
                                                18))
 
+(def rna-repeated-seqs3s "-128_-126[(600_800)]")
+(def rna-repeated-seqs3 (mut/rna-repeated-seqs (coord/rna-coordinate 128 0 :upstream)
+                                               (coord/rna-coordinate 126 0 :upstream)
+                                               nil
+                                               [600 800]))
+
 (deftest format-rna-repeated-seqs-test
   (testing "returns a string expression of a RNA repeated-seqs"
     (are [m o s] (= (mut/format m o) s)
@@ -894,14 +909,16 @@
       rna-repeated-seqs1-a nil rna-repeated-seqs1s-b
       rna-repeated-seqs1-a {:range-format :bases} rna-repeated-seqs1s-b
       rna-repeated-seqs1-a {:range-format :coord} rna-repeated-seqs1s-c
-      rna-repeated-seqs2 nil rna-repeated-seqs2s)))
+      rna-repeated-seqs2 nil rna-repeated-seqs2s
+      rna-repeated-seqs3 nil rna-repeated-seqs3s)))
 
 (deftest parse-rna-repeated-seqs-test
   (testing "returns a correct RNARepeatedSeqs"
     (are [s m] (= (mut/parse-rna-repeated-seqs s) m)
       rna-repeated-seqs1s-c rna-repeated-seqs1-c
       rna-repeated-seqs1s-b rna-repeated-seqs1-b
-      rna-repeated-seqs2s rna-repeated-seqs2)))
+      rna-repeated-seqs2s rna-repeated-seqs2
+      rna-repeated-seqs3s rna-repeated-seqs3)))
 
 (deftest plain-rna-repeated-seqs-test
   (testing "returns a plain map representing RNARepeatedSeqs"
@@ -1179,6 +1196,11 @@
                                                        "Ser" (coord/protein-coordinate 67)
                                                        12))
 
+(def protein-repeated-seqs4s "Gln18[(70_80)]")
+(def protein-repeated-seqs4 (mut/protein-repeated-seqs "Gln" (coord/protein-coordinate 18)
+                                                       nil nil
+                                                       [70 80]))
+
 (deftest format-protein-repeated-seqs-test
   (testing "returns a string expression of a protein repeated-seqs"
     (are [m o s] (= (mut/format m o) s)
@@ -1187,7 +1209,8 @@
       protein-repeated-seqs2 nil protein-repeated-seqs2s
       protein-repeated-seqs2 {:amino-acid-format :short} protein-repeated-seqs2ss
       protein-repeated-seqs3 nil protein-repeated-seqs3s
-      protein-repeated-seqs3 {:amino-acid-format :short} protein-repeated-seqs3ss)))
+      protein-repeated-seqs3 {:amino-acid-format :short} protein-repeated-seqs3ss
+      protein-repeated-seqs4 nil protein-repeated-seqs4s)))
 
 (deftest parse-protein-repeated-seqs-test
   (testing "returns a correct ProteinRepeatedSeqs"
@@ -1197,7 +1220,8 @@
       protein-repeated-seqs2s protein-repeated-seqs2
       protein-repeated-seqs2ss protein-repeated-seqs2
       protein-repeated-seqs3s protein-repeated-seqs3
-      protein-repeated-seqs3ss protein-repeated-seqs3)))
+      protein-repeated-seqs3ss protein-repeated-seqs3
+      protein-repeated-seqs4s protein-repeated-seqs4)))
 
 (deftest plain-protein-repeated-seqs-test
   (testing "returns a plain map representing ProteinRepeatedSeqs"
