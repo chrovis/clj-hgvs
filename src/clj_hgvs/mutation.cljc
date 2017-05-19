@@ -9,6 +9,7 @@
 (declare parse-dna parse-rna parse-protein common-mutations?)
 
 (def short-amino-acids
+  "A list of single-letter amino acids."
   ["A"
    "R"
    "N"
@@ -33,6 +34,7 @@
    "X"])
 
 (def long-amino-acids
+  "A list of three-letter amino acids."
   ["Ala"
    "Arg"
    "Asn"
@@ -151,6 +153,8 @@
   {:arglists '([m])}
   :mutation)
 
+;; SeparatelyFormat protocol is used for formatting alleles mutation, such as
+;; c.2376[G>C];[G>C], including common part.
 (defprotocol SeparatelyFormat
   (format-common [this opts])
   (format-unique [this opts]))
@@ -647,6 +651,9 @@
     (dna-repeated-seqs coord-start coord-end ref ncopy)))
 
 (defn parse-dna
+  "Parses a DNA mutation string s, returning a record implementing Mutation
+  protocol. kind must be selected from :genome, :mitochondria, :cdna, or
+  :ncdna."
   [s kind]
   ((condp re-find s
      #"\[.+;.+\]$" parse-dna-alleles
@@ -1086,6 +1093,8 @@
     (rna-repeated-seqs coord-start coord-end ref ncopy)))
 
 (defn parse-rna
+  "Parses a RNA mutation string s, returning a record implementing Mutation
+  protocol."
   [s]
   ((condp re-find s
      #"\[.+;.+\]$" parse-rna-alleles
@@ -1576,6 +1585,8 @@
     (protein-extension ref coord alt region new-site)))
 
 (defn parse-protein
+  "Parses a protein mutation string s, returning a record implementing Mutation
+  protocol."
   [s]
   ((condp re-find s
      #"\[.+;.+\]$" parse-protein-alleles
