@@ -480,17 +480,37 @@
 (def dna-alleles2 (mut/dna-alleles [(mut/dna-substitution (coord/genomic-coordinate 123) "G" ">" "A")]
                                    [(mut/dna-deletion (coord/genomic-coordinate 345) nil)]))
 
+(def dna-alleles3s "2376[G>C];[G>C]")
+(def dna-alleles3k :cdna)
+(def dna-alleles3 (mut/dna-alleles [(mut/dna-substitution (coord/cdna-coordinate 2376)
+                                                          "G" ">" "C")]
+                                   [(mut/dna-substitution (coord/cdna-coordinate 2376)
+                                                          "G" ">" "C")]))
+
+(def dna-alleles4s "123_124[14];[18]")
+(def dna-alleles4k :genome)
+(def dna-alleles4 (mut/dna-alleles [(mut/dna-repeated-seqs (coord/genomic-coordinate 123)
+                                                           (coord/genomic-coordinate 124)
+                                                           nil 14)]
+                                   [(mut/dna-repeated-seqs (coord/genomic-coordinate 123)
+                                                           (coord/genomic-coordinate 124)
+                                                           nil 18)]))
+
 (deftest format-dna-alleles-test
   (testing "returns a string expression of a DNA alleles"
     (are [m s] (= (mut/format m) s)
       dna-alleles1 dna-alleles1s
-      dna-alleles2 dna-alleles2s)))
+      dna-alleles2 dna-alleles2s
+      dna-alleles3 dna-alleles3s
+      dna-alleles4 dna-alleles4s)))
 
 (deftest parse-dna-alleles-test
   (testing "returns a correct DNAAlleles"
     (are [s k m] (= (mut/parse-dna-alleles s k) m)
       dna-alleles1s dna-alleles1k dna-alleles1
-      dna-alleles2s dna-alleles2k dna-alleles2)))
+      dna-alleles2s dna-alleles2k dna-alleles2
+      dna-alleles3s dna-alleles3k dna-alleles3
+      dna-alleles4s dna-alleles4k dna-alleles4)))
 
 ;;; DNA - repeated sequences
 
@@ -513,20 +533,11 @@
                             :coord-start (coord/plain (coord/genomic-coordinate 123))
                             :coord-end (coord/plain (coord/genomic-coordinate 124))
                             :ref nil
-                            :ncopy 14
-                            :ncopy-other nil})
+                            :ncopy 14})
 
-(def dna-repeated-seqs2s "123_124[14];[18]")
-(def dna-repeated-seqs2k :genome)
-(def dna-repeated-seqs2 (mut/dna-repeated-seqs (coord/genomic-coordinate 123)
-                                               (coord/genomic-coordinate 124)
-                                               nil
-                                               14
-                                               18))
-
-(def dna-repeated-seqs3s "-128_-126[(600_800)]")
-(def dna-repeated-seqs3k :cdna)
-(def dna-repeated-seqs3 (mut/dna-repeated-seqs (coord/cdna-coordinate 128 0 :upstream)
+(def dna-repeated-seqs2s "-128_-126[(600_800)]")
+(def dna-repeated-seqs2k :cdna)
+(def dna-repeated-seqs2 (mut/dna-repeated-seqs (coord/cdna-coordinate 128 0 :upstream)
                                                (coord/cdna-coordinate 126 0 :upstream)
                                                nil
                                                [600 800]))
@@ -539,16 +550,14 @@
       dna-repeated-seqs1-a nil dna-repeated-seqs1s-b
       dna-repeated-seqs1-a {:range-format :bases} dna-repeated-seqs1s-b
       dna-repeated-seqs1-a {:range-format :coord} dna-repeated-seqs1s-c
-      dna-repeated-seqs2 nil dna-repeated-seqs2s
-      dna-repeated-seqs3 nil dna-repeated-seqs3s)))
+      dna-repeated-seqs2 nil dna-repeated-seqs2s)))
 
 (deftest parse-dna-repeated-seqs-test
   (testing "returns a correct DNARepeatedSeqs"
     (are [s k m] (= (mut/parse-dna-repeated-seqs s k) m)
       dna-repeated-seqs1s-c dna-repeated-seqs1k dna-repeated-seqs1-c
       dna-repeated-seqs1s-b dna-repeated-seqs1k dna-repeated-seqs1-b
-      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2
-      dna-repeated-seqs3s dna-repeated-seqs3k dna-repeated-seqs3)))
+      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2)))
 
 (deftest plain-dna-repeated-seqs-test
   (testing "returns a plain map representing DNARepeatedSeqs"
@@ -853,17 +862,39 @@
 (def rna-alleles2 (mut/rna-alleles [(mut/rna-substitution (coord/rna-coordinate 76 nil nil) "a" "u")]
                                    [(mut/rna-deletion (coord/rna-coordinate 103 nil nil) nil)]))
 
+(def rna-alleles3s "76[a>u];[a>u]")
+(def rna-alleles3 (mut/rna-alleles
+                   [(mut/rna-substitution (coord/rna-coordinate 76 nil nil)
+                                          "a" "u")]
+                   [(mut/rna-substitution (coord/rna-coordinate 76 nil nil)
+                                          "a" "u")]))
+
+(def rna-alleles4s "-124_-123[14];[18]")
+(def rna-alleles4 (mut/rna-alleles
+                   [(mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
+                                           (coord/rna-coordinate 123 0 :upstream)
+                                           nil
+                                           14)]
+                   [(mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
+                                           (coord/rna-coordinate 123 0 :upstream)
+                                           nil
+                                           18)]))
+
 (deftest format-rna-alleles-test
   (testing "returns a string expression of a RNA alleles"
     (are [m s] (= (mut/format m) s)
       rna-alleles1 rna-alleles1s
-      rna-alleles2 rna-alleles2s)))
+      rna-alleles2 rna-alleles2s
+      rna-alleles3 rna-alleles3s
+      rna-alleles4 rna-alleles4s)))
 
 (deftest parse-rna-alleles-test
   (testing "returns a correct RNAAlleles"
     (are [s m] (= (mut/parse-rna-alleles s) m)
       rna-alleles1s rna-alleles1
-      rna-alleles2s rna-alleles2)))
+      rna-alleles2s rna-alleles2
+      rna-alleles3s rna-alleles3
+      rna-alleles4s rna-alleles4)))
 
 ;;; RNA - repeated sequences
 
@@ -885,18 +916,10 @@
                             :coord-start (coord/plain (coord/rna-coordinate 124 0 :upstream))
                             :coord-end (coord/plain (coord/rna-coordinate 123 0 :upstream))
                             :ref nil
-                            :ncopy 14
-                            :ncopy-other nil})
+                            :ncopy 14})
 
-(def rna-repeated-seqs2s "-124_-123[14];[18]")
-(def rna-repeated-seqs2 (mut/rna-repeated-seqs (coord/rna-coordinate 124 0 :upstream)
-                                               (coord/rna-coordinate 123 0 :upstream)
-                                               nil
-                                               14
-                                               18))
-
-(def rna-repeated-seqs3s "-128_-126[(600_800)]")
-(def rna-repeated-seqs3 (mut/rna-repeated-seqs (coord/rna-coordinate 128 0 :upstream)
+(def rna-repeated-seqs2s "-128_-126[(600_800)]")
+(def rna-repeated-seqs2 (mut/rna-repeated-seqs (coord/rna-coordinate 128 0 :upstream)
                                                (coord/rna-coordinate 126 0 :upstream)
                                                nil
                                                [600 800]))
@@ -909,16 +932,14 @@
       rna-repeated-seqs1-a nil rna-repeated-seqs1s-b
       rna-repeated-seqs1-a {:range-format :bases} rna-repeated-seqs1s-b
       rna-repeated-seqs1-a {:range-format :coord} rna-repeated-seqs1s-c
-      rna-repeated-seqs2 nil rna-repeated-seqs2s
-      rna-repeated-seqs3 nil rna-repeated-seqs3s)))
+      rna-repeated-seqs2 nil rna-repeated-seqs2s)))
 
 (deftest parse-rna-repeated-seqs-test
   (testing "returns a correct RNARepeatedSeqs"
     (are [s m] (= (mut/parse-rna-repeated-seqs s) m)
       rna-repeated-seqs1s-c rna-repeated-seqs1-c
       rna-repeated-seqs1s-b rna-repeated-seqs1-b
-      rna-repeated-seqs2s rna-repeated-seqs2
-      rna-repeated-seqs3s rna-repeated-seqs3)))
+      rna-repeated-seqs2s rna-repeated-seqs2)))
 
 (deftest plain-rna-repeated-seqs-test
   (testing "returns a plain map representing RNARepeatedSeqs"
@@ -1157,17 +1178,35 @@
                        [(mut/protein-substitution "Ser" (coord/protein-coordinate 73) "Arg")]
                        [(mut/protein-deletion "Asn" (coord/protein-coordinate 603))]))
 
+(def protein-alleles3s "[Ser73Arg];[Ser73=]")
+(def protein-alleles3 (mut/protein-alleles
+                       [(mut/protein-substitution "Ser" (coord/protein-coordinate 73) "Arg")]
+                       [(mut/protein-substitution "Ser" (coord/protein-coordinate 73) "Ser")]))
+
+(def protein-alleles4s "Ala2[10];[11]")
+(def protein-alleles4 (mut/protein-alleles
+                       [(mut/protein-repeated-seqs "Ala" (coord/protein-coordinate 2)
+                                                   nil nil
+                                                   10)]
+                       [(mut/protein-repeated-seqs "Ala" (coord/protein-coordinate 2)
+                                                   nil nil
+                                                   11)]))
+
 (deftest format-protein-alleles-test
   (testing "returns a string expression of a protein alleles"
     (are [m s] (= (mut/format m) s)
       protein-alleles1 protein-alleles1s
-      protein-alleles2 protein-alleles2s)))
+      protein-alleles2 protein-alleles2s
+      protein-alleles3 protein-alleles3s
+      protein-alleles4 protein-alleles4s)))
 
 (deftest parse-protein-alleles-test
   (testing "returns a correct ProteinAlleles"
     (are [s m] (= (mut/parse-protein-alleles s) m)
       protein-alleles1s protein-alleles1
-      protein-alleles2s protein-alleles2)))
+      protein-alleles2s protein-alleles2
+      protein-alleles3s protein-alleles3
+      protein-alleles4s protein-alleles4)))
 
 ;;; Protein - repeated sequences
 
@@ -1181,23 +1220,16 @@
                               :coord-start (coord/plain (coord/protein-coordinate 2))
                               :ref-end nil
                               :coord-end nil
-                              :ncopy 10
-                              :ncopy-other nil})
+                              :ncopy 10})
 
-(def protein-repeated-seqs2s "Ala2[10];[11]")
-(def protein-repeated-seqs2ss "A2[10];[11]")
-(def protein-repeated-seqs2 (mut/protein-repeated-seqs "Ala" (coord/protein-coordinate 2)
-                                                       nil nil
-                                                       10 11))
-
-(def protein-repeated-seqs3s "Arg65_Ser67[12]")
-(def protein-repeated-seqs3ss "R65_S67[12]")
-(def protein-repeated-seqs3 (mut/protein-repeated-seqs "Arg" (coord/protein-coordinate 65)
+(def protein-repeated-seqs2s "Arg65_Ser67[12]")
+(def protein-repeated-seqs2ss "R65_S67[12]")
+(def protein-repeated-seqs2 (mut/protein-repeated-seqs "Arg" (coord/protein-coordinate 65)
                                                        "Ser" (coord/protein-coordinate 67)
                                                        12))
 
-(def protein-repeated-seqs4s "Gln18[(70_80)]")
-(def protein-repeated-seqs4 (mut/protein-repeated-seqs "Gln" (coord/protein-coordinate 18)
+(def protein-repeated-seqs3s "Gln18[(70_80)]")
+(def protein-repeated-seqs3 (mut/protein-repeated-seqs "Gln" (coord/protein-coordinate 18)
                                                        nil nil
                                                        [70 80]))
 
@@ -1208,9 +1240,7 @@
       protein-repeated-seqs1 {:amino-acid-format :short} protein-repeated-seqs1ss
       protein-repeated-seqs2 nil protein-repeated-seqs2s
       protein-repeated-seqs2 {:amino-acid-format :short} protein-repeated-seqs2ss
-      protein-repeated-seqs3 nil protein-repeated-seqs3s
-      protein-repeated-seqs3 {:amino-acid-format :short} protein-repeated-seqs3ss
-      protein-repeated-seqs4 nil protein-repeated-seqs4s)))
+      protein-repeated-seqs3 nil protein-repeated-seqs3s)))
 
 (deftest parse-protein-repeated-seqs-test
   (testing "returns a correct ProteinRepeatedSeqs"
@@ -1219,9 +1249,7 @@
       protein-repeated-seqs1ss protein-repeated-seqs1
       protein-repeated-seqs2s protein-repeated-seqs2
       protein-repeated-seqs2ss protein-repeated-seqs2
-      protein-repeated-seqs3s protein-repeated-seqs3
-      protein-repeated-seqs3ss protein-repeated-seqs3
-      protein-repeated-seqs4s protein-repeated-seqs4)))
+      protein-repeated-seqs3s protein-repeated-seqs3)))
 
 (deftest plain-protein-repeated-seqs-test
   (testing "returns a plain map representing ProteinRepeatedSeqs"

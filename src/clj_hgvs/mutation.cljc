@@ -6,7 +6,7 @@
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
 
-(declare parse-dna parse-rna parse-protein)
+(declare parse-dna parse-rna parse-protein common-mutations?)
 
 (def short-amino-acids
   ["A"
@@ -93,6 +93,20 @@
          #"\([\*\-\+\d\?_]+\)" [s]
          (re-seq #"[\*\-\+\d\?]+" s))))
 
+;; "[123G>A];[345del]" => ["123G>A" "345del"]
+;; "2376[G>C];[G>C]" => ["2376G>C" "2376G>C"]
+(defn- split-alleles-mutations
+  [s]
+  (let [[_ common alleles] (re-matches #"([^\[\];]+)(\[.+\])" s)]
+    (if common
+      (if (re-matches #"\[\d+\];\[\d+\]" alleles)
+        (->> (string/split alleles #";")
+             (mapv #(str common %)))
+        (->> (re-seq #"\[(.+?)\]" alleles)
+             (map second)
+             (mapv #(str common %))))
+      (mapv second (re-seq #"\[(.+?)\]" s)))))
+
 ;; "14" => 14
 ;; "(600_800)" => [600 800]
 (defn- parse-ncopy
@@ -137,6 +151,10 @@
   {:arglists '([m])}
   :mutation)
 
+(defprotocol SeparatelyFormat
+  (format-common [this opts])
+  (format-unique [this opts]))
+
 ;;; DNA mutations
 
 (defn- dna-bases?
@@ -163,12 +181,12 @@
   Mutation
   (format [this] (format this nil))
   (format [this _]
-    (apply str (flatten [(coord/format coord)
-                         ref
-                         type
-                         alt])))
+    (str (format-common this _) (format-unique this _)))
   (plain [this]
-    (into {:mutation "dna-substitution"} (plain-coords this))))
+    (into {:mutation "dna-substitution"} (plain-coords this)))
+  SeparatelyFormat
+  (format-common [this _] (coord/format coord))
+  (format-unique [this _] (str ref type alt)))
 
 (defn dna-substitution
   "Constructor of DNASubstitution. Throws an exception if any input is illegal."
@@ -528,26 +546,33 @@
   (let [{:keys [coord-start coord-end ref alt]} (restore-coords m)]
     (dna-indel coord-start coord-end ref alt)))
 
-;;; DNA - allels
+;;; DNA - alleles
 ;;;
 ;;; e.g. g.[123G>A;345del]
 ;;;      g.[123G>A];[345del]
+;;;      c.2376[G>C];[G>C]
 ;;;      c.2376G>C(;)3103del (TODO)
 ;;;      c.2376[G>C];[(G>C)] (TODO)
 ;;;      c.2376[G>C];[=] (TODO)
 ;;;      c.[2376G>C];[?] (TODO)
-;;;      c.[296T>G;476C>T;1083A>C];[296T>G;1083A>C] (TODO)
+;;;      c.[296T>G;476C>T;1083A>C];[296T>G;1083A>C]
 ;;;      c.[296T>G;476C>T];[476C>T](;)1083A>C (TODO)
 ;;;      c.[296T>G];[476C>T](;)1083G>C(;)1406del (TODO)
 ;;;      c.[NM_000167.5:94A>G;NM_004006.2:76A>C] (TODO)
+;;;      g.123_124[14];[18]
 
 (defrecord DNAAlleles [mutations1 mutations2]
   Mutation
   (format [this] (format this nil))
   (format [this opts]
-    (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
-         (if (seq mutations2)
-           (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]"))))
+    (if (common-mutations? (concat mutations1 mutations2))
+      (str (format-common (first mutations1) opts)
+           "[" (string/join ";" (map #(format-unique % opts) mutations1)) "]"
+           (if (seq mutations2)
+             (str ";[" (string/join ";" (map #(format-unique % opts) mutations2)) "]")))
+      (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
+           (if (seq mutations2)
+             (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]")))))
   (plain [this]
     {:mutation "dna-alleles"
      :mutations1 (mapv plain mutations1)
@@ -561,7 +586,7 @@
 
 (defn parse-dna-alleles
   [s kind]
-  (let [[mut1 mut2] (map second (re-seq #"\[(.+?)\]" s))]
+  (let [[mut1 mut2] (split-alleles-mutations s)]
     (dna-alleles (mapv #(parse-dna % kind) (string/split mut1 #";"))
                  (if mut2
                    (mapv #(parse-dna % kind) (string/split mut2 #";"))))))
@@ -575,58 +600,56 @@
 ;;;
 ;;; e.g. g.123_124[14]
 ;;;      g.123TG[14]
-;;;      g.123_124[14];[18]
 ;;;      c.-128_-126[(600_800)]
 
-(defrecord DNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
+(defrecord DNARepeatedSeqs [coord-start coord-end ref ncopy]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [range-format] :or {range-format :auto}}]
+  (format [this opts]
+    (str (format-common this opts) "[" (format-unique this opts) "]"))
+  (plain [this]
+    (into {:mutation "dna-repeated-seqs"} (plain-coords this)))
+  SeparatelyFormat
+  (format-common [this {:keys [range-format] :or {range-format :auto}}]
     (let [should-show-end? (neg? (compare coord-start coord-end))]
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
              :bases ref
-             :coord (if should-show-end? (str "_" (coord/format coord-end))))
-           "[" (format-ncopy ncopy) "]"
-           (if ncopy-other (str ";[" (format-ncopy ncopy-other) "]")))))
-  (plain [this]
-    (into {:mutation "dna-repeated-seqs"} (plain-coords this))))
+             :coord (if should-show-end? (str "_" (coord/format coord-end)))))))
+  (format-unique [this _]
+    (format-ncopy ncopy)))
 
 (defn dna-repeated-seqs
   "Constructor of DNARepeatedSeqs. Throws an exception if any input is illegal."
-  ([coord-start coord-end ref ncopy]
-   (dna-repeated-seqs coord-start coord-end ref ncopy nil))
-  ([coord-start coord-end ref ncopy ncopy-other]
-   {:pre [(satisfies? coord/Coordinate coord-start)
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-          (or (nil? ref) (dna-bases? ref))
-          (or (integer? ncopy) (vector? ncopy))
-          (or (nil? ncopy-other) (integer? ncopy-other) (vector? ncopy-other))]}
-   (DNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other)))
+  [coord-start coord-end ref ncopy]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (nil? ref) (dna-bases? ref))
+         (or (integer? ncopy) (vector? ncopy))]}
+  (DNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private dna-repeated-seqs-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[([\d\(\)_]+)\](?:;\[([\d\(\)_]+)\])?")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?([A-Z]+)?\[([\d\(\)_]+)\]")
 
 (defn parse-dna-repeated-seqs
   [s kind]
-  (let [[_ coord-s coord-e ref ncopy1 ncopy2] (re-matches dna-repeated-seqs-re s)
+  (let [[_ coord-s coord-e ref ncopy] (re-matches dna-repeated-seqs-re s)
         parse-coord (coord-parser kind)]
     (dna-repeated-seqs (parse-coord coord-s)
                        (some-> coord-e parse-coord)
                        ref
-                       (parse-ncopy ncopy1)
-                       (some-> ncopy2 parse-ncopy))))
+                       (parse-ncopy ncopy))))
 
 (defmethod restore "dna-repeated-seqs"
   [m]
-  (let [{:keys [coord-start coord-end ref ncopy ncopy-other]} (restore-coords m)]
-    (dna-repeated-seqs coord-start coord-end ref ncopy ncopy-other)))
+  (let [{:keys [coord-start coord-end ref ncopy]} (restore-coords m)]
+    (dna-repeated-seqs coord-start coord-end ref ncopy)))
 
 (defn parse-dna
   [s kind]
   ((condp re-find s
-     #"^\[.+\]$" parse-dna-alleles
+     #"\[.+;.+\]$" parse-dna-alleles
      #"del[ACGT]*ins" parse-dna-indel
      #"del" parse-dna-deletion
      #"dup" parse-dna-duplication
@@ -653,9 +676,13 @@
   Mutation
   (format [this] (format this nil))
   (format [this _]
+    (str (format-common this _) (format-unique this _))
     (apply str (coord/format coord) ref ">" alt))
   (plain [this]
-    (into {:mutation "rna-substitution"} (plain-coords this))))
+    (into {:mutation "rna-substitution"} (plain-coords this)))
+  SeparatelyFormat
+  (format-common [this _] (coord/format coord))
+  (format-unique [this _] (str ref ">" alt)))
 
 (defn rna-substitution
   "Constructor of RNASubstitution. Throws an exception if any input is illegal."
@@ -967,19 +994,25 @@
 ;;;
 ;;; e.g. r.[76a>u;103del]
 ;;;      r.[76a>u];[103del]
-;;;      r.76[a>u];[a>u] (TODO)
+;;;      r.76[a>u];[a>u]
 ;;;      r.76a>u(;)103del (TODO)
 ;;;      r.76[a>u];[(a>u)] (TODO)
 ;;;      r.76[a>u];[=] (TODO)
 ;;;      r.[76a>u];[?] (TODO)
+;;;      r.-124_-123[14];[18]
 
 (defrecord RNAAlleles [mutations1 mutations2]
   Mutation
   (format [this] (format this nil))
   (format [this opts]
-    (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
-         (if (seq mutations2)
-           (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]"))))
+    (if (common-mutations? (concat mutations1 mutations2))
+      (str (format-common (first mutations1) opts)
+           "[" (string/join ";" (map #(format-unique % opts) mutations1)) "]"
+           (if (seq mutations2)
+             (str ";[" (string/join ";" (map #(format-unique % opts) mutations2)) "]")))
+      (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
+           (if (seq mutations2)
+             (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]")))))
   (plain [this]
     {:mutation "rna-alleles"
      :mutations1 (mapv plain mutations1)
@@ -993,7 +1026,7 @@
 
 (defn parse-rna-alleles
   [s]
-  (let [[muts1 muts2] (map second (re-seq #"\[(.+?)\]" s))]
+  (let [[muts1 muts2] (split-alleles-mutations s)]
     (rna-alleles (mapv parse-rna (string/split muts1 #";"))
                  (if muts2
                    (mapv parse-rna (string/split muts2 #";"))))))
@@ -1007,57 +1040,55 @@
 ;;;
 ;;; e.g. r.-124_-123[14]
 ;;;      r.-124ug[14]
-;;;      r.-124_-123[14];[18]
 ;;;      r.-128_-126[(600_800)]
 
-(defrecord RNARepeatedSeqs [coord-start coord-end ref ncopy ncopy-other]
+(defrecord RNARepeatedSeqs [coord-start coord-end ref ncopy]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [range-format] :or {range-format :auto}}]
+  (format [this opts]
+    (str (format-common this opts) "[" (format-unique this opts) "]"))
+  (plain [this]
+    (into {:mutation "rna-repeated-seqs"} (plain-coords this)))
+  SeparatelyFormat
+  (format-common [this {:keys [range-format] :or {range-format :auto}}]
     (let [should-show-end? (neg? (compare coord-start coord-end))]
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
              :bases ref
-             :coord (if should-show-end? (str "_" (coord/format coord-end))))
-           "[" (format-ncopy ncopy) "]"
-           (if ncopy-other (str ";[" (format-ncopy ncopy-other) "]")))))
-  (plain [this]
-    (into {:mutation "rna-repeated-seqs"} (plain-coords this))))
+             :coord (if should-show-end? (str "_" (coord/format coord-end)))))))
+  (format-unique [this _]
+    (format-ncopy ncopy)))
 
 (defn rna-repeated-seqs
   "Constructor of RNARepeatedSeqs. Throws an exception if any input is illegal."
-  ([coord-start coord-end ref ncopy]
-   (rna-repeated-seqs coord-start coord-end ref ncopy nil))
-  ([coord-start coord-end ref ncopy ncopy-other]
-   {:pre [(satisfies? coord/Coordinate coord-start)
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-          (or (nil? ref) (rna-bases? ref))
-          (or (integer? ncopy) (vector? ncopy))
-          (or (nil? ncopy-other) (integer? ncopy-other) (vector? ncopy-other))]}
-   (RNARepeatedSeqs. coord-start coord-end ref ncopy ncopy-other)))
+  [coord-start coord-end ref ncopy]
+  {:pre [(satisfies? coord/Coordinate coord-start)
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (nil? ref) (rna-bases? ref))
+         (or (integer? ncopy) (vector? ncopy))]}
+  (RNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private rna-repeated-seqs-re
-  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[([\d\(\)_]+)\](?:;\[([\d\(\)_]+)\])?")
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?([a-z]+)?\[([\d\(\)_]+)\]")
 
 (defn parse-rna-repeated-seqs
   [s]
-  (let [[_ coord-s coord-e ref ncopy1 ncopy2] (re-matches rna-repeated-seqs-re s)]
+  (let [[_ coord-s coord-e ref ncopy] (re-matches rna-repeated-seqs-re s)]
     (rna-repeated-seqs (coord/parse-rna-coordinate coord-s)
                        (some-> coord-e coord/parse-rna-coordinate)
                        ref
-                       (parse-ncopy ncopy1)
-                       (some-> ncopy2 parse-ncopy))))
+                       (parse-ncopy ncopy))))
 
 (defmethod restore "rna-repeated-seqs"
   [m]
-  (let [{:keys [coord-start coord-end ref ncopy ncopy-other]} (restore-coords m)]
-    (rna-repeated-seqs coord-start coord-end ref ncopy ncopy-other)))
+  (let [{:keys [coord-start coord-end ref ncopy]} (restore-coords m)]
+    (rna-repeated-seqs coord-start coord-end ref ncopy)))
 
 (defn parse-rna
   [s]
   ((condp re-find s
-     #"^\[.+\]$" parse-rna-alleles
+     #"\[.+;.+\]$" parse-rna-alleles
      #"delins" parse-rna-indel
      #"del" parse-rna-deletion
      #"dup" parse-rna-duplication
@@ -1337,19 +1368,25 @@
 ;;;      p.[Ser73Arg];[Asn603del]
 ;;;      p.[(Ser73Arg)];[(Asn603del)] (TODO)
 ;;;      p.(Ser73Arg)(;)(Asn603del) (TODO)
-;;;      p.[Ser73Arg];[Ser73=] (TODO)
+;;;      p.[Ser73Arg];[Ser73=]
 ;;;      p.[Ser73Arg];[(?)] (TODO)
 ;;;      p.[Asn26His,Ala25_Gly29del] (TODO)
 ;;;      p.[Arg83=/Arg83Ser] (TODO)
 ;;;      p.[Arg83=//Arg83Ser] (TODO)
+;;;      p.Ala2[10];[11]
 
 (defrecord ProteinAlleles [mutations1 mutations2]
   Mutation
   (format [this] (format this nil))
   (format [this opts]
-    (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
-         (if (seq mutations2)
-           (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]"))))
+    (if (common-mutations? (concat mutations1 mutations2))
+      (str (format-common (first mutations1) opts)
+           "[" (string/join ";" (map #(format-unique % opts) mutations1)) "]"
+           (if (seq mutations2)
+             (str ";[" (string/join ";" (map #(format-unique % opts) mutations2)) "]")))
+      (str "[" (string/join ";" (map #(format % opts) mutations1)) "]"
+           (if (seq mutations2)
+             (str ";[" (string/join ";" (map #(format % opts) mutations2)) "]")))))
   (plain [this]
     {:mutation "protein-alleles"
      :mutations1 (mapv plain mutations1)
@@ -1363,7 +1400,7 @@
 
 (defn parse-protein-alleles
   [s]
-  (let [[mut1 mut2] (map second (re-seq #"\[(.+?)\]" s))]
+  (let [[mut1 mut2] (split-alleles-mutations s)]
     (protein-alleles (mapv parse-protein (string/split mut1 #";"))
                      (if mut2
                        (mapv parse-protein (string/split mut2 #";"))))))
@@ -1376,58 +1413,55 @@
 ;;; Protein - repeated sequences
 ;;;
 ;;; e.g. Ala2[10]
-;;;      Ala2[10];[11]
 ;;;      Arg65_Ser67[12]
 ;;;      (Gln18)[(70_80)]
 
-(defrecord ProteinRepeatedSeqs [ref-start coord-start ref-end coord-end ncopy
-                                ncopy-other]
+(defrecord ProteinRepeatedSeqs [ref-start coord-start ref-end coord-end ncopy]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    (apply str (flatten [(cond-> ref-start
-                           (= amino-acid-format :short) ->short-amino-acid)
-                         (coord/format coord-start)
-                         (if (should-show-end? ref-start coord-start ref-end coord-end)
-                           ["_"
-                            (cond-> ref-end
-                              (= amino-acid-format :short) ->short-amino-acid)
-                            (coord/format coord-end)])
-                         "[" (format-ncopy ncopy) "]"
-                         (if ncopy-other [";[" (format-ncopy ncopy-other) "]"])])))
+  (format [this opts]
+    (str (format-common this opts) "[" (format-unique this opts) "]"))
   (plain [this]
-    (into {:mutation "protein-repeated-seqs"} (plain-coords this))))
+    (into {:mutation "protein-repeated-seqs"} (plain-coords this)))
+  SeparatelyFormat
+  (format-common [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+    (str (cond-> ref-start
+           (= amino-acid-format :short) ->short-amino-acid)
+         (coord/format coord-start)
+         (if (should-show-end? ref-start coord-start ref-end coord-end)
+           (str "_"
+                (cond-> ref-end
+                  (= amino-acid-format :short) ->short-amino-acid)
+                (coord/format coord-end)))))
+  (format-unique [this _]
+    (format-ncopy ncopy)))
 
 (defn protein-repeated-seqs
   "Constructor of ProteinRepeatedSeqs. Throws an exception if any input is illegal."
-  ([ref-start coord-start ref-end coord-end ncopy]
-   (protein-repeated-seqs ref-start coord-start ref-end coord-end ncopy nil))
-  ([ref-start coord-start ref-end coord-end ncopy ncopy-other]
-   {:pre [(amino-acid? ref-start)
-          (satisfies? coord/Coordinate coord-start)
-          (or (nil? ref-end) (amino-acid? ref-end))
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-          (or (integer? ncopy) (vector? ncopy))
-          (or (nil? ncopy-other) (integer? ncopy-other) (vector? ncopy-other))]}
-   (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy ncopy-other)))
+  [ref-start coord-start ref-end coord-end ncopy]
+  {:pre [(amino-acid? ref-start)
+         (satisfies? coord/Coordinate coord-start)
+         (or (nil? ref-end) (amino-acid? ref-end))
+         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
+         (or (integer? ncopy) (vector? ncopy))]}
+  (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy))
 
 (def ^:private protein-repeated-seqs-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[([\d\(\)_]+)\](?:;\[([\d\(\)_]+)\])?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?\[([\d\(\)_]+)\]")
 
 (defn parse-protein-repeated-seqs
   [s]
-  (let [[_ ref-s coord-s ref-e coord-e ncopy1 ncopy2] (re-matches protein-repeated-seqs-re s)]
+  (let [[_ ref-s coord-s ref-e coord-e ncopy] (re-matches protein-repeated-seqs-re s)]
     (protein-repeated-seqs (->long-amino-acid ref-s)
                            (coord/parse-protein-coordinate coord-s)
                            (->long-amino-acid ref-e)
                            (some-> coord-e coord/parse-protein-coordinate)
-                           (parse-ncopy ncopy1)
-                           (if ncopy2 (parse-ncopy ncopy2)))))
+                           (parse-ncopy ncopy))))
 
 (defmethod restore "protein-repeated-seqs"
   [m]
-  (let [{:keys [ref-start coord-start ref-end coord-end ncopy ncopy-other]} (restore-coords m)]
-    (protein-repeated-seqs ref-start coord-start ref-end coord-end ncopy ncopy-other)))
+  (let [{:keys [ref-start coord-start ref-end coord-end ncopy]} (restore-coords m)]
+    (protein-repeated-seqs ref-start coord-start ref-end coord-end ncopy)))
 
 ;;; Protein - frame shift
 ;;;
@@ -1544,7 +1578,7 @@
 (defn parse-protein
   [s]
   ((condp re-find s
-     #"^\[.+\]$" parse-protein-alleles
+     #"\[.+;.+\]$" parse-protein-alleles
      #"delins" parse-protein-indel
      #"del" parse-protein-deletion
      #"dup" parse-protein-duplication
@@ -1554,3 +1588,14 @@
      #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
      parse-protein-substitution)
    s))
+
+(defn- common-mutations?
+  [mutations]
+  (and (apply = (map type mutations))
+       (condp instance? (first mutations)
+         DNASubstitution (apply = (map :coord mutations))
+         DNARepeatedSeqs (apply = (map #(dissoc % :ncopy) mutations))
+         RNASubstitution (apply = (map :coord mutations))
+         RNARepeatedSeqs (apply = (map #(dissoc % :ncopy) mutations))
+         ProteinRepeatedSeqs (apply = (map #(dissoc % :ncopy) mutations))
+         false)))
