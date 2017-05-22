@@ -1094,6 +1094,24 @@
   (let [{:keys [coord-start coord-end ref ncopy]} (restore-coords m)]
     (rna-repeated-seqs coord-start coord-end ref ncopy)))
 
+;;; RNA - no RNA detected
+;;;
+;;; e.g. r.0
+
+(defrecord NoRNA []
+  Mutation
+  (format [this] (format this nil))
+  (format [this _] "0")
+  (plain [this] {:mutation "no-rna"}))
+
+(defn no-rna
+  []
+  (NoRNA.))
+
+(defmethod restore "no-rna"
+  [m]
+  (no-rna))
+
 ;;; RNA - unknown mutation
 ;;;
 ;;; e.g. r.?
@@ -1116,8 +1134,9 @@
   "Parses a RNA mutation string s, returning a record implementing Mutation
   protocol."
   [s]
-  (if (= s "?")
-    (rna-unknown-mutation)
+  (case s
+    "0" (no-rna)
+    "?" (rna-unknown-mutation)
     ((condp re-find s
        #"\[.+;.+\]$" parse-rna-alleles
        #"delins" parse-rna-indel
@@ -1606,6 +1625,24 @@
   (let [{:keys [ref coord alt region new-site]} (restore-coords m)]
     (protein-extension ref coord alt region new-site)))
 
+;;; Protein - no protein detected
+;;;
+;;; e.g. r.0
+
+(defrecord NoProtein []
+  Mutation
+  (format [this] (format this nil))
+  (format [this _] "0")
+  (plain [this] {:mutation "no-protein"}))
+
+(defn no-protein
+  []
+  (NoProtein.))
+
+(defmethod restore "no-protein"
+  [m]
+  (no-protein))
+
 ;;; Protein - unknown mutation
 ;;;
 ;;; e.g. r.?
@@ -1628,8 +1665,9 @@
   "Parses a protein mutation string s, returning a record implementing Mutation
   protocol."
   [s]
-  (if (= s "?")
-    (protein-unknown-mutation)
+  (case s
+    "0" (no-protein)
+    "?" (protein-unknown-mutation)
     ((condp re-find s
        #"\[.+;.+\]$" parse-protein-alleles
        #"delins" parse-protein-indel
