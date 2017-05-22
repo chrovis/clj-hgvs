@@ -161,9 +161,10 @@
 
 ;;; DNA mutations
 
+;; See http://varnomen.hgvs.org/bg-material/standards#dna
 (defn- dna-bases?
   [s]
-  (and (string? s) (some? (re-matches #"[ACGNT]+" s))))
+  (and (string? s) (some? (re-matches #"[ACGTBDHKMNRSVWY]+" s))))
 
 (defn- coord-parser
   [kind]
@@ -259,7 +260,7 @@
    (DNADeletion. coord-start coord-end ref)))
 
 (def ^:private dna-deletion-re
-  #"([\(\)\*\-\+\d\?_]+)del([ACGNT]+)?")
+  #"([\(\)\*\-\+\d\?_]+)del([A-Z]+)?")
 
 (defn parse-dna-deletion
   [s kind]
@@ -379,7 +380,7 @@
 
 (defn- parse-dna-insertion-alt
   [s kind]
-  (or (re-matches #"[ACGNT]+" s)
+  (or (re-matches #"[A-Z]+" s)
       (some-> (re-matches #"\((\d+)\)" s)
               (second)
               (parse-long)
@@ -657,7 +658,7 @@
   [s kind]
   ((condp re-find s
      #"\[.+;.+\]$" parse-dna-alleles
-     #"del[ACGT]*ins" parse-dna-indel
+     #"del[A-Z]*ins" parse-dna-indel
      #"del" parse-dna-deletion
      #"dup" parse-dna-duplication
      #"ins" parse-dna-insertion
@@ -669,9 +670,10 @@
 
 ;;; RNA mutations
 
+;; See http://varnomen.hgvs.org/bg-material/standards#rna
 (defn- rna-bases?
   [s]
-  (and (string? s) (some? (re-matches #"[acgu]+" s))))
+  (and (string? s) (some? (re-matches #"[acgubdhkmnrsvwy]+" s))))
 
 ;;; RNA - substitution
 ;;;
