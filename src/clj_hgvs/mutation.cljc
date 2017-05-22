@@ -1094,21 +1094,41 @@
   (let [{:keys [coord-start coord-end ref ncopy]} (restore-coords m)]
     (rna-repeated-seqs coord-start coord-end ref ncopy)))
 
+;;; RNA - unknown mutation
+;;;
+;;; e.g. r.?
+
+(defrecord RNAUnknownMutation []
+  Mutation
+  (format [this] (format this nil))
+  (format [this _] "?")
+  (plain [this] {:mutation "rna-unknown"}))
+
+(defn rna-unknown-mutation
+  []
+  (RNAUnknownMutation.))
+
+(defmethod restore "rna-unknown"
+  [m]
+  (rna-unknown-mutation))
+
 (defn parse-rna
   "Parses a RNA mutation string s, returning a record implementing Mutation
   protocol."
   [s]
-  ((condp re-find s
-     #"\[.+;.+\]$" parse-rna-alleles
-     #"delins" parse-rna-indel
-     #"del" parse-rna-deletion
-     #"dup" parse-rna-duplication
-     #"ins" parse-rna-insertion
-     #"inv" parse-rna-inversion
-     #"con" parse-rna-conversion
-     #"\[[\d\(\)_]+\]" parse-rna-repeated-seqs
-     parse-rna-substitution)
-   s))
+  (if (= s "?")
+    (rna-unknown-mutation)
+    ((condp re-find s
+       #"\[.+;.+\]$" parse-rna-alleles
+       #"delins" parse-rna-indel
+       #"del" parse-rna-deletion
+       #"dup" parse-rna-duplication
+       #"ins" parse-rna-insertion
+       #"inv" parse-rna-inversion
+       #"con" parse-rna-conversion
+       #"\[[\d\(\)_]+\]" parse-rna-repeated-seqs
+       parse-rna-substitution)
+     s)))
 
 ;;; Protein mutations
 
@@ -1586,21 +1606,41 @@
   (let [{:keys [ref coord alt region new-site]} (restore-coords m)]
     (protein-extension ref coord alt region new-site)))
 
+;;; Protein - unknown mutation
+;;;
+;;; e.g. r.?
+
+(defrecord ProteinUnknownMutation []
+  Mutation
+  (format [this] (format this nil))
+  (format [this _] "?")
+  (plain [this] {:mutation "protein-unknown"}))
+
+(defn protein-unknown-mutation
+  []
+  (ProteinUnknownMutation.))
+
+(defmethod restore "protein-unknown"
+  [m]
+  (protein-unknown-mutation))
+
 (defn parse-protein
   "Parses a protein mutation string s, returning a record implementing Mutation
   protocol."
   [s]
-  ((condp re-find s
-     #"\[.+;.+\]$" parse-protein-alleles
-     #"delins" parse-protein-indel
-     #"del" parse-protein-deletion
-     #"dup" parse-protein-duplication
-     #"ins" parse-protein-insertion
-     #"fs" parse-protein-frame-shift
-     #"ext" parse-protein-extension
-     #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
-     parse-protein-substitution)
-   s))
+  (if (= s "?")
+    (protein-unknown-mutation)
+    ((condp re-find s
+       #"\[.+;.+\]$" parse-protein-alleles
+       #"delins" parse-protein-indel
+       #"del" parse-protein-deletion
+       #"dup" parse-protein-duplication
+       #"ins" parse-protein-insertion
+       #"fs" parse-protein-frame-shift
+       #"ext" parse-protein-extension
+       #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
+       parse-protein-substitution)
+     s)))
 
 (defn- common-mutations?
   [mutations]

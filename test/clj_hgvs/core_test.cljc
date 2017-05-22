@@ -73,25 +73,29 @@
                                                   :ref "a"
                                                   :alt "c"})})
 
-(def hgvs7s "NP_005219.2:p.Leu858Arg")
-(def hgvs7ss "NP_005219.2:p.L858R")
-(def hgvs7m {:transcript "NP_005219.2", :kind :protein,
+(def hgvs7s "LRG_199t1:r.?")
+(def hgvs7m {:transcript "LRG_199t1", :kind :rna,
+             :mutation (mut/rna-unknown-mutation)})
+
+(def hgvs8s "NP_005219.2:p.Leu858Arg")
+(def hgvs8ss "NP_005219.2:p.L858R")
+(def hgvs8m {:transcript "NP_005219.2", :kind :protein,
              :mutation (mut/map->ProteinSubstitution {:ref "Leu"
                                                       :coord (coord/protein-coordinate 858)
                                                       :alt "Arg"})})
 
-(def hgvs8s "NP_001096.1:p.Arg258=")
-(def hgvs8m {:transcript "NP_001096.1", :kind :protein,
+(def hgvs9s "NP_001096.1:p.Arg258=")
+(def hgvs9m {:transcript "NP_001096.1", :kind :protein,
              :mutation (mut/map->ProteinSubstitution {:ref "Arg"
                                                       :coord (coord/protein-coordinate 258)
                                                       :alt "Arg"})})
 
-(def hgvs9s "NP_001005735.1:p.Leu344Trpfs")
-(def hgvs9m {:transcript "NP_001005735.1", :kind :protein,
-             :mutation (mut/map->ProteinFrameShift {:ref "Leu"
-                                                    :coord (coord/protein-coordinate 344)
-                                                    :alt "Trp"
-                                                    :new-ter-site nil})})
+(def hgvs10s "NP_001005735.1:p.Leu344Trpfs")
+(def hgvs10m {:transcript "NP_001005735.1", :kind :protein,
+              :mutation (mut/map->ProteinFrameShift {:ref "Leu"
+                                                     :coord (coord/protein-coordinate 344)
+                                                     :alt "Trp"
+                                                     :new-ter-site nil})})
 
 (deftest hgvs-test
   (testing "allows mutation records"
@@ -126,9 +130,10 @@
       hgvs5s hgvs5m
       hgvs6s hgvs6m
       hgvs7s hgvs7m
-      hgvs7ss hgvs7m
       hgvs8s hgvs8m
-      hgvs9s hgvs9m))
+      hgvs8ss hgvs8m
+      hgvs9s hgvs9m
+      hgvs10s hgvs10m))
   (testing "throws Exception when an illegal HGVS is passed"
     (are [x] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse x))
       ":2361G>A"
@@ -149,9 +154,10 @@
       hgvs6m hgvs6s
       hgvs7m hgvs7s
       hgvs8m hgvs8s
-      hgvs9m hgvs9s)
+      hgvs9m hgvs9s
+      hgvs10m hgvs10s)
     (is (= (hgvs/format hgvs4m {:show-bases? true}) hgvs4s))
-    (is (= (hgvs/format hgvs7m {:amino-acid-format :short}) hgvs7ss))))
+    (is (= (hgvs/format hgvs8m {:amino-acid-format :short}) hgvs8ss))))
 
 (deftest plain-test
   (testing "returns a plain map representing HGVS"
