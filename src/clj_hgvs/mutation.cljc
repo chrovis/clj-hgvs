@@ -685,8 +685,7 @@
   Mutation
   (format [this] (format this nil))
   (format [this _]
-    (str (format-common this _) (format-unique this _))
-    (apply str (coord/format coord) ref ">" alt))
+    (str (format-common this _) (format-unique this _)))
   (plain [this]
     (into {:mutation "rna-substitution"} (plain-coords this)))
   SeparatelyFormat
