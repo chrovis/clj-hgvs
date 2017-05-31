@@ -1171,7 +1171,6 @@
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
-    {:pre [(#{:long :short} amino-acid-format)]}
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
