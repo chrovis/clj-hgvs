@@ -6,7 +6,7 @@
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
 
-(declare parse-dna parse-rna parse-protein common-mutations?)
+(declare parse-dna parse-rna parse-protein parse common-mutations?)
 
 (def short-amino-acids
   "A list of single-letter amino acids."
@@ -158,6 +158,41 @@
 (defprotocol SeparatelyFormat
   (format-common [this opts])
   (format-unique [this opts]))
+
+;;; Uncertain mutation
+;;;
+;;; e.g. r.(?)
+;;;      r.(306g>u)
+;;;      p.(Arg2371Ser)
+
+(defrecord UncertainMutation [mutation]
+  Mutation
+  (format [this] (format this nil))
+  (format [this _]
+    (str "(" (format mutation) ")"))
+  (plain [this]
+    {:mutation "uncertain-mutation"
+     :content-mutation (plain mutation)}))
+
+(defn uncertain-mutation
+  "Constructor of UncertainMutation. Throws an exception if any input is
+  illegal."
+  [mutation]
+  {:pre [(satisfies? Mutation mutation)
+         (not (instance? UncertainMutation mutation))]}
+  (UncertainMutation. mutation))
+
+(def ^:private uncertain-mutation-re
+  #"\((\S+)\)")
+
+(defn parse-uncertain-mutation
+  [s kind]
+  (let [[_ mut] (re-matches uncertain-mutation-re s)]
+    (uncertain-mutation (parse mut kind))))
+
+(defmethod restore "uncertain-mutation"
+  [m]
+  (uncertain-mutation (restore (:content-mutation m))))
 
 ;;; DNA mutations
 
@@ -657,6 +692,7 @@
   :ncdna."
   [s kind]
   ((condp re-find s
+     #"^\((\S+)\)$" parse-uncertain-mutation
      #"\[.+;.+\]$" parse-dna-alleles
      #"del[A-Z]*ins" parse-dna-indel
      #"del" parse-dna-deletion
@@ -1137,6 +1173,7 @@
     "0" (no-rna)
     "?" (rna-unknown-mutation)
     ((condp re-find s
+       #"^\((\S+)\)$" #(parse-uncertain-mutation % :rna)
        #"\[.+;.+\]$" parse-rna-alleles
        #"delins" parse-rna-indel
        #"del" parse-rna-deletion
@@ -1625,7 +1662,7 @@
 
 ;;; Protein - no protein detected
 ;;;
-;;; e.g. r.0
+;;; e.g. p.0
 
 (defrecord NoProtein []
   Mutation
@@ -1643,7 +1680,7 @@
 
 ;;; Protein - unknown mutation
 ;;;
-;;; e.g. r.?
+;;; e.g. p.?
 
 (defrecord ProteinUnknownMutation []
   Mutation
@@ -1667,6 +1704,7 @@
     "0" (no-protein)
     "?" (protein-unknown-mutation)
     ((condp re-find s
+       #"^\((\S+)\)$" #(parse-uncertain-mutation % :protein)
        #"\[.+;.+\]$" parse-protein-alleles
        #"delins" parse-protein-indel
        #"del" parse-protein-deletion
@@ -1677,6 +1715,14 @@
        #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
        parse-protein-substitution)
      s)))
+
+(defn parse
+  [s kind]
+  (let [parse* (cond
+                 (#{:genome :mitochondria :cdna :ncdna} kind) #(parse-dna % kind)
+                 (= kind :rna) parse-rna
+                 (= kind :protein) parse-protein)]
+    (parse* s)))
 
 (defn- common-mutations?
   [mutations]

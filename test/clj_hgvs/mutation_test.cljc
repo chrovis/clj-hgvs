@@ -26,6 +26,39 @@
     (is (nil? (mut/->short-amino-acid "")))
     (is (nil? (mut/->short-amino-acid nil)))))
 
+;;; Uncertain mutation
+
+(def uncertain-mutation1s "(?)")
+(def uncertain-mutation1k :rna)
+(def uncertain-mutation1 (mut/uncertain-mutation (mut/rna-unknown-mutation)))
+(def uncertain-mutation1m {:mutation "uncertain-mutation"
+                           :content-mutation {:mutation "rna-unknown"}})
+
+(def uncertain-mutation2s "(306g>u)")
+(def uncertain-mutation2k :rna)
+(def uncertain-mutation2 (mut/uncertain-mutation
+                          (mut/rna-substitution (coord/rna-coordinate 306 nil nil) "g" "u")))
+
+(deftest format-uncertain-mutation-test
+  (testing "returns a string expression of an uncertain mutation"
+    (are [m s] (= (mut/format m nil) s)
+      uncertain-mutation1 uncertain-mutation1s
+      uncertain-mutation2 uncertain-mutation2s)))
+
+(deftest parse-uncertain-mutation-test
+  (testing "returns a correct UncertainMutation"
+    (are [s k m] (= (mut/parse-uncertain-mutation s k) m)
+      uncertain-mutation1s uncertain-mutation1k uncertain-mutation1
+      uncertain-mutation2s uncertain-mutation2k uncertain-mutation2)))
+
+(deftest plain-uncertain-mutation-test
+  (testing "returns a plain map representing UncertainMutation"
+    (is (= (mut/plain uncertain-mutation1) uncertain-mutation1m))))
+
+(deftest restore-uncertain-mutation-test
+  (testing "restores a plain map to UncertainMutation"
+    (is (= (mut/restore uncertain-mutation1m) uncertain-mutation1))))
+
 ;;; DNA mutations
 
 ;;; DNA - substitution

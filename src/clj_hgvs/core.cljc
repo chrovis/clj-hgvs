@@ -14,13 +14,6 @@
   [k]
   (some? (#{:genome :mitochondria :cdna :ncdna :rna :protein} k)))
 
-(defn- mutation-parser
-  [kind]
-  (cond
-    (#{:genome :mitochondria :cdna :ncdna} kind) #(mut/parse-dna % kind)
-    (= kind :rna) mut/parse-rna
-    (= kind :protein) mut/parse-protein))
-
 (defn hgvs
   "Constructor of HGVS map. Throws an exception if any input is illegal."
   [transcript kind mutation]
@@ -30,7 +23,7 @@
   {:transcript transcript
    :kind kind
    :mutation (if (string? mutation)
-               ((mutation-parser kind) mutation)
+               (mut/parse mutation kind)
                mutation)})
 
 (def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
