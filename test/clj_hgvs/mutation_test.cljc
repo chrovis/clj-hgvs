@@ -982,6 +982,51 @@
   (testing "restores a plain map to RNARepeatedSeqs"
     (is (= (mut/restore rna-repeated-seqs1m-c) rna-repeated-seqs1-c))))
 
+;;; RNA - no RNA detected
+
+(def no-rna-s "0")
+(def no-rna (mut/no-rna))
+(def no-rna-m {:mutation "no-rna"})
+
+(deftest format-no-rna-test
+  (is (= (mut/format no-rna) no-rna-s)))
+
+(deftest plain-no-rna-test
+  (is (= (mut/plain no-rna) no-rna-m)))
+
+(deftest restore-no-rna-test
+  (is (= (mut/restore no-rna-m) no-rna)))
+
+;;; RNA - unknown mutation
+
+(def rna-unknown-s "?")
+(def rna-unknown (mut/rna-unknown-mutation))
+(def rna-unknown-m {:mutation "rna-unknown"})
+
+(deftest format-rna-unknown-mutation-test
+  (is (= (mut/format rna-unknown) rna-unknown-s)))
+
+(deftest plain-rna-unknown-mutation-test
+  (is (= (mut/plain rna-unknown) rna-unknown-m)))
+
+(deftest restore-rna-unknown-mutation-test
+  (is (= (mut/restore rna-unknown-m) rna-unknown)))
+
+;;; RNA - splice affected
+
+(def rna-splice-affected-s "spl")
+(def rna-splice-affected (mut/rna-splice-affected))
+(def rna-splice-affected-m {:mutation "rna-splice-affected"})
+
+(deftest format-rna-splice-affected-test
+  (is (= (mut/format rna-splice-affected) rna-splice-affected-s)))
+
+(deftest plain-rna-splice-affected-test
+  (is (= (mut/plain rna-splice-affected) rna-splice-affected-m)))
+
+(deftest restore-rna-splice-affected-test
+  (is (= (mut/restore rna-splice-affected-m) rna-splice-affected)))
+
 ;;; Protein mutations
 
 ;;; Protein - substitution

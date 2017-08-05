@@ -1165,6 +1165,24 @@
   [m]
   (rna-unknown-mutation))
 
+;;; RNA - splice affected
+;;;
+;;; e.g. r.spl
+
+(defrecord RNASpliceAffected []
+  Mutation
+  (format [this] (format this {}))
+  (format [_ _] "spl")
+  (plain [_] {:mutation "rna-splice-affected"}))
+
+(defn rna-splice-affected
+  []
+  (RNASpliceAffected.))
+
+(defmethod restore "rna-splice-affected"
+  [_]
+  (rna-splice-affected))
+
 (defn parse-rna
   "Parses a RNA mutation string s, returning a record implementing Mutation
   protocol."
@@ -1172,6 +1190,7 @@
   (case s
     "0" (no-rna)
     "?" (rna-unknown-mutation)
+    "spl" (rna-splice-affected)
     ((condp re-find s
        #"^\((\S+)\)$" #(parse-uncertain-mutation % :rna)
        #"\[.+;.+\]$" parse-rna-alleles
