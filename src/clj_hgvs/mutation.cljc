@@ -655,8 +655,12 @@
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
-             :bases ref
-             :coord (if should-show-end? (str "_" (coord/format coord-end)))))))
+             :bases (or ref (throw (#?(:clj NullPointerException.
+                                       :cljs js/Error.) "ref missing")))
+             :coord (if (and (nil? coord-end) (> (count ref) 1))
+                      (throw (#?(:clj NullPointerException.
+                                 :cljs js/Error.) "coord-end missing"))
+                      (if should-show-end? (str "_" (coord/format coord-end))))))))
   (format-unique [this _]
     (format-ncopy ncopy)))
 
@@ -1099,8 +1103,12 @@
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
-             :bases ref
-             :coord (if should-show-end? (str "_" (coord/format coord-end)))))))
+             :bases (or ref (throw (#?(:clj NullPointerException.
+                                       :cljs js/Error.) "ref missing")))
+             :coord (if (and (nil? coord-end) (> (count ref) 1))
+                      (throw (#?(:clj NullPointerException.
+                                 :cljs js/Error.) "coord-end missing"))
+                      (if should-show-end? (str "_" (coord/format coord-end))))))))
   (format-unique [this _]
     (format-ncopy ncopy)))
 

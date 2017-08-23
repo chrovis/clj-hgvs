@@ -583,7 +583,11 @@
       dna-repeated-seqs1-a nil dna-repeated-seqs1s-b
       dna-repeated-seqs1-a {:range-format :bases} dna-repeated-seqs1s-b
       dna-repeated-seqs1-a {:range-format :coord} dna-repeated-seqs1s-c
-      dna-repeated-seqs2 nil dna-repeated-seqs2s)))
+      dna-repeated-seqs2 nil dna-repeated-seqs2s))
+  (testing "throws exception"
+    (are [m o] (thrown? #?(:clj Exception, :cljs js/Error) (mut/format m o))
+      dna-repeated-seqs1-c {:range-format :bases}
+      dna-repeated-seqs1-b {:range-format :coord})))
 
 (deftest parse-dna-repeated-seqs-test
   (testing "returns a correct DNARepeatedSeqs"
@@ -965,7 +969,11 @@
       rna-repeated-seqs1-a nil rna-repeated-seqs1s-b
       rna-repeated-seqs1-a {:range-format :bases} rna-repeated-seqs1s-b
       rna-repeated-seqs1-a {:range-format :coord} rna-repeated-seqs1s-c
-      rna-repeated-seqs2 nil rna-repeated-seqs2s)))
+      rna-repeated-seqs2 nil rna-repeated-seqs2s))
+  (testing "throws exception"
+    (are [m o] (thrown? #?(:clj Exception, :cljs js/Error) (mut/format m o))
+      dna-repeated-seqs1-c {:range-format :bases}
+      dna-repeated-seqs1-b {:range-format :coord})))
 
 (deftest parse-rna-repeated-seqs-test
   (testing "returns a correct RNARepeatedSeqs"
