@@ -1587,7 +1587,7 @@
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [amino-acid-format ter-format]
-                 :or {amino-acid-format :long}}]
+                 :or {amino-acid-format :long, ter-format :long}}]
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
@@ -1597,11 +1597,8 @@
              (= amino-acid-format :short) ->short-amino-acid))
          "fs"
          (if (some? new-ter-site)
-           (str (cond
-                  (= ter-format :short) (->short-amino-acid "Ter")
-                  (= ter-format :long) "Ter"
-                  (= amino-acid-format :short) (->short-amino-acid "Ter")
-                  :else "Ter")
+           (str (cond-> "Ter"
+                  (= ter-format :short) ->short-amino-acid)
                 (coord/format new-ter-site)))))
   (plain [this]
     (into {:mutation "protein-frame-shift"} (plain-coords this))))
@@ -1643,14 +1640,10 @@
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [amino-acid-format ter-format]
-                 :or {amino-acid-format :long}}]
+                 :or {amino-acid-format :long, ter-format :long}}]
     (str (case ref
            "Met" (cond-> ref (= amino-acid-format :short) ->short-amino-acid)
-           "Ter" (cond
-                   (= ter-format :short) (->short-amino-acid ref)
-                   (= ter-format :long) ref
-                   (= amino-acid-format :short) (->short-amino-acid ref)
-                   :else ref))
+           "Ter" (cond-> ref (= ter-format :short) ->short-amino-acid))
          (coord/format coord)
          (cond-> alt
            (= amino-acid-format :short) ->short-amino-acid)

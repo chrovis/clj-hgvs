@@ -50,8 +50,10 @@
     :show-bases? - displays additional bases, e.g. g.6_8delTGC, default false.
     :ins-format - bases style of insertion, default :auto. <:auto|:bases|:count>
     :range-format - range style, default :auto. <:auto|:bases|:coord>
-    :amino-acid-format - amino acid style of protein HGVS, default :long. <:long|:short>
-    :ter-format - ter codon style of protein frame shift. <:long|:short>"
+    :amino-acid-format - amino acid style of protein HGVS, default :long.
+                         <:long|:short>
+    :ter-format - ter codon style of protein frame shift and extension, default
+                  :long. <:long|:short>"
   ([hgvs] (format hgvs nil))
   ([hgvs opts]
    (apply str [(format-transcript (:transcript hgvs))
