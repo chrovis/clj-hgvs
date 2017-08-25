@@ -171,3 +171,17 @@
 (deftest restore-test
   (testing "restores a plain map to HGVS"
     (is (= (hgvs/restore hgvs1pm) hgvs1m))))
+
+(deftest normalize-test
+  (testing "returns a normalized HGVS string"
+    (are [s ns] (= (hgvs/normalize s) ns)
+      "NG_012232.1:g.19_21delTGC" "NG_012232.1:g.19_21del"
+      "g.6775delTinsGA" "g.6775delinsGA"
+      "p.I327Rfs*?" "p.Ile327ArgfsTer?"
+      "p.*110Glnext*17" "p.Ter110Glnext*17"))
+  (testing "throws exception"
+    (are [s] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/normalize s))
+      ":2361G>A"
+      "NM_005228.3:2361G>A"
+      ""
+      nil)))

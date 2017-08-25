@@ -54,7 +54,7 @@
                          <:long|:short>
     :ter-format - ter codon style of protein frame shift and extension, default
                   :long. <:long|:short>"
-  ([hgvs] (format hgvs nil))
+  ([hgvs] (format hgvs {}))
   ([hgvs opts]
    (apply str [(format-transcript (:transcript hgvs))
                (format-kind (:kind hgvs))
@@ -76,3 +76,10 @@
   (-> m
       (update :kind keyword)
       (update :mutation mut/restore)))
+
+(defn normalize
+  "Reformats the HGVS string s, returning the normalized HGVS string. Default
+  values are used for style options. Throws an exception when an illegal HGVS
+  string is supplied."
+  [s]
+  (format (parse s)))
