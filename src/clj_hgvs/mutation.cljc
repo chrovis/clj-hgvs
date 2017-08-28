@@ -1173,6 +1173,24 @@
   [m]
   (rna-unknown-mutation))
 
+;;; RNA - no effect
+;;;
+;;; e.g. r.=
+
+(defrecord RNANoEffect []
+  Mutation
+  (format [this] (format this {}))
+  (format [_ _] "=")
+  (plain [_] {:mutation "rna-no-effect"}))
+
+(defn rna-no-effect
+  []
+  (RNANoEffect.))
+
+(defmethod restore "rna-no-effect"
+  [_]
+  (rna-no-effect))
+
 ;;; RNA - splice affected
 ;;;
 ;;; e.g. r.spl
@@ -1198,6 +1216,7 @@
   (case s
     "0" (no-rna)
     "?" (rna-unknown-mutation)
+    "=" (rna-no-effect)
     "spl" (rna-splice-affected)
     ((condp re-find s
        #"^\((\S+)\)$" #(parse-uncertain-mutation % :rna)
@@ -1716,6 +1735,24 @@
   [m]
   (protein-unknown-mutation))
 
+;;; Protein - no effect
+;;;
+;;; e.g. p.=
+
+(defrecord ProteinNoEffect []
+  Mutation
+  (format [this] (format this {}))
+  (format [_ _] "=")
+  (plain [_] {:mutation "protein-no-effect"}))
+
+(defn protein-no-effect
+  []
+  (ProteinNoEffect.))
+
+(defmethod restore "protein-no-effect"
+  [_]
+  (protein-no-effect))
+
 (defn parse-protein
   "Parses a protein mutation string s, returning a record implementing Mutation
   protocol."
@@ -1723,6 +1760,7 @@
   (case s
     "0" (no-protein)
     "?" (protein-unknown-mutation)
+    "=" (protein-no-effect)
     ((condp re-find s
        #"^\((\S+)\)$" #(parse-uncertain-mutation % :protein)
        #"\[.+;.+\]$" parse-protein-alleles
