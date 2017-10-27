@@ -8,7 +8,7 @@
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cloverage "1.0.9"]
             [lein-codox "0.10.3"]
-            [lein-doo "0.1.7"]]
+            [lein-doo "0.1.8"]]
   :profiles {:1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0-alpha16"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
@@ -18,8 +18,7 @@
                               :compiler {:output-to "target/testable.js"
                                          :output-dir "target"
                                          :main clj-hgvs.runner
-                                         :optimizations :simple
-                                         :process-shim false}}}} ; workaround (cf. bensu/doo#141)
+                                         :optimizations :none}}}}
   :codox {:namespaces [#"^clj-hgvs\.(?!internal)"]
           :output-path "docs"
           :source-uri "https://github.com/chrovis/clj-hgvs/blob/{version}/{filepath}#L{line}"}
