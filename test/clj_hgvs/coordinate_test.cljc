@@ -50,7 +50,15 @@
 
       (coord/uncertain-coordinate (coord/unknown-coordinate)
                                   (coord/genomic-coordinate 1))
-      "(?_1)")))
+      "(?_1)"
+
+      (coord/uncertain-coordinate (coord/unknown-coordinate)
+                                  (coord/cdna-coordinate 4072 -1 nil))
+      "4072-?"
+
+      (coord/uncertain-coordinate (coord/cdna-coordinate 5154 1 nil)
+                                  (coord/unknown-coordinate))
+      "5154+?")))
 
 (deftest plain-uncertain-coordinate-test
   (testing "returns a plain map representing UncertainCoordinate"

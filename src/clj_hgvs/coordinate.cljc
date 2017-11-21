@@ -52,10 +52,21 @@
 ;;;
 ;;; e.g. (123456_234567)
 ;;;      (?_1)
+;;;      4072-?
 
 (defrecord UncertainCoordinate [start end]
   Coordinate
-  (format [this] (str "(" (format start) "_" (format end) ")"))
+  (format [this]
+    (let [[known :as knowns] (remove #(instance? UnknownCoordinate %) [start end])]
+      (cond
+        (= (count knowns) 2) (str "(" (format start) "_" (format end) ")")
+
+        (and (satisfies? ICDNACoordinate known) (not (zero? (:offset known))))
+        (str (->region-str (:region known))
+             (:position known)
+             (if (pos? (:offset known)) "+?" "-?"))
+
+        :else (str "(" (format start) "_" (format end) ")"))))
   (plain [this]
     {:coordinate "uncertain"
      :start (plain start)
