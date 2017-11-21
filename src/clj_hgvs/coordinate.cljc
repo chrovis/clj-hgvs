@@ -383,3 +383,10 @@
 (defn parse-coordinate
   [s t]
   ((parser t) s))
+
+(defn comparable-coordinates?
+  "Returns true if the two coordinates are comparable, else false."
+  [coord1 coord2]
+  (not-any? (some-fn #(instance? UnknownCoordinate %)
+                     #(instance? UncertainCoordinate %))
+            [coord1 coord2]))

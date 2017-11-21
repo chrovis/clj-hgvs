@@ -383,17 +383,28 @@
 (def dna-inversion2 (mut/dna-inversion (coord/cdna-coordinate 77)
                                        (coord/cdna-coordinate 80)))
 
+(def dna-inversion3s "77-?_80+?inv")
+(def dna-inversion3k :cdna)
+(def dna-inversion3 (mut/dna-inversion (coord/uncertain-coordinate
+                                        (coord/unknown-coordinate)
+                                        (coord/cdna-coordinate 77 -1 nil))
+                                       (coord/uncertain-coordinate
+                                        (coord/cdna-coordinate 80 1 nil)
+                                        (coord/unknown-coordinate))))
+
 (deftest format-dna-inversion-test
   (testing "returns a string expression of a DNA inversion"
     (are [m s] (= (mut/format m nil) s)
       dna-inversion1 dna-inversion1s
-      dna-inversion2 dna-inversion2s)))
+      dna-inversion2 dna-inversion2s
+      dna-inversion3 dna-inversion3s)))
 
 (deftest parse-dna-inversion-test
   (testing "returns a correct DNAInversion"
     (are [s k m] (= (mut/parse-dna-inversion s k) m)
       dna-inversion1s dna-inversion1k dna-inversion1
-      dna-inversion2s dna-inversion2k dna-inversion2)))
+      dna-inversion2s dna-inversion2k dna-inversion2
+      dna-inversion3s dna-inversion3k dna-inversion3)))
 
 ;;; DNA - conversion
 

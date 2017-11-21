@@ -465,7 +465,8 @@
   [coord-start coord-end]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
-         (neg? (compare coord-start coord-end))]}
+         (or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]}
   (DNAInversion. coord-start coord-end))
 
 (def ^:private dna-inversion-re
@@ -509,7 +510,8 @@
   [coord-start coord-end alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
-         (neg? (compare coord-start coord-end))
+         (or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))
          (map? alt)]}
   (DNAConversion. coord-start coord-end alt))
 
@@ -554,7 +556,8 @@
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(coord/format coord-start)
-                         (if (neg? (compare coord-start coord-end))
+                         (if (or (not (coord/comparable-coordinates? coord-start coord-end))
+                                 (neg? (compare coord-start coord-end)))
                            ["_" (coord/format coord-end)])
                          "del"
                          (if show-bases? ref)
@@ -651,7 +654,8 @@
     (into {:mutation "dna-repeated-seqs"} (plain-coords this)))
   SeparatelyFormat
   (format-common [this {:keys [range-format] :or {range-format :auto}}]
-    (let [should-show-end? (neg? (compare coord-start coord-end))]
+    (let [should-show-end? (or (not (coord/comparable-coordinates? coord-start coord-end))
+                               (neg? (compare coord-start coord-end)))]
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
@@ -922,7 +926,8 @@
   [coord-start coord-end]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
-         (neg? (compare coord-start coord-end))]}
+         (or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]}
   (RNAInversion. coord-start coord-end))
 
 (def ^:private rna-inversion-re
@@ -964,7 +969,8 @@
   [coord-start coord-end alt]
   {:pre [(satisfies? coord/Coordinate coord-start)
          (satisfies? coord/Coordinate coord-end)
-         (neg? (compare coord-start coord-end))
+         (or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))
          (map? alt)]}
   (RNAConversion. coord-start coord-end alt))
 
@@ -1004,7 +1010,8 @@
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
-         (if (neg? (compare coord-start coord-end))
+         (if (or (not (coord/comparable-coordinates? coord-start coord-end))
+                 (neg? (compare coord-start coord-end)))
            (str "_" (coord/format coord-end)))
          "del"
          (if show-bases? ref)
@@ -1099,7 +1106,8 @@
     (into {:mutation "rna-repeated-seqs"} (plain-coords this)))
   SeparatelyFormat
   (format-common [this {:keys [range-format] :or {range-format :auto}}]
-    (let [should-show-end? (neg? (compare coord-start coord-end))]
+    (let [should-show-end? (or (not (coord/comparable-coordinates? coord-start coord-end))
+                               (neg? (compare coord-start coord-end)))]
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
@@ -1241,7 +1249,8 @@
 (defn- should-show-end?
   [ref-start coord-start ref-end coord-end]
   (and (some? ref-end)
-       (neg? (compare coord-start coord-end))))
+       (or (not (coord/comparable-coordinates? coord-start coord-end))
+           (neg? (compare coord-start coord-end)))))
 
 ;;; Protein - substitution
 ;;;
