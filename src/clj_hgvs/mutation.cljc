@@ -266,15 +266,9 @@
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
-    (apply str (flatten [(if (vector? coord-start)
-                           ["(" (coord/format (first coord-start))
-                            "_" (coord/format (second coord-start)) ")"]
-                           (coord/format coord-start))
+    (apply str (flatten [(coord/format coord-start)
                          (if coord-end "_")
-                         (if (vector? coord-end)
-                           ["(" (coord/format (first coord-end))
-                            "_" (coord/format (second coord-end)) ")"]
-                           (some-> coord-end coord/format))
+                         (some-> coord-end coord/format)
                          "del"
                          (if show-bases? ref)])))
   (plain [this]
@@ -284,13 +278,9 @@
   "Constructor of DNADeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:pre [(if (vector? coord-start)
-            (every? #(satisfies? coord/Coordinate %) coord-start)
-            (satisfies? coord/Coordinate coord-start))
+   {:pre [(satisfies? coord/Coordinate coord-start)
           (or (nil? coord-end)
-              (if (vector? coord-start)
-                (every? #(satisfies? coord/Coordinate %) coord-end)
-                (satisfies? coord/Coordinate coord-end)))
+              (satisfies? coord/Coordinate coord-end))
           (or (nil? ref) (dna-bases? ref))]}
    (DNADeletion. coord-start coord-end ref)))
 
@@ -325,16 +315,10 @@
   Mutation
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
-    (apply str (flatten [(if (vector? coord-start)
-                           ["(" (coord/format (first coord-start))
-                            "_" (coord/format (second coord-start)) ")"]
-                           (coord/format coord-start))
+    (apply str (flatten [(coord/format coord-start)
                          (if (and (some? coord-end) (not= coord-start coord-end))
                            ["_"
-                            (if (vector? coord-end)
-                              ["(" (coord/format (first coord-end))
-                               "_" (coord/format (second coord-end)) ")"]
-                              (coord/format coord-end))])
+                            (coord/format coord-end)])
                          "dup"
                          (if show-bases? ref)])))
   (plain [this]
@@ -344,13 +328,9 @@
   "Constructor of DNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:pre [(if (vector? coord-start)
-            (every? #(satisfies? coord/Coordinate %) coord-start)
-            (satisfies? coord/Coordinate coord-start))
+   {:pre [(satisfies? coord/Coordinate coord-start)
           (or (nil? coord-end)
-              (if (vector? coord-start)
-                (every? #(satisfies? coord/Coordinate %) coord-end)
-                (satisfies? coord/Coordinate coord-end)))
+              (satisfies? coord/Coordinate coord-end))
           (or (nil? ref) (dna-bases? ref))]}
    (DNADuplication. coord-start coord-end ref)))
 
