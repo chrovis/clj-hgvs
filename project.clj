@@ -10,7 +10,8 @@
             [lein-codox "0.10.3"]
             [lein-doo "0.1.8"]]
   :profiles {:1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
-             :1.9 {:dependencies [[org.clojure/clojure "1.9.0"]]}}
+             :1.9 {:dependencies [[org.clojure/clojure "1.9.0"]]}
+             :1.10 {:dependencies [[org.clojure/clojure "1.10.0-alpha6"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
                                       :password [:env/clojars_password :gpg]}]]
