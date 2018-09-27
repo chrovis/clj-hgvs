@@ -226,7 +226,8 @@
     (into {:mutation "dna-substitution"} (plain-coords this)))
   SeparatelyFormat
   (format-common [this _] (coord/format coord))
-  (format-unique [this _] (str ref type alt)))
+  (format-unique [this _]
+    (str ref type (when-not (= type "=") alt))))
 
 (defn dna-substitution
   "Constructor of DNASubstitution. Throws an exception if any input is illegal."
