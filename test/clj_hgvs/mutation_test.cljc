@@ -258,7 +258,7 @@
 
 (deftest format-dna-duplication-test
   (testing "returns a string expression of a DNA duplication"
-    (are [m o s] (= (mut/format m o ) s)
+    (are [m o s] (= (mut/format m o) s)
       dna-duplication1 nil dna-duplication1s
       dna-duplication2 nil dna-duplication2s
       dna-duplication3 nil dna-duplication3ss
@@ -373,7 +373,6 @@
   (testing "restores a plain map to DNAInsertion"
     (is (= (mut/restore dna-insertion1m) dna-insertion1))))
 
-
 ;;; DNA - inversion
 
 (def dna-inversion1s "1077_1080inv")
@@ -466,7 +465,6 @@
 (deftest restore-dna-conversion-test
   (testing "restores a plain map to DNAConversion"
     (is (= (mut/restore dna-conversion1m) dna-conversion1))))
-
 
 ;;; DNA - indel
 
@@ -871,7 +869,6 @@
 (def rna-indel2s "775deluinsga")
 (def rna-indel2ss "775delinsga")
 (def rna-indel2 (mut/rna-indel (coord/rna-coordinate 775 nil nil) nil "u" "ga"))
-
 
 (def rna-indel3s "775_777delinsc")
 (def rna-indel3 (mut/rna-indel (coord/rna-coordinate 775 nil nil)

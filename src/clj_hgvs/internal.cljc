@@ -24,4 +24,4 @@
     :cdna "c"
     :ncdna "n"
     :rna "r"
-    :protein"p"))
+    :protein "p"))

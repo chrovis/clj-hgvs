@@ -46,9 +46,9 @@
 (def hgvs3m {:transcript nil, :kind :genome,
              :mutation (mut/dna-alleles
                         [(mut/map->DNASubstitution {:coord (coord/genomic-coordinate 2376)
-                                                  :ref "A"
-                                                  :type ">"
-                                                  :alt "C"}),
+                                                    :ref "A"
+                                                    :type ">"
+                                                    :alt "C"}),
                          (mut/map->DNADeletion {:coord-start (coord/genomic-coordinate 3103)
                                                 :coord-end nil
                                                 :ref nil})]
