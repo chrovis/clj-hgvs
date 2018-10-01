@@ -97,8 +97,8 @@
       dna-substitution4 dna-substitution4s
       dna-substitution5 dna-substitution5s))
   (testing "alt is omitted if type is ="
-    (= (mut/format (mut/dna-substitution (coord/cdna-coordinate 123) "G" "=" "G"))
-       "123G=")))
+    (is (= (mut/format (mut/dna-substitution (coord/cdna-coordinate 123) "G" "=" "G"))
+           "123G="))))
 
 (deftest parse-dna-substitution-test
   (testing "returns a correct DNASubstitution"
