@@ -8,7 +8,7 @@
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cloverage "1.0.13"]
             [lein-codox "0.10.4"]
-            [lein-doo "0.1.8"]]
+            [lein-doo "0.1.10"]]
   :profiles {:1.7 {:dependencies [[org.clojure/clojure "1.7.0"]]}
              :1.9 {:dependencies [[org.clojure/clojure "1.9.0"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.0-alpha6"]]}}
