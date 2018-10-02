@@ -1,4 +1,4 @@
-(defproject clj-hgvs "0.2.4-SNAPSHOT"
+(defproject clj-hgvs "0.2.4"
   :description "Clojure(Script) library for handling HGVS"
   :url "https://github.com/chrovis/clj-hgvs"
   :license {:name "Apache License, Version 2.0"
@@ -23,4 +23,5 @@
   :codox {:namespaces [#"^clj-hgvs\.(?!internal)"]
           :output-path "docs"
           :source-uri "https://github.com/chrovis/clj-hgvs/blob/{version}/{filepath}#L{line}"}
-  :doo {:build "test"})
+  :doo {:build "test"}
+  :signing {:gpg-key "developer@xcoo.jp"})

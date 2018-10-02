@@ -19,7 +19,7 @@ clj-hgvs provides:
 With Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.2.3"]
+[clj-hgvs "0.2.4"]
 ```
 
 ## Usage
