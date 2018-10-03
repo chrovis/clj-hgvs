@@ -2,7 +2,8 @@
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest is are testing]])
             [clj-hgvs.coordinate :as coord]
-            [clj-hgvs.mutation :as mut]))
+            [clj-hgvs.mutation :as mut]
+            clj-hgvs.test-common))
 
 (deftest ->long-amino-acid-test
   (testing "converts a short amino acid to a long one"

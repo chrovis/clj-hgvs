@@ -1,26 +1,26 @@
 (ns clj-hgvs.core-test
-  (:require #?(:clj [clojure.test :refer :all]
+  (:require [clojure.spec.alpha :as s]
+            #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest is are testing]])
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
-            [clj-hgvs.mutation :as mut]))
+            [clj-hgvs.mutation :as mut]
+            clj-hgvs.test-common))
 
-(deftest transcript?-test
-  (testing "returns true if string is transcript"
-    (are [s] (true? (#'clj-hgvs.core/transcript? s))
-      "NC_000023.10"
-      "NC_000023"
-      "LRG_199"
-      "LRG_199t1"
-      "LRG_199p1"
-      "NG_012232.1"
-      "NM_004006.2"
-      "NR_002196.1"
-      "NP_003997.1"))
-  (testing "returns false if string is not transcript"
-    (are [s] (false? (#'clj-hgvs.core/transcript? s))
-      "LRG_199.1"
-      "NT_000023.10")))
+(deftest transcript-spec-test
+  (are [s] (s/valid? ::hgvs/transcript s)
+    "NC_000023.10"
+    "NC_000023"
+    "LRG_199"
+    "LRG_199t1"
+    "LRG_199p1"
+    "NG_012232.1"
+    "NM_004006.2"
+    "NR_002196.1"
+    "NP_003997.1")
+  (are [s] (not (s/valid? ::hgvs/transcript s))
+    "LRG_199.1"
+    "NT_000023.10"))
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m {:transcript "NM_005228.3", :kind :cdna,

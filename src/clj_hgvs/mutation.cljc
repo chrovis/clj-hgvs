@@ -1,7 +1,8 @@
 (ns clj-hgvs.mutation
   "Data structures and functions to handle HGVS mutations."
   #?(:clj (:refer-clojure :exclude [format]))
-  (:require [clojure.string :as string]
+  (:require [clojure.spec.alpha :as s]
+            [clojure.string :as string]
             [clojure.walk :as walk]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
@@ -148,6 +149,12 @@
   details of the option.")
   (plain [this] "Returns a plain map representing the given mutation."))
 
+(s/def ::mutation #(satisfies? Mutation %))
+
+(s/def :clj-hgvs.mutation.plain-mutation/mutation string?)
+(s/def ::plain-mutation
+  (s/keys :req-un [:clj-hgvs.mutation.plain-mutation/mutation]))
+
 (defmulti restore
   "Restores a plain map to a suitable mutation record."
   {:arglists '([m])}
@@ -174,12 +181,15 @@
     {:mutation "uncertain-mutation"
      :content-mutation (plain mutation)}))
 
+(s/def ::uncertain-mutation
+  (s/and ::mutation (s/keys :req-un [::mutation])))
+
 (defn uncertain-mutation
   "Constructor of UncertainMutation. Throws an exception if any input is
   illegal."
   [mutation]
-  {:pre [(satisfies? Mutation mutation)
-         (not (instance? UncertainMutation mutation))]}
+  {:pre [(not (instance? UncertainMutation mutation))]
+   :post [(s/valid? ::uncertain-mutation %)]}
   (UncertainMutation. mutation))
 
 (def ^:private uncertain-mutation-re
@@ -197,9 +207,8 @@
 ;;; DNA mutations
 
 ;; See http://varnomen.hgvs.org/bg-material/standards#dna
-(defn- dna-bases?
-  [s]
-  (and (string? s) (some? (re-matches #"[ACGTBDHKMNRSVWY]+" s))))
+(s/def ::dna-bases
+  (s/and string? #(re-matches #"[ACGTBDHKMNRSVWY]+" %)))
 
 (defn- coord-parser
   [kind]
@@ -229,14 +238,22 @@
   (format-unique [this _]
     (str ref type (when-not (= type "=") alt))))
 
+(s/def :clj-hgvs.mutation.dna-substitution/coord ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-substitution/ref ::dna-bases)
+(s/def :clj-hgvs.mutation.dna-substitution/type #{">" "=" "=/>" "=//>"})
+(s/def :clj-hgvs.mutation.dna-substitution/alt (s/nilable ::dna-bases))
+(s/def ::dna-substitution
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-substitution/coord
+                          :clj-hgvs.mutation.dna-substitution/ref
+                          :clj-hgvs.mutation.dna-substitution/type
+                          :clj-hgvs.mutation.dna-substitution/alt])))
+
 (defn dna-substitution
   "Constructor of DNASubstitution. Throws an exception if any input is illegal."
   ([coord ref typ] (dna-substitution coord ref typ nil))
   ([coord ref typ alt]
-   {:pre [(satisfies? coord/Coordinate coord)
-          (dna-bases? ref)
-          (#{">" "=" "=/>" "=//>"} typ)
-          (or (nil? alt) (dna-bases? alt))]}
+   {:post [(s/valid? ::dna-substitution %)]}
    (DNASubstitution. coord ref typ alt)))
 
 (def ^:private dna-substitution-re
@@ -275,14 +292,20 @@
   (plain [this]
     (into {:mutation "dna-deletion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.dna-deletion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-deletion/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.dna-deletion/ref (s/nilable ::dna-bases))
+(s/def ::dna-deletion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-deletion/coord-start
+                          :clj-hgvs.mutation.dna-deletion/coord-end
+                          :clj-hgvs.mutation.dna-deletion/ref])))
+
 (defn dna-deletion
   "Constructor of DNADeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:pre [(satisfies? coord/Coordinate coord-start)
-          (or (nil? coord-end)
-              (satisfies? coord/Coordinate coord-end))
-          (or (nil? ref) (dna-bases? ref))]}
+   {:post [(s/valid? ::dna-deletion %)]}
    (DNADeletion. coord-start coord-end ref)))
 
 (def ^:private dna-deletion-re
@@ -325,14 +348,20 @@
   (plain [this]
     (into {:mutation "dna-duplication"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.dna-duplication/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-duplication/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.dna-duplication/ref (s/nilable ::dna-bases))
+(s/def ::dna-duplication
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-duplication/coord-start
+                          :clj-hgvs.mutation.dna-duplication/coord-end
+                          :clj-hgvs.mutation.dna-duplication/ref])))
+
 (defn dna-duplication
   "Constructor of DNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:pre [(satisfies? coord/Coordinate coord-start)
-          (or (nil? coord-end)
-              (satisfies? coord/Coordinate coord-end))
-          (or (nil? ref) (dna-bases? ref))]}
+   {:post [(s/valid? ::dna-duplication %)]}
    (DNADuplication. coord-start coord-end ref)))
 
 (def ^:private dna-duplication-re
@@ -386,12 +415,20 @@
   (plain [this]
     (into {:mutation "dna-insertion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.dna-insertion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-insertion/coord-end ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-insertion/alt (s/or :dna-bases ::dna-bases
+                                                  :ref-seq map?))
+(s/def ::dna-insertion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-insertion/coord-start
+                          :clj-hgvs.mutation.dna-insertion/coord-end
+                          :clj-hgvs.mutation.dna-insertion/alt])))
+
 (defn dna-insertion
   "Constructor of DNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (satisfies? coord/Coordinate coord-end)
-         (or (dna-bases? alt) (map? alt))]}
+  {:post [(s/valid? ::dna-insertion %)]}
   (DNAInsertion. coord-start coord-end alt))
 
 (defn- parse-dna-insertion-alt
@@ -441,13 +478,19 @@
   (plain [this]
     (into {:mutation "dna-inversion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.dna-inversion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-inversion/coord-end ::coord/coordinate)
+(s/def ::dna-inversion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-inversion/coord-start
+                          :clj-hgvs.mutation.dna-inversion/coord-end])))
+
 (defn dna-inversion
   "Constructor of DNAInversion. Throws an exception if any input is illegal."
   [coord-start coord-end]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (satisfies? coord/Coordinate coord-end)
-         (or (not (coord/comparable-coordinates? coord-start coord-end))
-             (neg? (compare coord-start coord-end)))]}
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(s/valid? ::dna-inversion %)]}
   (DNAInversion. coord-start coord-end))
 
 (def ^:private dna-inversion-re
@@ -486,14 +529,20 @@
   (plain [this]
     (into {:mutation "dna-conversion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.dna-conversion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-conversion/coord-end ::coord/coordinate)
+(s/def ::dna-conversion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-conversion/coord-start
+                          :clj-hgvs.mutation.dna-conversion/coord-end])))
+
 (defn dna-conversion
   "Constructor of DNAConversion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (satisfies? coord/Coordinate coord-end)
-         (or (not (coord/comparable-coordinates? coord-start coord-end))
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
              (neg? (compare coord-start coord-end)))
-         (map? alt)]}
+         (map? alt)]
+   :post [(s/valid? ::dna-conversion %)]}
   (DNAConversion. coord-start coord-end alt))
 
 (def ^:private dna-conversion-re
@@ -547,13 +596,21 @@
   (plain [this]
     (into {:mutation "dna-indel"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.dna-indel/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-indel/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.dna-indel/ref (s/nilable ::dna-bases))
+(s/def :clj-hgvs.mutation.dna-indel/alt ::dna-bases)
+(s/def ::dna-indel
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-indel/coord-start
+                          :clj-hgvs.mutation.dna-indel/coord-end
+                          :clj-hgvs.mutation.dna-indel/ref
+                          :clj-hgvs.mutation.dna-indel/alt])))
+
 (defn dna-indel
   "Constructor of DNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (nil? ref) (dna-bases? ref))
-         (dna-bases? alt)]}
+  {:post [(s/valid? ::dna-indel %)]}
   (DNAIndel. coord-start coord-end ref alt))
 
 (def ^:private dna-indel-re
@@ -602,10 +659,16 @@
      :mutations1 (mapv plain mutations1)
      :mutations2 (mapv plain mutations2)}))
 
+(s/def :clj-hgvs.mutation.dna-alleles/mutations1 (s/coll-of ::mutation))
+(s/def :clj-hgvs.mutation.dna-alleles/mutations2 (s/nilable (s/coll-of ::mutation)))
+(s/def ::dna-alleles
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-alleles/mutations1
+                          :clj-hgvs.mutation.dna-alleles/mutations2])))
+
 (defn dna-alleles
   [mutations1 mutations2]
-  {:pre [(every? #(satisfies? Mutation %) mutations1)
-         (every? #(satisfies? Mutation %) mutations2)]}
+  {:post [(s/valid? ::dna-alleles %)]}
   (DNAAlleles. mutations1 mutations2))
 
 (defn parse-dna-alleles
@@ -649,13 +712,22 @@
   (format-unique [this _]
     (format-ncopy ncopy)))
 
+(s/def :clj-hgvs.mutation.dna-repeated-seqs/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.dna-repeated-seqs/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.dna-repeated-seqs/ref (s/nilable ::dna-bases))
+(s/def :clj-hgvs.mutation.dna-repeated-seqs/ncopy (s/or :integer integer?
+                                                        :vector  vector?))
+(s/def ::dna-repeated-seqs
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.dna-repeated-seqs/coord-start
+                          :clj-hgvs.mutation.dna-repeated-seqs/coord-end
+                          :clj-hgvs.mutation.dna-repeated-seqs/ref
+                          :clj-hgvs.mutation.dna-repeated-seqs/ncopy])))
+
 (defn dna-repeated-seqs
   "Constructor of DNARepeatedSeqs. Throws an exception if any input is illegal."
   [coord-start coord-end ref ncopy]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (nil? ref) (dna-bases? ref))
-         (or (integer? ncopy) (vector? ncopy))]}
+  {:post [(s/valid? ::dna-repeated-seqs %)]}
   (DNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private dna-repeated-seqs-re
@@ -693,12 +765,23 @@
      parse-dna-substitution)
    s kind))
 
+(s/def ::dna-mutation
+  (s/or :uncertain     ::uncertain-mutation
+        :substitution  ::dna-substitution
+        :deletion      ::dna-deletion
+        :duplication   ::dna-duplication
+        :insertion     ::dna-insertion
+        :inversion     ::dna-inversion
+        :conversion    ::dna-conversion
+        :indel         ::dna-indel
+        :alleles       ::dna-alleles
+        :repeated-seqs ::dna-repeated-seqs))
+
 ;;; RNA mutations
 
 ;; See http://varnomen.hgvs.org/bg-material/standards#rna
-(defn- rna-bases?
-  [s]
-  (and (string? s) (some? (re-matches #"[acgubdhkmnrsvwy]+" s))))
+(s/def ::rna-bases
+  (s/and string? #(re-matches #"[acgubdhkmnrsvwy]+" %)))
 
 ;;; RNA - substitution
 ;;;
@@ -717,12 +800,19 @@
   (format-common [this _] (coord/format coord))
   (format-unique [this _] (str ref ">" alt)))
 
+(s/def :clj-hgvs.mutation.rna-substitution/coord ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-substitution/ref ::rna-bases)
+(s/def :clj-hgvs.mutation.rna-substitution/alt ::rna-bases)
+(s/def ::rna-substitution
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-substitution/coord
+                          :clj-hgvs.mutation.rna-substitution/ref
+                          :clj-hgvs.mutation.rna-substitution/alt])))
+
 (defn rna-substitution
   "Constructor of RNASubstitution. Throws an exception if any input is illegal."
   [coord ref alt]
-  {:pre [(satisfies? coord/Coordinate coord)
-         (rna-bases? ref)
-         (rna-bases? alt)]}
+  {:post [(s/valid? ::rna-substitution %)]}
   (RNASubstitution. coord ref alt))
 
 (def ^:private rna-substitution-re
@@ -757,13 +847,20 @@
   (plain [this]
     (into {:mutation "rna-deletion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.rna-deletion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-deletion/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.rna-deletion/ref (s/nilable ::rna-bases))
+(s/def ::rna-deletion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-deletion/coord-start
+                          :clj-hgvs.mutation.rna-deletion/coord-end
+                          :clj-hgvs.mutation.rna-deletion/ref])))
+
 (defn rna-deletion
   "Constructor of DNAdeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:pre [(satisfies? coord/Coordinate coord-start)
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-          (or (nil? ref) (rna-bases? ref))]}
+   {:post [(s/valid? ::rna-deletion %)]}
    (RNADeletion. coord-start coord-end ref)))
 
 (def ^:private rna-deletion-re
@@ -799,13 +896,20 @@
   (plain [this]
     (into {:mutation "rna-duplication"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.rna-duplication/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-duplication/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.rna-duplication/ref (s/nilable ::rna-bases))
+(s/def ::rna-duplication
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-duplication/coord-start
+                          :clj-hgvs.mutation.rna-duplication/coord-end
+                          :clj-hgvs.mutation.rna-duplication/ref])))
+
 (defn rna-duplication
   "Constructor of RNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:pre [(satisfies? coord/Coordinate coord-start)
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-          (or (nil? ref) (rna-bases? ref))]}
+   {:post [(s/valid? ::rna-duplication %)]}
    (RNADuplication. coord-start coord-end ref)))
 
 (def ^:private rna-duplication-re
@@ -844,12 +948,20 @@
   (plain [this]
     (into {:mutation "rna-insertion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.rna-insertion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-insertion/coord-end ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-insertion/alt (s/or :rna-bases ::rna-bases
+                                                  :ref-seq map?))
+(s/def ::rna-insertion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-insertion/coord-start
+                          :clj-hgvs.mutation.rna-insertion/coord-end
+                          :clj-hgvs.mutation.rna-insertion/alt])))
+
 (defn rna-insertion
   "Constructor of RNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (satisfies? coord/Coordinate coord-end)
-         (or (rna-bases? alt) (map? alt) (re-matches #"n{2,}" alt))]}
+  {:post [(s/valid? ::rna-insertion %)]}
   (RNAInsertion. coord-start coord-end alt))
 
 (defn- parse-rna-alt-n
@@ -902,13 +1014,19 @@
   (plain [this]
     (into {:mutation "rna-inversion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.rna-inversion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-inversion/coord-end ::coord/coordinate)
+(s/def ::rna-inversion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-inversion/coord-start
+                          :clj-hgvs.mutation.rna-inversion/coord-end])))
+
 (defn rna-inversion
   "Constructor of RNAInversion. Throws an exception if any input is illegal."
   [coord-start coord-end]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (satisfies? coord/Coordinate coord-end)
-         (or (not (coord/comparable-coordinates? coord-start coord-end))
-             (neg? (compare coord-start coord-end)))]}
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(s/valid? ::rna-inversion %)]}
   (RNAInversion. coord-start coord-end))
 
 (def ^:private rna-inversion-re
@@ -945,14 +1063,21 @@
   (plain [this]
     (into {:mutation "rna-conversion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.rna-conversion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-conversion/coord-end ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-conversion/alt map?)
+(s/def ::rna-conversion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-conversion/coord-start
+                          :clj-hgvs.mutation.rna-conversion/coord-end
+                          :clj-hgvs.mutation.rna-conversion/alt])))
+
 (defn rna-conversion
   "Constructor of RNAConversion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (satisfies? coord/Coordinate coord-end)
-         (or (not (coord/comparable-coordinates? coord-start coord-end))
-             (neg? (compare coord-start coord-end)))
-         (map? alt)]}
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(s/valid? ::rna-conversion %)]}
   (RNAConversion. coord-start coord-end alt))
 
 (def ^:private rna-conversion-re
@@ -1001,13 +1126,21 @@
   (plain [this]
     (into {:mutation "rna-indel"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.rna-indel/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-indel/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.rna-indel/ref (s/nilable ::rna-bases))
+(s/def :clj-hgvs.mutation.rna-indel/alt ::rna-bases)
+(s/def ::rna-indel
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-indel/coord-start
+                          :clj-hgvs.mutation.rna-indel/coord-end
+                          :clj-hgvs.mutation.rna-indel/ref
+                          :clj-hgvs.mutation.rna-indel/alt])))
+
 (defn rna-indel
   "Constructor of RNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (nil? ref) (rna-bases? ref))
-         (rna-bases? alt)]}
+  {:post [(s/valid? ::rna-indel %)]}
   (RNAIndel. coord-start coord-end ref alt))
 
 (def ^:private rna-indel-re
@@ -1054,10 +1187,16 @@
      :mutations1 (mapv plain mutations1)
      :mutations2 (mapv plain mutations2)}))
 
+(s/def :clj-hgvs.mutation.rna-alleles/mutations1 (s/coll-of ::rna-mutation))
+(s/def :clj-hgvs.mutation.rna-alleles/mutations2 (s/nilable (s/coll-of ::rna-mutation)))
+(s/def ::rna-alleles
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-alleles/mutations1
+                          :clj-hgvs.mutation.rna-alleles/mutations2])))
+
 (defn rna-alleles
   [mutations1 mutations2]
-  {:pre [(every? #(satisfies? Mutation %) mutations1)
-         (every? #(satisfies? Mutation %) mutations2)]}
+  {:post [(s/valid? ::rna-alleles %)]}
   (RNAAlleles. mutations1 mutations2))
 
 (defn parse-rna-alleles
@@ -1101,13 +1240,22 @@
   (format-unique [this _]
     (format-ncopy ncopy)))
 
+(s/def :clj-hgvs.mutation.rna-repeated-seqs/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.rna-repeated-seqs/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.rna-repeated-seqs/ref (s/nilable ::rna-bases))
+(s/def :clj-hgvs.mutation.rna-repeated-seqs/ncopy (s/or :integer integer?
+                                                        :vector  vector?))
+(s/def ::rna-repeated-seqs
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.rna-repeated-seqs/coord-start
+                          :clj-hgvs.mutation.rna-repeated-seqs/coord-end
+                          :clj-hgvs.mutation.rna-repeated-seqs/ref
+                          :clj-hgvs.mutation.rna-repeated-seqs/ncopy])))
+
 (defn rna-repeated-seqs
   "Constructor of RNARepeatedSeqs. Throws an exception if any input is illegal."
   [coord-start coord-end ref ncopy]
-  {:pre [(satisfies? coord/Coordinate coord-start)
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (nil? ref) (rna-bases? ref))
-         (or (integer? ncopy) (vector? ncopy))]}
+  {:post [(s/valid? ::rna-repeated-seqs %)]}
   (RNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private rna-repeated-seqs-re
@@ -1136,6 +1284,8 @@
   (format [this _] "0")
   (plain [this] {:mutation "no-rna"}))
 
+(s/def ::no-rna ::mutation)
+
 (defn no-rna
   []
   (NoRNA.))
@@ -1153,6 +1303,8 @@
   (format [this] (format this nil))
   (format [this _] "?")
   (plain [this] {:mutation "rna-unknown"}))
+
+(s/def ::rna-unknown ::mutation)
 
 (defn rna-unknown-mutation
   []
@@ -1172,6 +1324,8 @@
   (format [_ _] "=")
   (plain [_] {:mutation "rna-no-effect"}))
 
+(s/def ::rna-no-effect ::mutation)
+
 (defn rna-no-effect
   []
   (RNANoEffect.))
@@ -1189,6 +1343,8 @@
   (format [this] (format this {}))
   (format [_ _] "spl")
   (plain [_] {:mutation "rna-splice-affected"}))
+
+(s/def ::rna-splice-affected ::mutation)
 
 (defn rna-splice-affected
   []
@@ -1220,12 +1376,30 @@
        parse-rna-substitution)
      s)))
 
+(s/def ::rna-mutation
+  (s/or :uncertain       ::uncertain-mutation
+        :substitution    ::rna-substitution
+        :deletion        ::rna-deletion
+        :duplication     ::rna-duplication
+        :substitution    ::rna-substitution
+        :insertion       ::rna-insertion
+        :inversion       ::rna-inversion
+        :conversion      ::rna-conversion
+        :indel           ::rna-indel
+        :alleles         ::rna-alleles
+        :repeated-seqs   ::rna-repeated-seqs
+        :no-rna          ::no-rna
+        :unknown         ::rna-unknown
+        :no-effect       ::rna-no-effect
+        :splice-affected ::rna-splice-affected))
+
 ;;; Protein mutations
 
-(defn- amino-acid?
-  [s]
-  (or (some? ((set short-amino-acids) s))
-      (some? ((set long-amino-acids) s))))
+(s/def ::short-amino-acid (set short-amino-acids))
+(s/def ::long-amino-acid  (set long-amino-acids))
+
+(s/def ::amino-acid (s/or :short ::short-amino-acid
+                          :long  ::long-amino-acid))
 
 (defn- should-show-end?
   [ref-start coord-start ref-end coord-end]
@@ -1254,12 +1428,19 @@
   (plain [this]
     (into {:mutation "protein-substitution"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-substitution/ref ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-substitution/coord ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-substitution/alt ::amino-acid)
+(s/def ::protein-substitution
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-substitution/ref
+                          :clj-hgvs.mutation.protein-substitution/coord
+                          :clj-hgvs.mutation.protein-substitution/alt])))
+
 (defn protein-substitution
   "Constructor of ProteinSubstitution. Throws an exception if any input is illegal."
   [ref coord alt]
-  {:pre [(amino-acid? ref)
-         (satisfies? coord/Coordinate coord)
-         (amino-acid? alt)]}
+  {:post [(s/valid? ::protein-substitution %)]}
   (ProteinSubstitution. ref coord alt))
 
 (def ^:private protein-substitution-re
@@ -1301,14 +1482,22 @@
   (plain [this]
     (into {:mutation "protein-deletion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-deletion/ref-start ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-deletion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-deletion/ref-end (s/nilable ::amino-acid))
+(s/def :clj-hgvs.mutation.protein-deletion/coord-end (s/nilable ::coord/coordinate))
+(s/def ::protein-deletion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-deletion/ref-start
+                          :clj-hgvs.mutation.protein-deletion/coord-start
+                          :clj-hgvs.mutation.protein-deletion/ref-end
+                          :clj-hgvs.mutation.protein-deletion/coord-end])))
+
 (defn protein-deletion
   "Constructor of ProteinDeletion. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-deletion ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
-   {:pre [(amino-acid? ref-start)
-          (satisfies? coord/Coordinate coord-start)
-          (or (nil? ref-end) (amino-acid? ref-end))
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))]}
+   {:post [(s/valid? ::protein-deletion %)]}
    (ProteinDeletion. ref-start coord-start ref-end coord-end)))
 
 (def ^:private protein-deletion-re
@@ -1348,14 +1537,22 @@
   (plain [this]
     (into {:mutation "protein-duplication"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-duplication/ref-start ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-duplication/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-duplication/ref-end (s/nilable ::amino-acid))
+(s/def :clj-hgvs.mutation.protein-duplication/coord-end (s/nilable ::coord/coordinate))
+(s/def ::protein-duplication
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-duplication/ref-start
+                          :clj-hgvs.mutation.protein-duplication/coord-start
+                          :clj-hgvs.mutation.protein-duplication/ref-end
+                          :clj-hgvs.mutation.protein-duplication/coord-end])))
+
 (defn protein-duplication
   "Constructor of ProteinDuplication. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-duplication ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
-   {:pre [(amino-acid? ref-start)
-          (satisfies? coord/Coordinate coord-start)
-          (or (nil? ref-end) (amino-acid? ref-end))
-          (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))]}
+   {:post [(s/valid? ::protein-duplication %)]}
    (ProteinDuplication. ref-start coord-start ref-end coord-end)))
 
 (def ^:private protein-duplication-re
@@ -1398,14 +1595,23 @@
   (plain [this]
     (into {:mutation "protein-insertion"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-insertion/ref-start ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-insertion/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-insertion/ref-end ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-insertion/coord-end ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-insertion/alts (s/coll-of ::amino-acid))
+(s/def ::protein-insertion
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-insertion/ref-start
+                          :clj-hgvs.mutation.protein-insertion/coord-start
+                          :clj-hgvs.mutation.protein-insertion/ref-end
+                          :clj-hgvs.mutation.protein-insertion/coord-end
+                          :clj-hgvs.mutation.protein-insertion/alts])))
+
 (defn protein-insertion
   "Constructor of ProteinInsertion. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
-  {:pre [(amino-acid? ref-start)
-         (satisfies? coord/Coordinate coord-start)
-         (amino-acid? ref-end)
-         (satisfies? coord/Coordinate coord-end)
-         (every? amino-acid? alts)]}
+  {:post [(s/valid? ::protein-insertion %)]}
   (ProteinInsertion. ref-start coord-start ref-end coord-end alts))
 
 (defn- parse-protein-insertion-alts
@@ -1454,14 +1660,23 @@
   (plain [this]
     (into {:mutation "protein-indel"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-indel/ref-start ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-indel/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-indel/ref-end (s/nilable ::amino-acid))
+(s/def :clj-hgvs.mutation.protein-indel/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.protein-indel/alts (s/coll-of ::amino-acid))
+(s/def ::protein-indel
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-indel/ref-start
+                          :clj-hgvs.mutation.protein-indel/coord-start
+                          :clj-hgvs.mutation.protein-indel/ref-end
+                          :clj-hgvs.mutation.protein-indel/coord-end
+                          :clj-hgvs.mutation.protein-indel/alts])))
+
 (defn protein-indel
   "Constructor of ProteinIndel. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
-  {:pre [(amino-acid? ref-start)
-         (satisfies? coord/Coordinate coord-start)
-         (or (nil? ref-end) (amino-acid? ref-end))
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (every? amino-acid? alts)]}
+  {:post [(s/valid? ::protein-indel %)]}
   (ProteinIndel. ref-start coord-start ref-end coord-end alts))
 
 (def ^:private protein-indel-re
@@ -1513,10 +1728,16 @@
      :mutations1 (mapv plain mutations1)
      :mutations2 (mapv plain mutations2)}))
 
+(s/def :clj-hgvs.mutation.protein-alleles/mutations1 (s/coll-of ::protein-mutation))
+(s/def :clj-hgvs.mutation.protein-alleles/mutations2 (s/nilable (s/coll-of ::protein-mutation)))
+(s/def ::protein-alleles
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-alleles/mutations1
+                          :clj-hgvs.mutation.protein-alleles/mutations2])))
+
 (defn protein-alleles
   [mutations1 mutations2]
-  {:pre [(every? #(satisfies? Mutation %) mutations1)
-         (every? #(satisfies? Mutation %) mutations2)]}
+  {:post [(s/valid? ::protein-alleles %)]}
   (ProteinAlleles. mutations1 mutations2))
 
 (defn parse-protein-alleles
@@ -1557,14 +1778,24 @@
   (format-unique [this _]
     (format-ncopy ncopy)))
 
+(s/def :clj-hgvs.mutation.protein-repeated-seqs/ref-start ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-repeated-seqs/coord-start ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-repeated-seqs/ref-end (s/nilable ::amino-acid))
+(s/def :clj-hgvs.mutation.protein-repeated-seqs/coord-end (s/nilable ::coord/coordinate))
+(s/def :clj-hgvs.mutation.protein-repeated-seqs/ncopy (s/or :integer integer?
+                                                            :vector  vector?))
+(s/def ::protein-repeated-seqs
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-repeated-seqs/ref-start
+                          :clj-hgvs.mutation.protein-repeated-seqs/coord-start
+                          :clj-hgvs.mutation.protein-repeated-seqs/ref-end
+                          :clj-hgvs.mutation.protein-repeated-seqs/coord-end
+                          :clj-hgvs.mutation.protein-repeated-seqs/ncopy])))
+
 (defn protein-repeated-seqs
   "Constructor of ProteinRepeatedSeqs. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end ncopy]
-  {:pre [(amino-acid? ref-start)
-         (satisfies? coord/Coordinate coord-start)
-         (or (nil? ref-end) (amino-acid? ref-end))
-         (or (nil? coord-end) (satisfies? coord/Coordinate coord-end))
-         (or (integer? ncopy) (vector? ncopy))]}
+  {:post [(s/valid? ::protein-repeated-seqs %)]}
   (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy))
 
 (def ^:private protein-repeated-seqs-re
@@ -1612,13 +1843,21 @@
   (plain [this]
     (into {:mutation "protein-frame-shift"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-frame-shift/ref ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-frame-shift/coord ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-frame-shift/alt (s/nilable ::amino-acid))
+(s/def :clj-hgvs.mutation.protein-frame-shift/new-ter-site (s/nilable ::coord/coordinate))
+(s/def ::protein-frame-shift
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-frame-shift/ref
+                          :clj-hgvs.mutation.protein-frame-shift/coord
+                          :clj-hgvs.mutation.protein-frame-shift/alt
+                          :clj-hgvs.mutation.protein-frame-shift/new-ter-site])))
+
 (defn protein-frame-shift
   "Constructor of ProteinFrameShift. Throws an exception if any input is illegal."
   [ref coord alt new-ter-site]
-  {:pre [(amino-acid? ref)
-         (satisfies? coord/Coordinate coord)
-         (or (nil? alt) (amino-acid? alt))
-         (or (nil? new-ter-site) (satisfies? coord/Coordinate new-ter-site))]}
+  {:post [(s/valid? ::protein-frame-shift %)]}
   (ProteinFrameShift. ref coord alt new-ter-site))
 
 (def ^:private protein-frame-shift-re
@@ -1662,14 +1901,23 @@
   (plain [this]
     (into {:mutation "protein-extension"} (plain-coords this))))
 
+(s/def :clj-hgvs.mutation.protein-extension/ref ::amino-acid)
+(s/def :clj-hgvs.mutation.protein-extension/coord ::coord/coordinate)
+(s/def :clj-hgvs.mutation.protein-extension/alt (s/nilable ::amino-acid))
+(s/def :clj-hgvs.mutation.protein-extension/region #{:upstream :downstream})
+(s/def :clj-hgvs.mutation.protein-extension/new-site ::coord/coordinate)
+(s/def ::protein-extension
+  (s/and ::mutation
+         (s/keys :req-un [:clj-hgvs.mutation.protein-extension/ref
+                          :clj-hgvs.mutation.protein-extension/coord
+                          :clj-hgvs.mutation.protein-extension/alt
+                          :clj-hgvs.mutation.protein-extension/region
+                          :clj-hgvs.mutation.protein-extension/new-site])))
+
 (defn protein-extension
   "Constructor of ProteinExtension. Throws an exception if any input is illegal."
   [ref coord alt region new-site]
-  {:pre [(amino-acid? ref)
-         (satisfies? coord/Coordinate coord)
-         (or (nil? alt) (amino-acid? alt))
-         (#{:upstream :downstream} region)
-         (satisfies? coord/Coordinate coord)]}
+  {:post [(s/valid? ::protein-extension %)]}
   (ProteinExtension. ref coord alt region new-site))
 
 (def ^:private protein-extension-re
@@ -1699,6 +1947,8 @@
   (format [this _] "0")
   (plain [this] {:mutation "no-protein"}))
 
+(s/def ::no-protein ::mutation)
+
 (defn no-protein
   []
   (NoProtein.))
@@ -1717,6 +1967,8 @@
   (format [this _] "?")
   (plain [this] {:mutation "protein-unknown"}))
 
+(s/def ::protein-unknown ::mutation)
+
 (defn protein-unknown-mutation
   []
   (ProteinUnknownMutation.))
@@ -1734,6 +1986,8 @@
   (format [this] (format this {}))
   (format [_ _] "=")
   (plain [_] {:mutation "protein-no-effect"}))
+
+(s/def ::protein-no-effect ::mutation)
 
 (defn protein-no-effect
   []
@@ -1763,6 +2017,21 @@
        #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
        parse-protein-substitution)
      s)))
+
+(s/def ::protein-mutation
+  (s/or :uncertain     ::uncertain-mutation
+        :substitution  ::protein-substitution
+        :deletion      ::protein-deletion
+        :duplication   ::protein-duplication
+        :insertion     ::protein-insertion
+        :indel         ::protein-indel
+        :alleles       ::protein-alleles
+        :repeated-seqs ::protein-repeated-seqs
+        :frame-shift   ::protein-frame-shift
+        :extension     ::protein-extension
+        :no-protein    ::no-protein
+        :unknown       ::protein-unknown
+        :no-effect     ::protein-no-effect))
 
 (defn parse
   [s kind]

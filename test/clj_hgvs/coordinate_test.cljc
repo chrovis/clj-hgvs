@@ -1,7 +1,8 @@
 (ns clj-hgvs.coordinate-test
   (:require #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest are is testing]])
-            [clj-hgvs.coordinate :as coord]))
+            [clj-hgvs.coordinate :as coord]
+            clj-hgvs.test-common))
 
 ;;; uncertain coordinate
 
@@ -11,7 +12,7 @@
       (coord/genomic-coordinate 123456) (coord/genomic-coordinate 234567)
       (coord/unknown-coordinate) (coord/genomic-coordinate 1)))
   (testing "throws an error if an input is illegal"
-    (are [s e] (thrown? #?(:clj Error, :cljs js/Error)
+    (are [s e] (thrown? #?(:clj Throwable, :cljs js/Error)
                         (coord/uncertain-coordinate s e))
       "123456" "234567"
       (coord/genomic-coordinate 123456) (coord/protein-coordinate 234567))))
@@ -98,7 +99,7 @@
   (testing "validates an input and returns GenomicCoordinate"
     (is (= (coord/genomic-coordinate 3) (coord/->GenomicCoordinate 3))))
   (testing "throws an error if an input is illegal"
-    (are [p] (thrown? #?(:clj Error, :cljs js/Error) (coord/genomic-coordinate p))
+    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/genomic-coordinate p))
       0
       3.5
       "3"
@@ -137,7 +138,7 @@
   (testing "validates an input and returns MitochondrialCoordinate"
     (is (= (coord/mitochondrial-coordinate 3) (coord/->MitochondrialCoordinate 3))))
   (testing "throws an error if an input is illegal"
-    (are [p] (thrown? #?(:clj Error, :cljs js/Error) (coord/mitochondrial-coordinate p))
+    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/mitochondrial-coordinate p))
       0
       3.5
       "3"
@@ -183,7 +184,7 @@
       85 3 :upstream
       37 3 :downstream))
   (testing "throws an error if inputs are illegal"
-    (are [p o r] (thrown? #?(:clj Error, :cljs js/Error) (coord/cdna-coordinate p o r))
+    (are [p o r] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/cdna-coordinate p o r))
       0 0 nil
       3.5 0 nil
       "3" 0 nil
@@ -255,7 +256,7 @@
   (testing "validates an input and returns NCDNACoordinate"
     (is (= (coord/ncdna-coordinate 3) (coord/->NCDNACoordinate 3))))
   (testing "throws an error if an input is illegal"
-    (are [p] (thrown? #?(:clj Error, :cljs js/Error) (coord/ncdna-coordinate p))
+    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/ncdna-coordinate p))
       0
       3.5
       "3"
@@ -301,7 +302,7 @@
       85 3 :upstream
       37 3 :downstream))
   (testing "throws an error if inputs are illegal"
-    (are [p s i] (thrown? #?(:clj Error, :cljs js/Error) (coord/rna-coordinate p s i))
+    (are [p s i] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/rna-coordinate p s i))
       0 nil nil
       3.5 nil nil
       "3" nil nil
@@ -374,7 +375,7 @@
   (testing "validates an input and returns ProteinCoordinate"
     (is (= (coord/protein-coordinate 3) (coord/->ProteinCoordinate 3))))
   (testing "throws an error if an input is illegal"
-    (are [p] (thrown? #?(:clj Error, :cljs js/Error) (coord/protein-coordinate p))
+    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/protein-coordinate p))
       0
       3.5
       "3"

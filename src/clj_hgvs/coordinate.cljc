@@ -1,7 +1,8 @@
 (ns clj-hgvs.coordinate
   "Data structures and functions to handle HGVS coordinates."
   #?(:clj (:refer-clojure :exclude [format]))
-  (:require [clj-hgvs.internal :refer [parse-long]]))
+  (:require [clojure.spec.alpha :as s]
+            [clj-hgvs.internal :refer [parse-long]]))
 
 (declare parser parse-coordinate cdna-coordinate rna-coordinate)
 
@@ -16,6 +17,12 @@
 
 (defprotocol ICDNACoordinate
   (in-exon? [this] "Returns true if the coordinate is located in exon, else false."))
+
+(s/def ::coordinate #(satisfies? Coordinate %))
+
+(s/def ::position (s/and integer? pos?))
+(s/def ::offset (s/nilable integer?))
+(s/def ::region (s/nilable #{:upstream :downstream}))
 
 (defn ->region-keyword
   [s]
@@ -38,6 +45,8 @@
   Coordinate
   (format [_] "?")
   (plain [_] {:coordinate "unknown"}))
+
+(s/def ::unknown-coordinate ::coordinate)
 
 (defn unknown-coordinate
   "Returns UnknownCoordinate instance."
@@ -72,16 +81,22 @@
      :start (plain start)
      :end (plain end)}))
 
+(s/def :clj-hgvs.coordinate.uncertain-coordinate/start ::coordinate)
+(s/def :clj-hgvs.coordinate.uncertain-coordinate/end ::coordinate)
+(s/def ::uncertain-coordinate
+  (s/and ::coordinate
+         (s/keys :req-un [:clj-hgvs.coordinate.uncertain-coordinate/start
+                          :clj-hgvs.coordinate.uncertain-coordinate/end])))
+
 (defn uncertain-coordinate
   "Returns UncertainCoordinate instance having start and end. Throws an
   exception if any input is illegal."
   [start end]
-  {:pre [(satisfies? Coordinate start)
-         (satisfies? Coordinate end)
-         (not (instance? UncertainCoordinate start))
+  {:pre [(not (instance? UncertainCoordinate start))
          (not (instance? UncertainCoordinate end))
          (or (some #(instance? UnknownCoordinate %) [start end])
-             (= (type start) (type end)))]}
+             (= (type start) (type end)))]
+   :post [(s/valid? ::uncertain-coordinate %)]}
   (UncertainCoordinate. start end))
 
 ;; (123456_234567)
@@ -133,11 +148,14 @@
   (format [_] (str position))
   (plain [this] (into {:coordinate "genomic"} this)))
 
+(s/def ::genomic-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position])))
+
 (defn genomic-coordinate
   "Returns GenomicCoordinate instance having position. Throws an exception if
   position is illegal."
   [position]
-  {:pre [(integer? position) (pos? position)]}
+  {:post [(s/valid? ::genomic-coordinate %)]}
   (GenomicCoordinate. position))
 
 (defn parse-genomic-coordinate
@@ -163,11 +181,14 @@
   (format [_] (str position))
   (plain [this] (into {:coordinate "mitochondrial"} this)))
 
+(s/def ::mitochondrial-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position])))
+
 (defn mitochondrial-coordinate
   "Returns MitochondrialCoordinate instance having position. Throws an exception
   if position is illegal."
   [position]
-  {:pre [(integer? position) (pos? position)]}
+  {:post [(s/valid? ::mitochondrial-coordinate %)]}
   (MitochondrialCoordinate. position))
 
 (defn parse-mitochondrial-coordinate
@@ -219,14 +240,15 @@
   (in-exon? [this]
     (or (nil? offset) (zero? offset))))
 
+(s/def ::cdna-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position ::offset ::region])))
+
 (defn cdna-coordinate
   "Returns CDNACoordinate instance having position, offset, and region. Throws
   an exception if any input is illegal."
   ([position] (cdna-coordinate position 0 nil))
   ([position offset region]
-   {:pre [(integer? position) (pos? position)
-          (integer? offset)
-          (or (nil? region) (#{:upstream :downstream} region))]}
+   {:post [(s/valid? ::cdna-coordinate %)]}
    (CDNACoordinate. position offset region)))
 
 (def ^:private cdna-coordinate-re
@@ -260,11 +282,14 @@
   (format [_] (str position))
   (plain [this] (into {:coordinate "ncdna"} this)))
 
+(s/def ::ncdna-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position])))
+
 (defn ncdna-coordinate
   "Returns NCDNACoordinate instance having position. Throws an exception if
   position is illegal."
   [position]
-  {:pre [(integer? position) (pos? position)]}
+  {:post [(s/valid? ::ncdna-coordinate %)]}
   (NCDNACoordinate. position))
 
 (defn parse-ncdna-coordinate
@@ -308,13 +333,14 @@
   (in-exon? [this]
     (or (nil? offset) (zero? offset))))
 
+(s/def ::rna-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position ::offset ::region])))
+
 (defn rna-coordinate
   "Returns RNACoordinate instance having position, offset, and region. Throws an
   exception if any input is illegal."
   [position offset region]
-  {:pre [(integer? position) (pos? position)
-         (or (nil? offset) (integer? offset))
-         (or (nil? region) (#{:upstream :downstream} region))]}
+  {:post [(s/valid? ::rna-coordinate %)]}
   (RNACoordinate. position offset region))
 
 (def ^:private rna-coordinate-re
@@ -349,11 +375,14 @@
   (format [_] (str position))
   (plain [this] (into {:coordinate "protein"} this)))
 
+(s/def ::protein-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position])))
+
 (defn protein-coordinate
   "Returns ProteinCoordinate instance having position. Throws an exception if
   position is illegal."
   [position]
-  {:pre [(integer? position) (pos? position)]}
+  {:post [(s/valid? ::protein-coordinate %)]}
   (ProteinCoordinate. position))
 
 (defn parse-protein-coordinate
