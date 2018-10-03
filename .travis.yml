@@ -12,7 +12,7 @@ jdk:
   - openjdk10
   - openjdk11
 before_install: if [ -f "${JAVA_HOME}/lib/security/cacerts" -a -w  "${JAVA_HOME}/lib/security/cacerts" ]; then rm "${JAVA_HOME}/lib/security/cacerts" && ln -s /etc/ssl/certs/java/cacerts "${JAVA_HOME}/lib/security/cacerts"; fi
-script: lein with-profile +dev:+1.7:+1.9:+1.10 test
+script: lein with-profile +dev:+1.7:+1.8:+1.10 test
 jobs:
   include:
     - stage: cljs-test
