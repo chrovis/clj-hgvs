@@ -1437,7 +1437,7 @@
                           :ref "Met"
                           :coord (coord/plain (coord/protein-coordinate 1))
                           :alt nil
-                          :region :upstream
+                          :region "upstream"
                           :new-site (coord/plain (coord/protein-coordinate 5))})
 
 (def protein-extension2s "Met1Valext-12")

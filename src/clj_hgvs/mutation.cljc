@@ -1899,7 +1899,8 @@
          (coord/->region-str region)
          (coord/format new-site)))
   (plain [this]
-    (into {:mutation "protein-extension"} (plain-coords this))))
+    (into {:mutation "protein-extension"}
+          (update (plain-coords this) :region name))))
 
 (s/def :clj-hgvs.mutation.protein-extension/ref ::amino-acid)
 (s/def :clj-hgvs.mutation.protein-extension/coord ::coord/coordinate)
@@ -1935,7 +1936,7 @@
 (defmethod restore "protein-extension"
   [m]
   (let [{:keys [ref coord alt region new-site]} (restore-coords m)]
-    (protein-extension ref coord alt region new-site)))
+    (protein-extension ref coord alt (keyword region) new-site)))
 
 ;;; Protein - no protein detected
 ;;;
