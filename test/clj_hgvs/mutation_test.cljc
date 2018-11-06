@@ -1360,6 +1360,7 @@
 ;;; Protein - frame shift
 
 (def protein-frame-shift1s "Arg97ProfsTer23")
+(def protein-frame-shift1sn "Arg97Profs")
 (def protein-frame-shift1 (mut/protein-frame-shift "Arg"
                                                    (coord/protein-coordinate 97)
                                                    "Pro"
@@ -1397,12 +1398,13 @@
 (deftest format-protein-frame-shift-test
   (testing "returns a string expression of a protein frame-shift"
     (are [m o s] (= (mut/format m o) s)
-      protein-frame-shift1 nil protein-frame-shift1s
+      protein-frame-shift1 nil protein-frame-shift1sn
+      protein-frame-shift1 {:show-ter-site? true} protein-frame-shift1s
       protein-frame-shift2 nil protein-frame-shift2s
       protein-frame-shift2 {:amino-acid-format :short} protein-frame-shift2ss
       protein-frame-shift3 nil protein-frame-shift3s
-      protein-frame-shift4 {:ter-format :short} protein-frame-shift4s
-      protein-frame-shift5 {:ter-format :short} protein-frame-shift5s)))
+      protein-frame-shift4 {:show-ter-site? true, :ter-format :short} protein-frame-shift4s
+      protein-frame-shift5 {:show-ter-site? true, :ter-format :short} protein-frame-shift5s)))
 
 (deftest parse-protein-frame-shift-test
   (testing "returns a correct ProteinFrameShift"

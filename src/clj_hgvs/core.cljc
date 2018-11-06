@@ -64,6 +64,8 @@
     :range-format - range style, default :auto. <:auto|:bases|:coord>
     :amino-acid-format - amino acid style of protein HGVS, default :long.
                          <:long|:short>
+    :show-ter-site? - displays a new ter codon site of protein frame shift,
+                      default false.
     :ter-format - ter codon style of protein frame shift and extension, default
                   :long. <:long|:short>"
   ([hgvs] (format hgvs {}))
@@ -76,12 +78,14 @@
 (s/def :clj-hgvs.spec.format-options/ins-format #{:auto :bases :count})
 (s/def :clj-hgvs.spec.format-options/range-format #{:auto :bases :coord})
 (s/def :clj-hgvs.spec.format-options/amino-acid-format #{:long :short})
+(s/def :clj-hgvs.spec.format-options/show-ter-site? #(or (true? %) (false? %)))
 (s/def :clj-hgvs.spec.format-options/ter-format #{:long :short})
 (s/def ::format-options
   (s/keys :opt-un [:clj-hgvs.spec.format-options/show-bases?
                    :clj-hgvs.spec.format-options/ins-format
                    :clj-hgvs.spec.format-options/range-format
                    :clj-hgvs.spec.format-options/amino-acid-format
+                   :clj-hgvs.spec.format-options/show-ter-site?
                    :clj-hgvs.spec.format-options/ter-format]))
 
 (s/fdef format

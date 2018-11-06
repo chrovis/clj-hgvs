@@ -1826,8 +1826,8 @@
 (defrecord ProteinFrameShift [ref coord alt new-ter-site]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [amino-acid-format ter-format]
-                 :or {amino-acid-format :long, ter-format :long}}]
+  (format [this {:keys [amino-acid-format show-ter-site? ter-format]
+                 :or {amino-acid-format :long, show-ter-site? false, ter-format :long}}]
     (str (cond-> ref
            (= amino-acid-format :short) ->short-amino-acid)
          (coord/format coord)
@@ -1836,7 +1836,7 @@
            (cond-> alt
              (= amino-acid-format :short) ->short-amino-acid))
          "fs"
-         (if (some? new-ter-site)
+         (if (and show-ter-site? (some? new-ter-site))
            (str (cond-> "Ter"
                   (= ter-format :short) ->short-amino-acid)
                 (coord/format new-ter-site)))))

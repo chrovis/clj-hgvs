@@ -177,7 +177,7 @@
     (are [s ns] (= (hgvs/normalize s) ns)
       "NG_012232.1:g.19_21delTGC" "NG_012232.1:g.19_21del"
       "g.6775delTinsGA" "g.6775delinsGA"
-      "p.I327Rfs*?" "p.Ile327ArgfsTer?"
+      "p.I327Rfs*?" "p.Ile327Argfs"
       "p.*110Glnext*17" "p.Ter110Glnext*17"))
   (testing "throws exception"
     (are [s] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/normalize s))
