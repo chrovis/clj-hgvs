@@ -12,7 +12,7 @@
   :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
                                   [clojure-future-spec "1.9.0-beta4"]]}
-             :1.10 {:dependencies [[org.clojure/clojure "1.10.0-alpha6"]]}}
+             :1.10 {:dependencies [[org.clojure/clojure "1.10.0-beta5"]]}}
   :deploy-repositories [["snapshots" {:url "https://clojars.org/repo/"
                                       :username [:env/clojars_username :gpg]
                                       :password [:env/clojars_password :gpg]}]]
