@@ -59,6 +59,10 @@
    "Ter"
    "Xaa"])
 
+(def ^:private short-amino-acid-set (set short-amino-acids))
+
+(def ^:private long-amino-acid-set (set long-amino-acids))
+
 (def ^:private short-long-amino-acid-map
   (zipmap short-amino-acids long-amino-acids))
 
@@ -70,18 +74,14 @@
   or Character. Returns nil if s is not present in amino acid list."
   [s]
   (let [s (cond-> s (char? s) str)]
-    (if ((set long-amino-acids) s)
-      s
-      (get short-long-amino-acid-map s))))
+    (or (long-amino-acid-set s) (short-long-amino-acid-map s))))
 
 (defn ->short-amino-acid
   "Converts a three-letter amino acid into a single-letter one. s must be String
   or Character. Returns nil if s is not present in amino acid list."
   [s]
   (let [s (cond-> s (char? s) str)]
-    (if ((set short-amino-acids) s)
-      s
-      (get long-short-amino-acid-map s))))
+    (or (short-amino-acid-set s) (long-short-amino-acid-map s))))
 
 ;; "1" => ["1"]
 ;; "1_2" => ["1" "2"]
