@@ -7,7 +7,7 @@
                  [org.clojure/clojurescript "1.10.439" :scope "provided"]]
   :plugins [[lein-cljsbuild "1.1.7"]
             [lein-cloverage "1.0.13"]
-            [lein-codox "0.10.4"]
+            [lein-codox "0.10.5"]
             [lein-doo "0.1.10"]]
   :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
