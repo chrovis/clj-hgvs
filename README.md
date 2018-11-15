@@ -16,11 +16,20 @@ clj-hgvs provides:
 
 ## Installation
 
-With Leiningen/Boot:
+Clojure CLI/deps.edn:
 
 ```clojure
-[clj-hgvs "0.2.4"]
+clj-hgvs {:mvn/version "0.3.0"}
 ```
+
+Leiningen/Boot:
+
+```clojure
+[clj-hgvs "0.3.0"]
+```
+
+To use clj-hgvs with Clojure 1.8, you must include a dependency on
+[clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
 
 ## Usage
 
@@ -54,6 +63,6 @@ hgvs1
 
 ## License
 
-Copyright 2017 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2018 [Xcoo, Inc.](https://xcoo.jp/)
 
-Licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+Licensed under the [Apache License, Version 2.0](LICENSE).
