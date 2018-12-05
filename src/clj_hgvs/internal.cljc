@@ -1,5 +1,6 @@
 (ns clj-hgvs.internal
-  "Common functions used only inside this projects.")
+  "Common functions used only inside this project."
+  (:require [clojure.spec.alpha :as s]))
 
 (defn parse-long
   [s]
@@ -25,3 +26,11 @@
     :ncdna "n"
     :rna "r"
     :protein "p"))
+
+(def ^:dynamic *validation-enabled* true)
+
+(defn valid?
+  [spec x]
+  (if *validation-enabled*
+    (s/valid? spec x)
+    true))

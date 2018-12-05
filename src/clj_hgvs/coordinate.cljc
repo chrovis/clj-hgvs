@@ -2,7 +2,7 @@
   "Data structures and functions to handle HGVS coordinates."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.spec.alpha :as s]
-            [clj-hgvs.internal :refer [parse-long]]))
+            [clj-hgvs.internal :as intl]))
 
 (declare parser parse-coordinate cdna-coordinate rna-coordinate)
 
@@ -96,7 +96,7 @@
          (not (instance? UncertainCoordinate end))
          (or (some #(instance? UnknownCoordinate %) [start end])
              (= (type start) (type end)))]
-   :post [(s/valid? ::uncertain-coordinate %)]}
+   :post [(intl/valid? ::uncertain-coordinate %)]}
   (UncertainCoordinate. start end))
 
 ;; (123456_234567)
@@ -118,12 +118,12 @@
                          :cdna cdna-coordinate
                          :rna rna-coordinate)]
         (if (= offset-direction "+")
-          (uncertain-coordinate (coordinate (parse-long position)
+          (uncertain-coordinate (coordinate (intl/parse-long position)
                                             1
                                             (->region-keyword region))
                                 (unknown-coordinate))
           (uncertain-coordinate (unknown-coordinate)
-                                (coordinate (parse-long position)
+                                (coordinate (intl/parse-long position)
                                             -1
                                             (->region-keyword region)))))
       (throw (#?(:clj Exception., :cljs js/Error.)
@@ -155,7 +155,7 @@
   "Returns GenomicCoordinate instance having position. Throws an exception if
   position is illegal."
   [position]
-  {:post [(s/valid? ::genomic-coordinate %)]}
+  {:post [(intl/valid? ::genomic-coordinate %)]}
   (GenomicCoordinate. position))
 
 (defn parse-genomic-coordinate
@@ -165,7 +165,7 @@
   (cond
     (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :genomic)
     (= s "?") (unknown-coordinate)
-    :else (genomic-coordinate (parse-long s))))
+    :else (genomic-coordinate (intl/parse-long s))))
 
 (defmethod restore "genomic"
   [m]
@@ -188,7 +188,7 @@
   "Returns MitochondrialCoordinate instance having position. Throws an exception
   if position is illegal."
   [position]
-  {:post [(s/valid? ::mitochondrial-coordinate %)]}
+  {:post [(intl/valid? ::mitochondrial-coordinate %)]}
   (MitochondrialCoordinate. position))
 
 (defn parse-mitochondrial-coordinate
@@ -198,7 +198,7 @@
   (cond
     (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :mitochondrial)
     (= s "?") (unknown-coordinate)
-    :else (mitochondrial-coordinate (parse-long s))))
+    :else (mitochondrial-coordinate (intl/parse-long s))))
 
 (defmethod restore "mitochondrial"
   [m]
@@ -248,7 +248,7 @@
   an exception if any input is illegal."
   ([position] (cdna-coordinate position 0 nil))
   ([position offset region]
-   {:post [(s/valid? ::cdna-coordinate %)]}
+   {:post [(intl/valid? ::cdna-coordinate %)]}
    (CDNACoordinate. position offset region)))
 
 (def ^:private cdna-coordinate-re
@@ -262,9 +262,9 @@
     (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :cdna)
     (= s "?") (unknown-coordinate)
     :else (let [[_ region position offset] (re-find cdna-coordinate-re s)]
-            (cdna-coordinate (parse-long position)
+            (cdna-coordinate (intl/parse-long position)
                              (if (some? offset)
-                               (parse-long offset)
+                               (intl/parse-long offset)
                                0)
                              (->region-keyword region)))))
 
@@ -289,7 +289,7 @@
   "Returns NCDNACoordinate instance having position. Throws an exception if
   position is illegal."
   [position]
-  {:post [(s/valid? ::ncdna-coordinate %)]}
+  {:post [(intl/valid? ::ncdna-coordinate %)]}
   (NCDNACoordinate. position))
 
 (defn parse-ncdna-coordinate
@@ -299,7 +299,7 @@
   (cond
     (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :ncdna)
     (= s "?") (unknown-coordinate)
-    :else (ncdna-coordinate (parse-long s))))
+    :else (ncdna-coordinate (intl/parse-long s))))
 
 (defmethod restore "ncdna"
   [m]
@@ -340,7 +340,7 @@
   "Returns RNACoordinate instance having position, offset, and region. Throws an
   exception if any input is illegal."
   [position offset region]
-  {:post [(s/valid? ::rna-coordinate %)]}
+  {:post [(intl/valid? ::rna-coordinate %)]}
   (RNACoordinate. position offset region))
 
 (def ^:private rna-coordinate-re
@@ -354,12 +354,12 @@
     (unknown-coordinate)
     (let [[_ region position offset] (re-find rna-coordinate-re s)]
       (if (or (some? region) (some? offset))
-        (rna-coordinate (parse-long position)
+        (rna-coordinate (intl/parse-long position)
                         (if (some? offset)
-                          (parse-long offset)
+                          (intl/parse-long offset)
                           0)
                         (->region-keyword region))
-        (rna-coordinate (parse-long position) nil nil)))))
+        (rna-coordinate (intl/parse-long position) nil nil)))))
 
 (defmethod restore "rna"
   [m]
@@ -382,7 +382,7 @@
   "Returns ProteinCoordinate instance having position. Throws an exception if
   position is illegal."
   [position]
-  {:post [(s/valid? ::protein-coordinate %)]}
+  {:post [(intl/valid? ::protein-coordinate %)]}
   (ProteinCoordinate. position))
 
 (defn parse-protein-coordinate
@@ -391,7 +391,7 @@
   [s]
   (if (= s "?")
     (unknown-coordinate)
-    (protein-coordinate (parse-long s))))
+    (protein-coordinate (intl/parse-long s))))
 
 (defmethod restore "protein"
   [m]

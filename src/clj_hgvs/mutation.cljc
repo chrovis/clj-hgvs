@@ -5,7 +5,7 @@
             [clojure.string :as string]
             [clojure.walk :as walk]
             [clj-hgvs.coordinate :as coord]
-            [clj-hgvs.internal :refer [parse-long ->kind-keyword ->kind-str]]))
+            [clj-hgvs.internal :as intl]))
 
 (declare parse-dna parse-rna parse-protein parse common-mutations?)
 
@@ -115,8 +115,8 @@
 (defn- parse-ncopy
   [s]
   (if-let [[_ s1 s2] (re-matches #"\((\d+)_(\d+)\)" s)]
-    [(parse-long s1) (parse-long s2)]
-    (parse-long s)))
+    [(intl/parse-long s1) (intl/parse-long s2)]
+    (intl/parse-long s)))
 
 ;; 14 => "14"
 ;; [600 800] => "(600_800)"
@@ -189,7 +189,7 @@
   illegal."
   [mutation]
   {:pre [(not (instance? UncertainMutation mutation))]
-   :post [(s/valid? ::uncertain-mutation %)]}
+   :post [(intl/valid? ::uncertain-mutation %)]}
   (UncertainMutation. mutation))
 
 (def ^:private uncertain-mutation-re
@@ -253,7 +253,7 @@
   "Constructor of DNASubstitution. Throws an exception if any input is illegal."
   ([coord ref typ] (dna-substitution coord ref typ nil))
   ([coord ref typ alt]
-   {:post [(s/valid? ::dna-substitution %)]}
+   {:post [(intl/valid? ::dna-substitution %)]}
    (DNASubstitution. coord ref typ alt)))
 
 (def ^:private dna-substitution-re
@@ -305,7 +305,7 @@
   "Constructor of DNADeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(s/valid? ::dna-deletion %)]}
+   {:post [(intl/valid? ::dna-deletion %)]}
    (DNADeletion. coord-start coord-end ref)))
 
 (def ^:private dna-deletion-re
@@ -361,7 +361,7 @@
   "Constructor of DNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(s/valid? ::dna-duplication %)]}
+   {:post [(intl/valid? ::dna-duplication %)]}
    (DNADuplication. coord-start coord-end ref)))
 
 (def ^:private dna-duplication-re
@@ -428,7 +428,7 @@
 (defn dna-insertion
   "Constructor of DNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:post [(s/valid? ::dna-insertion %)]}
+  {:post [(intl/valid? ::dna-insertion %)]}
   (DNAInsertion. coord-start coord-end alt))
 
 (defn- parse-dna-insertion-alt
@@ -436,7 +436,7 @@
   (or (re-matches #"[A-Z]+" s)
       (some-> (re-matches #"\((\d+)\)" s)
               (second)
-              (parse-long)
+              (intl/parse-long)
               (repeat "N")
               (#(apply str %)))
       (let [[_ transcript coord] (re-matches #"(?:([^:]+):)([\(\)\*\-\+\d\?_]+)" s)
@@ -490,7 +490,7 @@
   [coord-start coord-end]
   {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
              (neg? (compare coord-start coord-end)))]
-   :post [(s/valid? ::dna-inversion %)]}
+   :post [(intl/valid? ::dna-inversion %)]}
   (DNAInversion. coord-start coord-end))
 
 (def ^:private dna-inversion-re
@@ -522,7 +522,7 @@
                          (coord/format coord-end)
                          "con"
                          (if (:transcript alt) [(:transcript alt) ":"])
-                         (if (:kind alt) [(->kind-str (:kind alt)) "."])
+                         (if (:kind alt) [(intl/->kind-str (:kind alt)) "."])
                          (coord/format (:coord-start alt))
                          "_"
                          (coord/format (:coord-end alt))])))
@@ -542,7 +542,7 @@
   {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
              (neg? (compare coord-start coord-end)))
          (map? alt)]
-   :post [(s/valid? ::dna-conversion %)]}
+   :post [(intl/valid? ::dna-conversion %)]}
   (DNAConversion. coord-start coord-end alt))
 
 (def ^:private dna-conversion-re
@@ -555,10 +555,10 @@
   [s kind default-coord-parser]
   (let [[_ transcript kind coord-s coord-e] (re-matches dna-conversion-alt-re s)
         parse-alt-coord (if kind
-                          (coord-parser (->kind-keyword kind))
+                          (coord-parser (intl/->kind-keyword kind))
                           default-coord-parser)]
     {:transcript transcript
-     :kind (some-> kind ->kind-keyword)
+     :kind (some-> kind intl/->kind-keyword)
      :coord-start (parse-alt-coord coord-s)
      :coord-end (parse-alt-coord coord-e)}))
 
@@ -610,7 +610,7 @@
 (defn dna-indel
   "Constructor of DNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
-  {:post [(s/valid? ::dna-indel %)]}
+  {:post [(intl/valid? ::dna-indel %)]}
   (DNAIndel. coord-start coord-end ref alt))
 
 (def ^:private dna-indel-re
@@ -668,7 +668,7 @@
 
 (defn dna-alleles
   [mutations1 mutations2]
-  {:post [(s/valid? ::dna-alleles %)]}
+  {:post [(intl/valid? ::dna-alleles %)]}
   (DNAAlleles. mutations1 mutations2))
 
 (defn parse-dna-alleles
@@ -727,7 +727,7 @@
 (defn dna-repeated-seqs
   "Constructor of DNARepeatedSeqs. Throws an exception if any input is illegal."
   [coord-start coord-end ref ncopy]
-  {:post [(s/valid? ::dna-repeated-seqs %)]}
+  {:post [(intl/valid? ::dna-repeated-seqs %)]}
   (DNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private dna-repeated-seqs-re
@@ -812,7 +812,7 @@
 (defn rna-substitution
   "Constructor of RNASubstitution. Throws an exception if any input is illegal."
   [coord ref alt]
-  {:post [(s/valid? ::rna-substitution %)]}
+  {:post [(intl/valid? ::rna-substitution %)]}
   (RNASubstitution. coord ref alt))
 
 (def ^:private rna-substitution-re
@@ -860,7 +860,7 @@
   "Constructor of DNAdeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(s/valid? ::rna-deletion %)]}
+   {:post [(intl/valid? ::rna-deletion %)]}
    (RNADeletion. coord-start coord-end ref)))
 
 (def ^:private rna-deletion-re
@@ -909,7 +909,7 @@
   "Constructor of RNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(s/valid? ::rna-duplication %)]}
+   {:post [(intl/valid? ::rna-duplication %)]}
    (RNADuplication. coord-start coord-end ref)))
 
 (def ^:private rna-duplication-re
@@ -961,14 +961,14 @@
 (defn rna-insertion
   "Constructor of RNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:post [(s/valid? ::rna-insertion %)]}
+  {:post [(intl/valid? ::rna-insertion %)]}
   (RNAInsertion. coord-start coord-end alt))
 
 (defn- parse-rna-alt-n
   [s]
   (if-let [n (some-> (re-find #"\((\d)\)" s)
                      second
-                     parse-long)]
+                     intl/parse-long)]
     (apply str (repeat n "n"))))
 
 (def ^:private genbank-re
@@ -978,8 +978,8 @@
   [s]
   (let [[_ genbank coord-s coord-e] (re-matches genbank-re s)]
     {:genbank genbank
-     :coord-start (parse-long coord-s)
-     :coord-end (parse-long coord-e)}))
+     :coord-start (intl/parse-long coord-s)
+     :coord-end (intl/parse-long coord-e)}))
 
 (def ^:private rna-insertion-re
   #"([\d\-\+\*]+)_([\d\-\+\*]+)ins(.+)?")
@@ -1026,7 +1026,7 @@
   [coord-start coord-end]
   {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
              (neg? (compare coord-start coord-end)))]
-   :post [(s/valid? ::rna-inversion %)]}
+   :post [(intl/valid? ::rna-inversion %)]}
   (RNAInversion. coord-start coord-end))
 
 (def ^:private rna-inversion-re
@@ -1077,7 +1077,7 @@
   [coord-start coord-end alt]
   {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
              (neg? (compare coord-start coord-end)))]
-   :post [(s/valid? ::rna-conversion %)]}
+   :post [(intl/valid? ::rna-conversion %)]}
   (RNAConversion. coord-start coord-end alt))
 
 (def ^:private rna-conversion-re
@@ -1140,7 +1140,7 @@
 (defn rna-indel
   "Constructor of RNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
-  {:post [(s/valid? ::rna-indel %)]}
+  {:post [(intl/valid? ::rna-indel %)]}
   (RNAIndel. coord-start coord-end ref alt))
 
 (def ^:private rna-indel-re
@@ -1196,7 +1196,7 @@
 
 (defn rna-alleles
   [mutations1 mutations2]
-  {:post [(s/valid? ::rna-alleles %)]}
+  {:post [(intl/valid? ::rna-alleles %)]}
   (RNAAlleles. mutations1 mutations2))
 
 (defn parse-rna-alleles
@@ -1255,7 +1255,7 @@
 (defn rna-repeated-seqs
   "Constructor of RNARepeatedSeqs. Throws an exception if any input is illegal."
   [coord-start coord-end ref ncopy]
-  {:post [(s/valid? ::rna-repeated-seqs %)]}
+  {:post [(intl/valid? ::rna-repeated-seqs %)]}
   (RNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private rna-repeated-seqs-re
@@ -1440,7 +1440,7 @@
 (defn protein-substitution
   "Constructor of ProteinSubstitution. Throws an exception if any input is illegal."
   [ref coord alt]
-  {:post [(s/valid? ::protein-substitution %)]}
+  {:post [(intl/valid? ::protein-substitution %)]}
   (ProteinSubstitution. ref coord alt))
 
 (def ^:private protein-substitution-re
@@ -1497,7 +1497,7 @@
   "Constructor of ProteinDeletion. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-deletion ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
-   {:post [(s/valid? ::protein-deletion %)]}
+   {:post [(intl/valid? ::protein-deletion %)]}
    (ProteinDeletion. ref-start coord-start ref-end coord-end)))
 
 (def ^:private protein-deletion-re
@@ -1552,7 +1552,7 @@
   "Constructor of ProteinDuplication. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-duplication ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
-   {:post [(s/valid? ::protein-duplication %)]}
+   {:post [(intl/valid? ::protein-duplication %)]}
    (ProteinDuplication. ref-start coord-start ref-end coord-end)))
 
 (def ^:private protein-duplication-re
@@ -1611,14 +1611,14 @@
 (defn protein-insertion
   "Constructor of ProteinInsertion. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
-  {:post [(s/valid? ::protein-insertion %)]}
+  {:post [(intl/valid? ::protein-insertion %)]}
   (ProteinInsertion. ref-start coord-start ref-end coord-end alts))
 
 (defn- parse-protein-insertion-alts
   [s]
   (condp re-matches s
     #"([A-Z]([a-z]{2})?)+" (mapv ->long-amino-acid (re-seq #"[A-Z](?:[a-z]{2})?" s))
-    #"\d+" (vec (repeat (parse-long s) "Xaa"))))
+    #"\d+" (vec (repeat (intl/parse-long s) "Xaa"))))
 
 (def ^:private protein-insertion-re
   #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z]+)")
@@ -1676,7 +1676,7 @@
 (defn protein-indel
   "Constructor of ProteinIndel. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
-  {:post [(s/valid? ::protein-indel %)]}
+  {:post [(intl/valid? ::protein-indel %)]}
   (ProteinIndel. ref-start coord-start ref-end coord-end alts))
 
 (def ^:private protein-indel-re
@@ -1737,7 +1737,7 @@
 
 (defn protein-alleles
   [mutations1 mutations2]
-  {:post [(s/valid? ::protein-alleles %)]}
+  {:post [(intl/valid? ::protein-alleles %)]}
   (ProteinAlleles. mutations1 mutations2))
 
 (defn parse-protein-alleles
@@ -1795,7 +1795,7 @@
 (defn protein-repeated-seqs
   "Constructor of ProteinRepeatedSeqs. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end ncopy]
-  {:post [(s/valid? ::protein-repeated-seqs %)]}
+  {:post [(intl/valid? ::protein-repeated-seqs %)]}
   (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy))
 
 (def ^:private protein-repeated-seqs-re
@@ -1857,7 +1857,7 @@
 (defn protein-frame-shift
   "Constructor of ProteinFrameShift. Throws an exception if any input is illegal."
   [ref coord alt new-ter-site]
-  {:post [(s/valid? ::protein-frame-shift %)]}
+  {:post [(intl/valid? ::protein-frame-shift %)]}
   (ProteinFrameShift. ref coord alt new-ter-site))
 
 (def ^:private protein-frame-shift-re
@@ -1918,7 +1918,7 @@
 (defn protein-extension
   "Constructor of ProteinExtension. Throws an exception if any input is illegal."
   [ref coord alt region new-site]
-  {:post [(s/valid? ::protein-extension %)]}
+  {:post [(intl/valid? ::protein-extension %)]}
   (ProteinExtension. ref coord alt region new-site))
 
 (def ^:private protein-extension-re

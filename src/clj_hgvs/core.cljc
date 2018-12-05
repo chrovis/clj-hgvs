@@ -3,8 +3,14 @@
   nomenclature."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.spec.alpha :as s]
-            [clj-hgvs.internal :refer [->kind-keyword ->kind-str]]
+            [clj-hgvs.internal :as intl]
             [clj-hgvs.mutation :as mut]))
+
+(defmacro with-validation-disabled
+  "Disables validation within a scope."
+  [& body]
+  `(binding [intl/*validation-enabled* nil]
+     ~@body))
 
 (s/def ::transcript
   (s/and string? (s/or :N*_ #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
@@ -20,7 +26,7 @@
 (defn hgvs
   "Constructor of HGVS map. Throws an exception if any input is illegal."
   [transcript kind mutation]
-  {:post [(s/valid? ::hgvs %)]}
+  {:post [(intl/valid? ::hgvs %)]}
   {:transcript transcript
    :kind kind
    :mutation (if (string? mutation)
@@ -40,7 +46,7 @@
   "Parses a HGVS string s, returning a map representing the HGVS."
   [s]
   (let [[_ transcript kind mutation] (re-find hgvs-re s)
-        kind-k (->kind-keyword kind)]
+        kind-k (intl/->kind-keyword kind)]
     (hgvs transcript kind-k mutation)))
 
 (s/fdef parse
@@ -54,7 +60,7 @@
 
 (defn- format-kind
   [kind]
-  (str (->kind-str kind) "."))
+  (str (intl/->kind-str kind) "."))
 
 (defn format
   "Returns a HGVS string representing the given HGVS map. The second argument is
