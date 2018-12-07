@@ -1961,6 +1961,7 @@
 ;;; Protein - unknown mutation
 ;;;
 ;;; e.g. p.?
+;;;      p.Met1?
 
 (defrecord ProteinUnknownMutation []
   Mutation
@@ -2004,20 +2005,19 @@
   [s]
   (case s
     "0" (no-protein)
-    "?" (protein-unknown-mutation)
     "=" (protein-no-effect)
-    ((condp re-find s
-       #"^\((\S+)\)$" #(parse-uncertain-mutation % :protein)
-       #"\[.+;.+\]$" parse-protein-alleles
-       #"delins" parse-protein-indel
-       #"del" parse-protein-deletion
-       #"dup" parse-protein-duplication
-       #"ins" parse-protein-insertion
-       #"fs" parse-protein-frame-shift
-       #"ext" parse-protein-extension
-       #"\[[\d\(\)_]+\]" parse-protein-repeated-seqs
-       parse-protein-substitution)
-     s)))
+    (condp re-find s
+      #"^(M(et)?1)?\?$" (protein-unknown-mutation)
+      #"^\((\S+)\)$" (parse-uncertain-mutation s :protein)
+      #"\[.+;.+\]$" (parse-protein-alleles s)
+      #"delins" (parse-protein-indel s)
+      #"del" (parse-protein-deletion s)
+      #"dup" (parse-protein-duplication s)
+      #"ins" (parse-protein-insertion s)
+      #"fs" (parse-protein-frame-shift s)
+      #"ext" (parse-protein-extension s)
+      #"\[[\d\(\)_]+\]" (parse-protein-repeated-seqs s)
+      (parse-protein-substitution s))))
 
 (s/def ::protein-mutation
   (s/or :uncertain     ::uncertain-mutation
