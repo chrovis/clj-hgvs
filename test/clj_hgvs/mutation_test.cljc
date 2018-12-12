@@ -617,6 +617,20 @@
   (testing "restores a plain map to DNARepeatedSeqs"
     (is (= (mut/restore dna-repeated-seqs1m-c) dna-repeated-seqs1-c))))
 
+;;; DNA - general
+
+(deftest parse-dna-test
+  (are [s c] (instance? c (mut/parse-dna s :genome))
+    "45576A>C"            clj_hgvs.mutation.DNASubstitution
+    "6_8delTGC"           clj_hgvs.mutation.DNADeletion
+    "6_8dupTGC"           clj_hgvs.mutation.DNADuplication
+    "5756_5757insAGG"     clj_hgvs.mutation.DNAInsertion
+    "1077_1080inv"        clj_hgvs.mutation.DNAInversion
+    "333_590con1844_2101" clj_hgvs.mutation.DNAConversion
+    "6775delinsGA"        clj_hgvs.mutation.DNAIndel
+    "[123G>A;345del]"     clj_hgvs.mutation.DNAAlleles
+    "123_124[14]"         clj_hgvs.mutation.DNARepeatedSeqs))
+
 ;;; RNA mutations
 
 ;;; RNA - substitution
@@ -1046,6 +1060,25 @@
 
 (deftest restore-rna-splice-affected-test
   (is (= (mut/restore rna-splice-affected-m) rna-splice-affected)))
+
+;;; RNA - general
+
+(deftest parse-rna-test
+  (are [s c] (instance? c (mut/parse-rna s))
+    "76a>c"              clj_hgvs.mutation.RNASubstitution
+    "6_8del"             clj_hgvs.mutation.RNADeletion
+    "6_8dup"             clj_hgvs.mutation.RNADuplication
+    "756_757insacu"      clj_hgvs.mutation.RNAInsertion
+    "177_180inv"         clj_hgvs.mutation.RNAInversion
+    "123_345con888_1110" clj_hgvs.mutation.RNAConversion
+    "775_777delinsc"     clj_hgvs.mutation.RNAIndel
+    "[76a>u;103del]"     clj_hgvs.mutation.RNAAlleles
+    "-124_-123[14]"      clj_hgvs.mutation.RNARepeatedSeqs
+    "(?)"                clj_hgvs.mutation.UncertainMutation
+    "0"                  clj_hgvs.mutation.NoRNA
+    "?"                  clj_hgvs.mutation.RNAUnknownMutation
+    "="                  clj_hgvs.mutation.RNANoEffect
+    "spl"                clj_hgvs.mutation.RNASpliceAffected))
 
 ;;; Protein mutations
 
@@ -1492,3 +1525,22 @@
 (deftest restore-protein-extension-test
   (testing "restores a plain map to ProteinExtension"
     (is (= (mut/restore protein-extension1m) protein-extension1))))
+
+;;; Protein - general
+
+(deftest parse-protein-test
+  (are [s c] (instance? c (mut/parse-protein s))
+    "Arg54Ser"                clj_hgvs.mutation.ProteinSubstitution
+    "Cys76_Glu79del"          clj_hgvs.mutation.ProteinDeletion
+    "Ala3_Ser5dup"            clj_hgvs.mutation.ProteinDuplication
+    "Lys23_Leu24insArgSerGln" clj_hgvs.mutation.ProteinInsertion
+    "Cys28_Lys29delinsTrp"    clj_hgvs.mutation.ProteinIndel
+    "[Ser73Arg;Asn603del]"    clj_hgvs.mutation.ProteinAlleles
+    "Arg65_Ser67[12]"         clj_hgvs.mutation.ProteinRepeatedSeqs
+    "Arg97ProfsTer23"         clj_hgvs.mutation.ProteinFrameShift
+    "Met1Valext-12"           clj_hgvs.mutation.ProteinExtension
+    "(Arg2371Ser)"            clj_hgvs.mutation.UncertainMutation
+    "0"                       clj_hgvs.mutation.NoProtein
+    "?"                       clj_hgvs.mutation.ProteinUnknownMutation
+    "Met1?"                   clj_hgvs.mutation.ProteinUnknownMutation
+    "="                       clj_hgvs.mutation.ProteinNoEffect))
