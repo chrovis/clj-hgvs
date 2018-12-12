@@ -9,7 +9,8 @@
             [lein-cloverage "1.0.13"]
             [lein-codox "0.10.5"]
             [lein-doo "0.1.11"]]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]]}
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]
+                                  [codox-theme-rdash "0.1.2"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
                                   [clojure-future-spec "1.9.0"]]}
              :1.10 {:dependencies [[org.clojure/clojure "1.10.0-RC5"]]}}
@@ -21,7 +22,9 @@
                                          :output-dir "target"
                                          :main clj-hgvs.runner
                                          :optimizations :none}}}}
-  :codox {:namespaces [#"^clj-hgvs\.(?!internal)"]
+  :codox {:project {:name "clj-hgvs"}
+          :themes [:rdash]
+          :namespaces [#"^clj-hgvs\.(?!internal)"]
           :output-path "docs"
           :source-uri "https://github.com/chrovis/clj-hgvs/blob/{version}/{filepath}#L{line}"}
   :doo {:build "test"}
