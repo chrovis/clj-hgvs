@@ -1,13 +1,17 @@
 (ns clj-hgvs.core
-  "Functions to handle HGVS. See http://varnomen.hgvs.org/ for the detail HGVS
-  nomenclature."
+  "Main functions for handling HGVS. See http://varnomen.hgvs.org/ for the
+  detail HGVS nomenclature."
   #?(:clj (:refer-clojure :exclude [format]))
   (:require [clojure.spec.alpha :as s]
             [clj-hgvs.internal :as intl]
             [clj-hgvs.mutation :as mut]))
 
 (defmacro with-validation-disabled
-  "Disables validation within a scope."
+  "Disables validation within a scope.
+
+  HGVS data are checked upon interpretation phases by default, but in the scope,
+  all validations will be skipped. This macro may improve the performance on
+  handling HGVS which validity is already known."
   [& body]
   `(binding [intl/*validation-enabled* nil]
      ~@body))
@@ -24,7 +28,15 @@
                                ::mut/mutation]))
 
 (defn hgvs
-  "Constructor of HGVS map. Throws an exception if any input is illegal."
+  "Creates HGVS data represented as a simple map.
+
+  transcript is nilable for conventional reasons, but you should supply it if
+  possible.
+
+  kind must be one of :genome, :mitochondria, :cdna, :ncdna, :rna, and :protein.
+
+  mutation must be a clj-hgvs.mutation record or string. The string mutation
+  will be parsed by clj-hgvs.mutation/parse."
   [transcript kind mutation]
   {:post [(intl/valid? ::hgvs %)]}
   {:transcript transcript
@@ -63,17 +75,26 @@
   (str (intl/->kind-str kind) "."))
 
 (defn format
-  "Returns a HGVS string representing the given HGVS map. The second argument is
-  an optional map to specify style:
-    :show-bases? - displays additional bases, e.g. g.6_8delTGC, default false.
-    :ins-format - bases style of insertion, default :auto. <:auto|:bases|:count>
-    :range-format - range style, default :auto. <:auto|:bases|:coord>
-    :amino-acid-format - amino acid style of protein HGVS, default :long.
+  "Returns a HGVS string representing the given HGVS map.
+
+  The second argument is an optional map to specify style:
+
+    {:show-bases?        Display additional bases, e.g. g.6_8delTGC, default
+                         false.
+
+     :ins-format         Bases style of insertion, default :auto.
+                         <:auto|:bases|:count>
+
+     :range-format       Range style, default :auto. <:auto|:bases|:coord>
+
+     :amino-acid-format  Amino acid style of protein HGVS, default :long.
                          <:long|:short>
-    :show-ter-site? - displays a new ter codon site of protein frame shift,
-                      default false.
-    :ter-format - ter codon style of protein frame shift and extension, default
-                  :long. <:long|:short>"
+
+     :show-ter-site?     Display a new ter codon site of protein frame shift,
+                         default false.
+
+     :ter-format         Ter codon style of protein frame shift and extension,
+                         default :long. <:long|:short>}"
   ([hgvs] (format hgvs {}))
   ([hgvs opts]
    (apply str [(format-transcript (:transcript hgvs))
@@ -101,8 +122,8 @@
 
 (defn plain
   "Returns a plain map representing the given HGVS. This function is useful for
-  sending data through another codec. Use restore to retrieve original HGVS
-  data."
+  sending data through another codec. Use clj-hgvs.core/restore to retrieve
+  original HGVS data."
   [hgvs]
   (-> hgvs
       (update :kind name)
@@ -132,9 +153,10 @@
   :ret  ::hgvs)
 
 (defn normalize
-  "Reformats the HGVS string s, returning the normalized HGVS string. Default
-  values are used for style options. Throws an exception when an illegal HGVS
-  string is supplied."
+  "Reformats the HGVS string s, returning the normalized HGVS string.
+
+  The default style will be used for reformatting. See clj-hgvs.core/format
+  document for further details of the style options."
   [s]
   (format (parse s)))
 
