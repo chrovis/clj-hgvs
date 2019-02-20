@@ -1,5 +1,6 @@
 (ns clj-hgvs.core-test
-  (:require [clojure.spec.alpha :as s]
+  (:require #?(:clj [clojure.pprint :as pp])
+            [clojure.spec.alpha :as s]
             #?(:clj [clojure.test :refer :all]
                :cljs [cljs.test :refer-macros [deftest is are testing]])
             [clj-hgvs.coordinate :as coord]
@@ -196,3 +197,8 @@
       "NM_005228.3:2361G>A"
       ""
       nil)))
+
+#?(:clj (deftest print-test
+          (let [expect (str "#clj-hgvs/hgvs \"" hgvs1s "\"")]
+            (is (= (pr-str hgvs1m) expect))
+            (is (= (pp/write hgvs1m :stream nil) expect)))))

@@ -2,7 +2,8 @@
   "Main functions for handling HGVS. See http://varnomen.hgvs.org/ for the
   detail HGVS nomenclature."
   #?(:clj (:refer-clojure :exclude [format]))
-  (:require [clojure.spec.alpha :as s]
+  (:require #?(:clj [clojure.pprint :as pp])
+            [clojure.spec.alpha :as s]
             [clj-hgvs.internal :as intl]
             [clj-hgvs.mutation :as mut]))
 
@@ -166,6 +167,22 @@
 (s/fdef clj-hgvs.core/normalize
   :args (s/cat :s string?)
   :ret  string?)
+
+#?(:clj (defmethod print-method HGVS [hgvs ^java.io.Writer w]
+          (.write w (str "#clj-hgvs/hgvs \""
+                         (format hgvs {:show-bases? true
+                                       :amino-acid-format :short
+                                       :show-ter-site? true
+                                       :ter-format :short})
+                         "\""))))
+
+#?(:clj (defmethod pp/simple-dispatch HGVS [hgvs]
+          (.write *out* (str "#clj-hgvs/hgvs \""
+                             (format hgvs {:show-bases? true
+                                           :amino-acid-format :short
+                                           :show-ter-site? true
+                                           :ter-format :short})
+                             "\""))))
 
 #?(:clj (def data-readers
           "Tagged literal support if loader does not find \"data_readers.clj\"."
