@@ -166,3 +166,7 @@
 (s/fdef clj-hgvs.core/normalize
   :args (s/cat :s string?)
   :ret  string?)
+
+#?(:clj (def data-readers
+          "Tagged literal support if loader does not find \"data_readers.clj\"."
+          {'clj-hgvs/hgvs parse}))
