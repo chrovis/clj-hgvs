@@ -16,6 +16,8 @@
   `(binding [intl/*validation-enabled* nil]
      ~@body))
 
+(defrecord HGVS [transcript kind mutation])
+
 (s/def ::transcript
   (s/and string? (s/or :N*_ #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
                        :LRG_ #(re-matches #"LRG_\d+((t|p)\d+)?" %))))
@@ -28,7 +30,7 @@
                                ::mut/mutation]))
 
 (defn hgvs
-  "Creates HGVS data represented as a simple map.
+  "Creates HGVS data represented as a record.
 
   transcript is nilable for conventional reasons, but you should supply it if
   possible.
@@ -39,11 +41,11 @@
   will be parsed by clj-hgvs.mutation/parse."
   [transcript kind mutation]
   {:post [(intl/valid? ::hgvs %)]}
-  {:transcript transcript
-   :kind kind
-   :mutation (if (string? mutation)
-               (mut/parse mutation kind)
-               mutation)})
+  (map->HGVS {:transcript transcript
+              :kind kind
+              :mutation (if (string? mutation)
+                          (mut/parse mutation kind)
+                          mutation)}))
 
 (s/fdef hgvs
   :args (s/cat :transcript (s/nilable ::transcript)
@@ -125,9 +127,9 @@
   sending data through another codec. Use clj-hgvs.core/restore to retrieve
   original HGVS data."
   [hgvs]
-  (-> hgvs
-      (update :kind name)
-      (update :mutation mut/plain)))
+  {:transcript (:transcript hgvs)
+   :kind (name (:kind hgvs))
+   :mutation (mut/plain (:mutation hgvs))})
 
 (s/def :clj-hgvs.plain-hgvs/transcript (s/nilable ::transcript))
 (s/def :clj-hgvs.plain-hgvs/kind #{"genome" "mitochondria" "cdna" "ncdna" "rna" "protein"})
@@ -146,7 +148,8 @@
   [m]
   (-> m
       (update :kind keyword)
-      (update :mutation mut/restore)))
+      (update :mutation mut/restore)
+      map->HGVS))
 
 (s/fdef restore
   :args (s/cat :m ::plain-hgvs)
