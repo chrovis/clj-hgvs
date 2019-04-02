@@ -63,6 +63,6 @@ hgvs1
 
 ## License
 
-Copyright 2017-2018 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2019 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
