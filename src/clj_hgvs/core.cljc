@@ -23,7 +23,12 @@
   (s/and string? (s/or :N*_ #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
                        :LRG_ #(re-matches #"LRG_\d+((t|p)\d+)?" %))))
 
-(s/def ::kind #{:genome :mitochondria :cdna :ncdna :rna :protein})
+(s/def ::kind #{:genome
+                :mitochondria
+                :coding-dna
+                :non-coding-dna
+                :rna
+                :protein})
 
 (s/def :clj-hgvs.hgvs/transcript (s/nilable ::transcript))
 (s/def ::hgvs (s/keys :req-un [:clj-hgvs.hgvs/transcript
@@ -36,7 +41,8 @@
   transcript is nilable for conventional reasons, but you should supply it if
   possible.
 
-  kind must be one of :genome, :mitochondria, :cdna, :ncdna, :rna, and :protein.
+  kind must be one of :genome, :mitochondria, :coding-dna, :non-coding-dna,
+  :rna, and :protein.
 
   mutation must be a clj-hgvs.mutation record or string. The string mutation
   will be parsed by clj-hgvs.mutation/parse."
@@ -133,7 +139,12 @@
    :mutation (mut/plain (:mutation hgvs))})
 
 (s/def :clj-hgvs.plain-hgvs/transcript (s/nilable ::transcript))
-(s/def :clj-hgvs.plain-hgvs/kind #{"genome" "mitochondria" "cdna" "ncdna" "rna" "protein"})
+(s/def :clj-hgvs.plain-hgvs/kind #{"genome"
+                                   "mitochondria"
+                                   "coding-dna"
+                                   "non-coding-dna"
+                                   "rna"
+                                   "protein"})
 (s/def :clj-hgvs.plain-hgvs/mutation ::mut/plain-mutation)
 (s/def ::plain-hgvs (s/keys :req-un [:clj-hgvs.plain-hgvs/transcript
                                      :clj-hgvs.plain-hgvs/kind

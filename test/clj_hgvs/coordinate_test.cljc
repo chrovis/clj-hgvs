@@ -28,18 +28,18 @@
       (coord/uncertain-coordinate (coord/unknown-coordinate)
                                   (coord/genomic-coordinate 1))
 
-      "4072-?" :cdna
+      "4072-?" :coding-dna
       (coord/uncertain-coordinate (coord/unknown-coordinate)
-                                  (coord/cdna-coordinate 4072 -1 nil))
+                                  (coord/coding-dna-coordinate 4072 -1 nil))
 
-      "5154+?" :cdna
-      (coord/uncertain-coordinate (coord/cdna-coordinate 5154 1 nil)
+      "5154+?" :coding-dna
+      (coord/uncertain-coordinate (coord/coding-dna-coordinate 5154 1 nil)
                                   (coord/unknown-coordinate))))
   (testing "throws an error if any input is illegal"
     (are [s t] (thrown? #?(:clj Throwable, :cljs js/Error)
                         (coord/parse-uncertain-coordinate s t))
       "(123456_234567" :genomic
-      "4072-1" :cdna
+      "4072-1" :coding-dna
       "(123456_234567)" :illegal)))
 
 (deftest format-uncertain-coordinate-test
@@ -54,10 +54,10 @@
       "(?_1)"
 
       (coord/uncertain-coordinate (coord/unknown-coordinate)
-                                  (coord/cdna-coordinate 4072 -1 nil))
+                                  (coord/coding-dna-coordinate 4072 -1 nil))
       "4072-?"
 
-      (coord/uncertain-coordinate (coord/cdna-coordinate 5154 1 nil)
+      (coord/uncertain-coordinate (coord/coding-dna-coordinate 5154 1 nil)
                                   (coord/unknown-coordinate))
       "5154+?")))
 
@@ -173,9 +173,9 @@
 
 ;;; coding DNA coordinate
 
-(deftest cdna-coordinate-test
-  (testing "validates inputs and returns CDNACoordinate"
-    (are [p o r] (= (coord/cdna-coordinate p o r) (coord/->CDNACoordinate p o r))
+(deftest coding-dna-coordinate-test
+  (testing "validates inputs and returns CodingDNACoordinate"
+    (are [p o r] (= (coord/coding-dna-coordinate p o r) (coord/->CodingDNACoordinate p o r))
       3 0 nil
       3 0 :upstream
       3 0 :downstream
@@ -184,7 +184,7 @@
       85 3 :upstream
       37 3 :downstream))
   (testing "throws an error if inputs are illegal"
-    (are [p o r] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/cdna-coordinate p o r))
+    (are [p o r] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/coding-dna-coordinate p o r))
       0 0 nil
       3.5 0 nil
       "3" 0 nil
@@ -193,101 +193,101 @@
       3 8.5 nil
       3 "3" nil)))
 
-(deftest cdna-compare-test
+(deftest codina-dna-compare-test
   (testing "compares actual positions"
     (are [c1 c2 e] (= (compare c1 c2) e)
-      (coord/cdna-coordinate 2) (coord/cdna-coordinate 2) 0
-      (coord/cdna-coordinate 3) (coord/cdna-coordinate 2) 1
-      (coord/cdna-coordinate 2) (coord/cdna-coordinate 3) -1
-      (coord/cdna-coordinate 2 0 :upstream) (coord/cdna-coordinate 3 0 :upstream) 1
-      (coord/cdna-coordinate 3 0 :upstream) (coord/cdna-coordinate 2 0 :upstream) -1
-      (coord/cdna-coordinate 2 3 nil) (coord/cdna-coordinate 2 1 nil) 1
-      (coord/cdna-coordinate 2 1 nil) (coord/cdna-coordinate 2 3 nil) -1
-      (coord/cdna-coordinate 2 -1 nil) (coord/cdna-coordinate 2 -3 nil) 1
-      (coord/cdna-coordinate 2 -3 nil) (coord/cdna-coordinate 2 -1 nil) -1
-      (coord/cdna-coordinate 2 3 nil) (coord/cdna-coordinate 3 -1 nil) -1
-      (coord/cdna-coordinate 3 0 :upstream) (coord/cdna-coordinate 3 0 nil) -1
-      (coord/cdna-coordinate 3 0 :downstream) (coord/cdna-coordinate 3 0 nil) 1)))
+      (coord/coding-dna-coordinate 2) (coord/coding-dna-coordinate 2) 0
+      (coord/coding-dna-coordinate 3) (coord/coding-dna-coordinate 2) 1
+      (coord/coding-dna-coordinate 2) (coord/coding-dna-coordinate 3) -1
+      (coord/coding-dna-coordinate 2 0 :upstream) (coord/coding-dna-coordinate 3 0 :upstream) 1
+      (coord/coding-dna-coordinate 3 0 :upstream) (coord/coding-dna-coordinate 2 0 :upstream) -1
+      (coord/coding-dna-coordinate 2 3 nil) (coord/coding-dna-coordinate 2 1 nil) 1
+      (coord/coding-dna-coordinate 2 1 nil) (coord/coding-dna-coordinate 2 3 nil) -1
+      (coord/coding-dna-coordinate 2 -1 nil) (coord/coding-dna-coordinate 2 -3 nil) 1
+      (coord/coding-dna-coordinate 2 -3 nil) (coord/coding-dna-coordinate 2 -1 nil) -1
+      (coord/coding-dna-coordinate 2 3 nil) (coord/coding-dna-coordinate 3 -1 nil) -1
+      (coord/coding-dna-coordinate 3 0 :upstream) (coord/coding-dna-coordinate 3 0 nil) -1
+      (coord/coding-dna-coordinate 3 0 :downstream) (coord/coding-dna-coordinate 3 0 nil) 1)))
 
-(deftest parse-cdna-coordinate-test
-  (testing "parses input string, returning CDNACoordinate"
-    (are [s e] (= (coord/parse-cdna-coordinate s) e)
-      "3" (coord/cdna-coordinate 3 0 nil)
-      "-3" (coord/cdna-coordinate 3 0 :upstream)
-      "*3" (coord/cdna-coordinate 3 0 :downstream)
-      "87+3" (coord/cdna-coordinate 87 3 nil)
-      "88-1" (coord/cdna-coordinate 88 -1 nil)
-      "88" (coord/cdna-coordinate 88 0 nil)
-      "-85+3" (coord/cdna-coordinate 85 3 :upstream)
-      "*37+3" (coord/cdna-coordinate 37 3 :downstream)))
+(deftest parse-coding-dna-coordinate-test
+  (testing "parses input string, returning CodingDNACoordinate"
+    (are [s e] (= (coord/parse-coding-dna-coordinate s) e)
+      "3" (coord/coding-dna-coordinate 3 0 nil)
+      "-3" (coord/coding-dna-coordinate 3 0 :upstream)
+      "*3" (coord/coding-dna-coordinate 3 0 :downstream)
+      "87+3" (coord/coding-dna-coordinate 87 3 nil)
+      "88-1" (coord/coding-dna-coordinate 88 -1 nil)
+      "88" (coord/coding-dna-coordinate 88 0 nil)
+      "-85+3" (coord/coding-dna-coordinate 85 3 :upstream)
+      "*37+3" (coord/coding-dna-coordinate 37 3 :downstream)))
   (testing "returns UnknownCoordinate if input is \"?\""
-    (is (= (coord/parse-cdna-coordinate "?") (coord/unknown-coordinate)))))
+    (is (= (coord/parse-coding-dna-coordinate "?") (coord/unknown-coordinate)))))
 
-(deftest format-cdna-coordinate-test
-  (testing "returns a string expression of a CDNA coordinate"
+(deftest format-coding-dna-coordinate-test
+  (testing "returns a string expression of a coding DNA coordinate"
     (are [m s] (= (coord/format m) s)
-      (coord/cdna-coordinate 3 0 nil) "3"
-      (coord/cdna-coordinate 3 0 :upstream) "-3"
-      (coord/cdna-coordinate 3 0 :downstream) "*3"
-      (coord/cdna-coordinate 87 3 nil) "87+3"
-      (coord/cdna-coordinate 88 -1 nil) "88-1"
-      (coord/cdna-coordinate 88 0 nil) "88"
-      (coord/cdna-coordinate 85 3 :upstream) "-85+3"
-      (coord/cdna-coordinate 37 3 :downstream) "*37+3")))
+      (coord/coding-dna-coordinate 3 0 nil) "3"
+      (coord/coding-dna-coordinate 3 0 :upstream) "-3"
+      (coord/coding-dna-coordinate 3 0 :downstream) "*3"
+      (coord/coding-dna-coordinate 87 3 nil) "87+3"
+      (coord/coding-dna-coordinate 88 -1 nil) "88-1"
+      (coord/coding-dna-coordinate 88 0 nil) "88"
+      (coord/coding-dna-coordinate 85 3 :upstream) "-85+3"
+      (coord/coding-dna-coordinate 37 3 :downstream) "*37+3")))
 
-(deftest cdna-in-exon?-test
+(deftest coding-dna-in-exon?-test
   (testing "detects a coordinate is in exon ranges"
-    (is (true? (coord/in-exon? (coord/cdna-coordinate 3 0 nil))))
-    (is (false? (coord/in-exon? (coord/cdna-coordinate 87 3 nil))))))
+    (is (true? (coord/in-exon? (coord/coding-dna-coordinate 3 0 nil))))
+    (is (false? (coord/in-exon? (coord/coding-dna-coordinate 87 3 nil))))))
 
-(deftest plain-cdna-coordinate-test
-  (testing "returns a plain map representing CDNACoordinate"
-    (is (= (coord/plain (coord/cdna-coordinate 3 0 nil))
-           {:coordinate "cdna", :position 3, :offset 0, :region nil}))))
+(deftest plain-coding-dna-coordinate-test
+  (testing "returns a plain map representing CodingDNACoordinate"
+    (is (= (coord/plain (coord/coding-dna-coordinate 3 0 nil))
+           {:coordinate "coding-dna", :position 3, :offset 0, :region nil}))))
 
-(deftest restore-cdna-coordinate-test
-  (testing "restores a plain map to CDNACoordinate"
-    (is (= (coord/restore {:coordinate "cdna", :position 3, :offset 0, :region nil})
-           (coord/cdna-coordinate 3 0 nil)))))
+(deftest restore-coding-dna-coordinate-test
+  (testing "restores a plain map to CodingDNACoordinate"
+    (is (= (coord/restore {:coordinate "coding-dna", :position 3, :offset 0, :region nil})
+           (coord/coding-dna-coordinate 3 0 nil)))))
 
 ;;; non-coding DNA coordinate
 
-(deftest ncdna-coordinate-test
-  (testing "validates an input and returns NCDNACoordinate"
-    (is (= (coord/ncdna-coordinate 3) (coord/->NCDNACoordinate 3))))
+(deftest non-coding-dna-coordinate-test
+  (testing "validates an input and returns NonCodingDNACoordinate"
+    (is (= (coord/non-coding-dna-coordinate 3) (coord/->NonCodingDNACoordinate 3))))
   (testing "throws an error if an input is illegal"
-    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/ncdna-coordinate p))
+    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/non-coding-dna-coordinate p))
       0
       3.5
       "3"
       nil)))
 
-(deftest ncdna-compare-test
+(deftest non-coding-dna-compare-test
   (testing "compares actual positions"
     (are [c1 c2 e] (= (compare c1 c2) e)
-      (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 2) 0
-      (coord/ncdna-coordinate 3) (coord/ncdna-coordinate 2) 1
-      (coord/ncdna-coordinate 2) (coord/ncdna-coordinate 3) -1)))
+      (coord/non-coding-dna-coordinate 2) (coord/non-coding-dna-coordinate 2) 0
+      (coord/non-coding-dna-coordinate 3) (coord/non-coding-dna-coordinate 2) 1
+      (coord/non-coding-dna-coordinate 2) (coord/non-coding-dna-coordinate 3) -1)))
 
-(deftest parse-ncdna-coordinate-test
-  (testing "parses input string, returning NCDNACoordinate"
-    (is (= (coord/parse-ncdna-coordinate "3") (coord/ncdna-coordinate 3))))
+(deftest parse-non-coding-dna-coordinate-test
+  (testing "parses input string, returning NonCodingDNACoordinate"
+    (is (= (coord/parse-non-coding-dna-coordinate "3") (coord/non-coding-dna-coordinate 3))))
   (testing "returns UnknownCoordinate if input is \"?\""
-    (is (= (coord/parse-ncdna-coordinate "?") (coord/unknown-coordinate)))))
+    (is (= (coord/parse-non-coding-dna-coordinate "?") (coord/unknown-coordinate)))))
 
-(deftest format-ncdna-coordinate-test
-  (testing "returns a string expression of NCDNACoordinate"
-    (is (= (coord/format (coord/ncdna-coordinate 3)) "3"))))
+(deftest format-non-coding-dna-coordinate-test
+  (testing "returns a string expression of NonCodingDNACoordinate"
+    (is (= (coord/format (coord/non-coding-dna-coordinate 3)) "3"))))
 
-(deftest plain-ncdna-coordinate-test
-  (testing "returns a plain map representing NCDNACoordinate"
-    (is (= (coord/plain (coord/ncdna-coordinate 3))
-           {:coordinate "ncdna", :position 3}))))
+(deftest plain-non-coding-dna-coordinate-test
+  (testing "returns a plain map representing NonCodingDNACoordinate"
+    (is (= (coord/plain (coord/non-coding-dna-coordinate 3))
+           {:coordinate "non-coding-dna", :position 3}))))
 
-(deftest restore-ncdna-coordinate-test
-  (testing "restores a plain map to NCDNACoordinate"
-    (is (= (coord/restore {:coordinate "ncdna", :position 3})
-           (coord/ncdna-coordinate 3)))))
+(deftest restore-non-coding-dna-coordinate-test
+  (testing "restores a plain map to NonCodingDNACoordinate"
+    (is (= (coord/restore {:coordinate "non-coding-dna", :position 3})
+           (coord/non-coding-dna-coordinate 3)))))
 
 ;;; RNA coordinate
 

@@ -4,7 +4,7 @@
   (:require [clojure.spec.alpha :as s]
             [clj-hgvs.internal :as intl]))
 
-(declare parser parse-coordinate cdna-coordinate rna-coordinate)
+(declare parser parse-coordinate coding-dna-coordinate rna-coordinate)
 
 (defprotocol Coordinate
   (format [this] "Returns a string representing the given coordinate.")
@@ -15,7 +15,7 @@
   {:arglists '([m])}
   :coordinate)
 
-(defprotocol ICDNACoordinate
+(defprotocol ICodingDNACoordinate
   (in-exon? [this] "Returns true if the coordinate is located in exon, else false."))
 
 (s/def ::coordinate #(satisfies? Coordinate %))
@@ -70,7 +70,7 @@
       (cond
         (= (count knowns) 2) (str "(" (format start) "_" (format end) ")")
 
-        (and (satisfies? ICDNACoordinate known) (not (zero? (:offset known))))
+        (and (satisfies? ICodingDNACoordinate known) (not (zero? (:offset known))))
         (str (->region-str (:region known))
              (:position known)
              (if (pos? (:offset known)) "+?" "-?"))
@@ -115,7 +115,7 @@
     (if-let [[_ region position offset-direction]
              (re-matches uncertain-coordinate-offset-re s)]
       (let [coordinate (case t
-                         :cdna cdna-coordinate
+                         :coding-dna coding-dna-coordinate
                          :rna rna-coordinate)]
         (if (= offset-direction "+")
           (uncertain-coordinate (coordinate (intl/parse-long position)
@@ -214,7 +214,7 @@
 ;;;      -85+3
 ;;;      *37+3
 
-(defrecord CDNACoordinate [position offset region]
+(defrecord CodingDNACoordinate [position offset region]
   #?(:clj Comparable, :cljs IComparable)
   (#?(:clj compareTo, :cljs -compare) [this o]
     (let [{o-position :position, o-region :region} o
@@ -235,75 +235,75 @@
          (if-not (or (nil? offset) (zero? offset))
            (str (if (pos? offset) "+") offset))))
   (plain [this]
-    (into {:coordinate "cdna"} (update this :region #(some-> % name))))
-  ICDNACoordinate
+    (into {:coordinate "coding-dna"} (update this :region #(some-> % name))))
+  ICodingDNACoordinate
   (in-exon? [this]
     (or (nil? offset) (zero? offset))))
 
-(s/def ::cdna-coordinate
+(s/def ::coding-dna-coordinate
   (s/and ::coordinate (s/keys :req-un [::position ::offset ::region])))
 
-(defn cdna-coordinate
-  "Returns CDNACoordinate instance having position, offset, and region. Throws
-  an exception if any input is illegal."
-  ([position] (cdna-coordinate position 0 nil))
+(defn coding-dna-coordinate
+  "Returns CodingDNACoordinate instance having position, offset, and region.
+  Throws an exception if any input is illegal."
+  ([position] (coding-dna-coordinate position 0 nil))
   ([position offset region]
-   {:post [(intl/valid? ::cdna-coordinate %)]}
-   (CDNACoordinate. position offset region)))
+   {:post [(intl/valid? ::coding-dna-coordinate %)]}
+   (CodingDNACoordinate. position offset region)))
 
-(def ^:private cdna-coordinate-re
+(def ^:private coding-dna-coordinate-re
   #"^(\-|\*)?(\d+)([\-\+]\d+)?$")
 
-(defn parse-cdna-coordinate
+(defn parse-coding-dna-coordinate
   "Parses a coordinate string used in coding DNA mutations, returning a
-  CDNACoordinate or UnknownCoordinate."
+  CodingDNACoordinate or UnknownCoordinate."
   [s]
   (cond
-    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :cdna)
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :coding-dna)
     (= s "?") (unknown-coordinate)
-    :else (let [[_ region position offset] (re-find cdna-coordinate-re s)]
-            (cdna-coordinate (intl/parse-long position)
-                             (if (some? offset)
-                               (intl/parse-long offset)
-                               0)
-                             (->region-keyword region)))))
+    :else (let [[_ region position offset] (re-find coding-dna-coordinate-re s)]
+            (coding-dna-coordinate (intl/parse-long position)
+                                   (if (some? offset)
+                                     (intl/parse-long offset)
+                                     0)
+                                   (->region-keyword region)))))
 
-(defmethod restore "cdna"
+(defmethod restore "coding-dna"
   [m]
-  (cdna-coordinate (:position m) (:offset m) (keyword (:region m))))
+  (coding-dna-coordinate (:position m) (:offset m) (keyword (:region m))))
 
 ;;; non-coding DNA coordinate
 
-(defrecord NCDNACoordinate [position]
+(defrecord NonCodingDNACoordinate [position]
   #?(:clj Comparable, :cljs IComparable)
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
   Coordinate
   (format [_] (str position))
-  (plain [this] (into {:coordinate "ncdna"} this)))
+  (plain [this] (into {:coordinate "non-coding-dna"} this)))
 
-(s/def ::ncdna-coordinate
+(s/def ::non-coding-dna-coordinate
   (s/and ::coordinate (s/keys :req-un [::position])))
 
-(defn ncdna-coordinate
-  "Returns NCDNACoordinate instance having position. Throws an exception if
-  position is illegal."
+(defn non-coding-dna-coordinate
+  "Returns NonCodingDNACoordinate instance having position. Throws an exception
+  if position is illegal."
   [position]
-  {:post [(intl/valid? ::ncdna-coordinate %)]}
-  (NCDNACoordinate. position))
+  {:post [(intl/valid? ::non-coding-dna-coordinate %)]}
+  (NonCodingDNACoordinate. position))
 
-(defn parse-ncdna-coordinate
+(defn parse-non-coding-dna-coordinate
   "Parses a coordinate string used in non-coding DNA mutations, returning a
-  NCDNACoordinate or UnknownCoordinate."
+  NonCodingDNACoordinate or UnknownCoordinate."
   [s]
   (cond
-    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :ncdna)
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :non-coding-dna)
     (= s "?") (unknown-coordinate)
-    :else (ncdna-coordinate (intl/parse-long s))))
+    :else (non-coding-dna-coordinate (intl/parse-long s))))
 
-(defmethod restore "ncdna"
+(defmethod restore "non-coding-dna"
   [m]
-  (ncdna-coordinate (:position m)))
+  (non-coding-dna-coordinate (:position m)))
 
 ;;; RNA coordinate
 
@@ -329,7 +329,7 @@
            (str (if (pos? offset) "+") offset))))
   (plain [this]
     (into {:coordinate "rna"} (update this :region #(some-> % name))))
-  ICDNACoordinate
+  ICodingDNACoordinate
   (in-exon? [this]
     (or (nil? offset) (zero? offset))))
 
@@ -404,8 +404,8 @@
   (case t
     :genomic parse-genomic-coordinate
     :mitochondrial parse-mitochondrial-coordinate
-    :cdna parse-cdna-coordinate
-    :ncdna parse-ncdna-coordinate
+    :coding-dna parse-coding-dna-coordinate
+    :non-coding-dna parse-non-coding-dna-coordinate
     :rna parse-rna-coordinate
     :protein parse-protein-coordinate))
 

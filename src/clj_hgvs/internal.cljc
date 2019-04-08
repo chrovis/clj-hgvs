@@ -12,8 +12,8 @@
   (case s
     "g" :genome
     "m" :mitochondria
-    "c" :cdna
-    "n" :ncdna
+    "c" :coding-dna
+    "n" :non-coding-dna
     "r" :rna
     "p" :protein))
 
@@ -22,8 +22,8 @@
   (case k
     :genome "g"
     :mitochondria "m"
-    :cdna "c"
-    :ncdna "n"
+    :coding-dna "c"
+    :non-coding-dna "n"
     :rna "r"
     :protein "p"))
 

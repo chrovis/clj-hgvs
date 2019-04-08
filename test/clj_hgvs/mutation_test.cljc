@@ -74,20 +74,20 @@
                          :alt "C"})
 
 (def dna-substitution2s "88+1G>T")
-(def dna-substitution2k :cdna)
-(def dna-substitution2 (mut/dna-substitution (coord/cdna-coordinate 88 1 nil) "G" ">" "T"))
+(def dna-substitution2k :coding-dna)
+(def dna-substitution2 (mut/dna-substitution (coord/coding-dna-coordinate 88 1 nil) "G" ">" "T"))
 
 (def dna-substitution3s "123G=")
-(def dna-substitution3k :cdna)
-(def dna-substitution3 (mut/dna-substitution (coord/cdna-coordinate 123) "G" "="))
+(def dna-substitution3k :coding-dna)
+(def dna-substitution3 (mut/dna-substitution (coord/coding-dna-coordinate 123) "G" "="))
 
 (def dna-substitution4s "85C=/>T")
-(def dna-substitution4k :cdna)
-(def dna-substitution4 (mut/dna-substitution (coord/cdna-coordinate 85) "C" "=/>" "T"))
+(def dna-substitution4k :coding-dna)
+(def dna-substitution4 (mut/dna-substitution (coord/coding-dna-coordinate 85) "C" "=/>" "T"))
 
 (def dna-substitution5s "85C=//>T")
-(def dna-substitution5k :cdna)
-(def dna-substitution5 (mut/dna-substitution (coord/cdna-coordinate 85) "C" "=//>" "T"))
+(def dna-substitution5k :coding-dna)
+(def dna-substitution5 (mut/dna-substitution (coord/coding-dna-coordinate 85) "C" "=//>" "T"))
 
 (deftest format-dna-substitution-test
   (testing "returns a string expression of a DNA substitution"
@@ -98,7 +98,7 @@
       dna-substitution4 dna-substitution4s
       dna-substitution5 dna-substitution5s))
   (testing "alt is omitted if type is ="
-    (is (= (mut/format (mut/dna-substitution (coord/cdna-coordinate 123) "G" "=" "G"))
+    (is (= (mut/format (mut/dna-substitution (coord/coding-dna-coordinate 123) "G" "=" "G"))
            "123G="))))
 
 (deftest parse-dna-substitution-test
@@ -141,35 +141,35 @@
                                      "TGC"))
 
 (def dna-deletion4s "120_123+48del")
-(def dna-deletion4k :cdna)
-(def dna-deletion4 (mut/dna-deletion (coord/cdna-coordinate 120)
-                                     (coord/cdna-coordinate 123 48 nil)))
+(def dna-deletion4k :coding-dna)
+(def dna-deletion4 (mut/dna-deletion (coord/coding-dna-coordinate 120)
+                                     (coord/coding-dna-coordinate 123 48 nil)))
 
 (def dna-deletion5s "(4071+1_4072-1)_(5145+1_5146-1)del")
-(def dna-deletion5k :cdna)
+(def dna-deletion5k :coding-dna)
 (def dna-deletion5 (mut/dna-deletion (coord/uncertain-coordinate
-                                      (coord/cdna-coordinate 4071 1 nil)
-                                      (coord/cdna-coordinate 4072 -1 nil))
+                                      (coord/coding-dna-coordinate 4071 1 nil)
+                                      (coord/coding-dna-coordinate 4072 -1 nil))
                                      (coord/uncertain-coordinate
-                                      (coord/cdna-coordinate 5145 1 nil)
-                                      (coord/cdna-coordinate 5146 -1 nil))))
+                                      (coord/coding-dna-coordinate 5145 1 nil)
+                                      (coord/coding-dna-coordinate 5146 -1 nil))))
 
 (def dna-deletion6s "(?_-30)_(12+1_13-1)del")
-(def dna-deletion6k :cdna)
+(def dna-deletion6k :coding-dna)
 (def dna-deletion6 (mut/dna-deletion (coord/uncertain-coordinate
                                       (coord/unknown-coordinate)
-                                      (coord/cdna-coordinate 30 0 :upstream))
+                                      (coord/coding-dna-coordinate 30 0 :upstream))
                                      (coord/uncertain-coordinate
-                                      (coord/cdna-coordinate 12 1 nil)
-                                      (coord/cdna-coordinate 13 -1 nil))))
+                                      (coord/coding-dna-coordinate 12 1 nil)
+                                      (coord/coding-dna-coordinate 13 -1 nil))))
 
 (def dna-deletion7s "(?_-1)_(*1_?)del")
-(def dna-deletion7k :cdna)
+(def dna-deletion7k :coding-dna)
 (def dna-deletion7 (mut/dna-deletion (coord/uncertain-coordinate
                                       (coord/unknown-coordinate)
-                                      (coord/cdna-coordinate 1 0 :upstream))
+                                      (coord/coding-dna-coordinate 1 0 :upstream))
                                      (coord/uncertain-coordinate
-                                      (coord/cdna-coordinate 1 0 :downstream)
+                                      (coord/coding-dna-coordinate 1 0 :downstream)
                                       (coord/unknown-coordinate))))
 
 (deftest format-dna-deletion-test
@@ -226,35 +226,35 @@
                                            "TGC"))
 
 (def dna-duplication4s "120_123+48dup")
-(def dna-duplication4k :cdna)
-(def dna-duplication4 (mut/dna-duplication (coord/cdna-coordinate 120)
-                                           (coord/cdna-coordinate 123 48 nil)))
+(def dna-duplication4k :coding-dna)
+(def dna-duplication4 (mut/dna-duplication (coord/coding-dna-coordinate 120)
+                                           (coord/coding-dna-coordinate 123 48 nil)))
 
 (def dna-duplication5s "(4071+1_4072-1)_(5145+1_5146-1)dup")
-(def dna-duplication5k :cdna)
+(def dna-duplication5k :coding-dna)
 (def dna-duplication5 (mut/dna-duplication (coord/uncertain-coordinate
-                                            (coord/cdna-coordinate 4071 1 nil)
-                                            (coord/cdna-coordinate 4072 -1 nil))
+                                            (coord/coding-dna-coordinate 4071 1 nil)
+                                            (coord/coding-dna-coordinate 4072 -1 nil))
                                            (coord/uncertain-coordinate
-                                            (coord/cdna-coordinate 5145 1 nil)
-                                            (coord/cdna-coordinate 5146 -1 nil))))
+                                            (coord/coding-dna-coordinate 5145 1 nil)
+                                            (coord/coding-dna-coordinate 5146 -1 nil))))
 
 (def dna-duplication6s "(?_-30)_(12+1_13-1)dup")
-(def dna-duplication6k :cdna)
+(def dna-duplication6k :coding-dna)
 (def dna-duplication6 (mut/dna-duplication (coord/uncertain-coordinate
                                             (coord/unknown-coordinate)
-                                            (coord/cdna-coordinate 30 0 :upstream))
+                                            (coord/coding-dna-coordinate 30 0 :upstream))
                                            (coord/uncertain-coordinate
-                                            (coord/cdna-coordinate 12 1 nil)
-                                            (coord/cdna-coordinate 13 -1 nil))))
+                                            (coord/coding-dna-coordinate 12 1 nil)
+                                            (coord/coding-dna-coordinate 13 -1 nil))))
 
 (def dna-duplication7s "(?_-1)_(*1_?)dup")
-(def dna-duplication7k :cdna)
+(def dna-duplication7k :coding-dna)
 (def dna-duplication7 (mut/dna-duplication (coord/uncertain-coordinate
                                             (coord/unknown-coordinate)
-                                            (coord/cdna-coordinate 1 0 :upstream))
+                                            (coord/coding-dna-coordinate 1 0 :upstream))
                                            (coord/uncertain-coordinate
-                                            (coord/cdna-coordinate 1 0 :downstream)
+                                            (coord/coding-dna-coordinate 1 0 :downstream)
                                             (coord/unknown-coordinate))))
 
 (deftest format-dna-duplication-test
@@ -382,17 +382,17 @@
                                        (coord/genomic-coordinate 1080)))
 
 (def dna-inversion2s "77_80inv")
-(def dna-inversion2k :cdna)
-(def dna-inversion2 (mut/dna-inversion (coord/cdna-coordinate 77)
-                                       (coord/cdna-coordinate 80)))
+(def dna-inversion2k :coding-dna)
+(def dna-inversion2 (mut/dna-inversion (coord/coding-dna-coordinate 77)
+                                       (coord/coding-dna-coordinate 80)))
 
 (def dna-inversion3s "77-?_80+?inv")
-(def dna-inversion3k :cdna)
+(def dna-inversion3k :coding-dna)
 (def dna-inversion3 (mut/dna-inversion (coord/uncertain-coordinate
                                         (coord/unknown-coordinate)
-                                        (coord/cdna-coordinate 77 -1 nil))
+                                        (coord/coding-dna-coordinate 77 -1 nil))
                                        (coord/uncertain-coordinate
-                                        (coord/cdna-coordinate 80 1 nil)
+                                        (coord/coding-dna-coordinate 80 1 nil)
                                         (coord/unknown-coordinate))))
 
 (deftest format-dna-inversion-test
@@ -437,13 +437,13 @@
                                           :coord-end (coord/genomic-coordinate 1683)}))
 
 (def dna-conversion3s "15_355conNM_004006.1:20_360")
-(def dna-conversion3k :cdna)
-(def dna-conversion3 (mut/dna-conversion (coord/cdna-coordinate 15)
-                                         (coord/cdna-coordinate 355)
+(def dna-conversion3k :coding-dna)
+(def dna-conversion3 (mut/dna-conversion (coord/coding-dna-coordinate 15)
+                                         (coord/coding-dna-coordinate 355)
                                          {:transcript "NM_004006.1"
                                           :kind nil
-                                          :coord-start (coord/cdna-coordinate 20)
-                                          :coord-end (coord/cdna-coordinate 360)}))
+                                          :coord-start (coord/coding-dna-coordinate 20)
+                                          :coord-end (coord/coding-dna-coordinate 360)}))
 
 (deftest format-dna-conversion-test
   (testing "returns a string expression of a DNA conversion"
@@ -484,9 +484,9 @@
 (def dna-indel2 (mut/dna-indel (coord/genomic-coordinate 6775) nil "T" "GA"))
 
 (def dna-indel3s "145_147delinsTGG")
-(def dna-indel3k :cdna)
-(def dna-indel3 (mut/dna-indel (coord/cdna-coordinate 145)
-                               (coord/cdna-coordinate 147)
+(def dna-indel3k :coding-dna)
+(def dna-indel3 (mut/dna-indel (coord/coding-dna-coordinate 145)
+                               (coord/coding-dna-coordinate 147)
                                nil
                                "TGG"))
 
@@ -527,10 +527,10 @@
                                    [(mut/dna-deletion (coord/genomic-coordinate 345) nil)]))
 
 (def dna-alleles3s "2376[G>C];[G>C]")
-(def dna-alleles3k :cdna)
-(def dna-alleles3 (mut/dna-alleles [(mut/dna-substitution (coord/cdna-coordinate 2376)
+(def dna-alleles3k :coding-dna)
+(def dna-alleles3 (mut/dna-alleles [(mut/dna-substitution (coord/coding-dna-coordinate 2376)
                                                           "G" ">" "C")]
-                                   [(mut/dna-substitution (coord/cdna-coordinate 2376)
+                                   [(mut/dna-substitution (coord/coding-dna-coordinate 2376)
                                                           "G" ">" "C")]))
 
 (def dna-alleles4s "123_124[14];[18]")
@@ -582,9 +582,9 @@
                             :ncopy 14})
 
 (def dna-repeated-seqs2s "-128_-126[(600_800)]")
-(def dna-repeated-seqs2k :cdna)
-(def dna-repeated-seqs2 (mut/dna-repeated-seqs (coord/cdna-coordinate 128 0 :upstream)
-                                               (coord/cdna-coordinate 126 0 :upstream)
+(def dna-repeated-seqs2k :coding-dna)
+(def dna-repeated-seqs2 (mut/dna-repeated-seqs (coord/coding-dna-coordinate 128 0 :upstream)
+                                               (coord/coding-dna-coordinate 126 0 :upstream)
                                                nil
                                                [600 800]))
 

@@ -215,8 +215,8 @@
   (case kind
     :genome coord/parse-genomic-coordinate
     :mitochondria coord/parse-mitochondrial-coordinate
-    :cdna coord/parse-cdna-coordinate
-    :ncdna coord/parse-ncdna-coordinate))
+    :coding-dna coord/parse-coding-dna-coordinate
+    :non-coding-dna coord/parse-non-coding-dna-coordinate))
 
 ;;; DNA - substitution
 ;;;
@@ -749,8 +749,8 @@
 
 (defn parse-dna
   "Parses a DNA mutation string s, returning a record implementing Mutation
-  protocol. kind must be selected from :genome, :mitochondria, :cdna, or
-  :ncdna."
+  protocol. kind must be selected from :genome, :mitochondria, :coding-dna, or
+  :non-coding-dna."
   [s kind]
   ((condp re-find s
      #"^\((\S+)\)$" parse-uncertain-mutation
@@ -2037,7 +2037,7 @@
 (defn parse
   [s kind]
   (let [parse* (cond
-                 (#{:genome :mitochondria :cdna :ncdna} kind) #(parse-dna % kind)
+                 (#{:genome :mitochondria :coding-dna :non-coding-dna} kind) #(parse-dna % kind)
                  (= kind :rna) parse-rna
                  (= kind :protein) parse-protein)]
     (parse* s)))
