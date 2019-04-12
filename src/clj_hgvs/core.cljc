@@ -20,13 +20,15 @@
 (defrecord HGVS [transcript kind mutation])
 
 (s/def ::transcript
-  (s/and string? (s/or :N*_ #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
-                       :LRG_ #(re-matches #"LRG_\d+((t|p)\d+)?" %))))
+  (s/and string? (s/or :N*_  #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
+                       :LRG_ #(re-matches #"LRG_\d+((t|p)\d+)?" %)
+                       :J*   #(re-matches #"J\d+(\.\d+)?" %))))
 
 (s/def ::kind #{:genome
                 :mitochondria
                 :coding-dna
                 :non-coding-dna
+                :circular-dna
                 :rna
                 :protein})
 
@@ -42,7 +44,7 @@
   possible.
 
   kind must be one of :genome, :mitochondria, :coding-dna, :non-coding-dna,
-  :rna, and :protein.
+  :circular-dna, :rna, and :protein.
 
   mutation must be a clj-hgvs.mutation record or string. The string mutation
   will be parsed by clj-hgvs.mutation/parse."
@@ -61,7 +63,7 @@
                                  :m ::mut/mutation))
   :ret  ::hgvs)
 
-(def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnrp])\.(.+)$")
+(def ^:private hgvs-re #"^(?:([^:]+):)?([gmcnorp])\.(.+)$")
 
 (defn parse
   "Parses a HGVS string s, returning a map representing the HGVS."
@@ -143,6 +145,7 @@
                                    "mitochondria"
                                    "coding-dna"
                                    "non-coding-dna"
+                                   "circular-dna"
                                    "rna"
                                    "protein"})
 (s/def :clj-hgvs.plain-hgvs/mutation ::mut/plain-mutation)

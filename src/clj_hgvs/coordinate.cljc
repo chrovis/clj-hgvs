@@ -174,9 +174,6 @@
 ;;; mitochondrial coordinate
 
 (defrecord MitochondrialCoordinate [position]
-  #?(:clj Comparable, :cljs IComparable)
-  (#?(:clj compareTo, :cljs -compare) [this o]
-    (compare position (:position o)))
   Coordinate
   (format [_] (str position))
   (plain [this] (into {:coordinate "mitochondrial"} this)))
@@ -305,6 +302,36 @@
   [m]
   (non-coding-dna-coordinate (:position m)))
 
+;;; circular DNA coordinate
+
+(defrecord CircularDNACoordinate [position]
+  Coordinate
+  (format [_] (str position))
+  (plain [this] (into {:coordinate "circular-dna"} this)))
+
+(s/def ::circular-dna-coordinate
+  (s/and ::coordinate (s/keys :req-un [::position])))
+
+(defn circular-dna-coordinate
+  "Returns CircularDNACoordinate instance having position. Throws an exception
+  if position is illegal."
+  [position]
+  {:post [(intl/valid? ::circular-dna-coordinate %)]}
+  (CircularDNACoordinate. position))
+
+(defn parse-circular-dna-coordinate
+  "Parses a coordinate string used in circular-dna mutations, returning a
+  CircularDNACoordinate or UnknownCoordinate."
+  [s]
+  (cond
+    (uncertain-coordinate-string? s) (parse-uncertain-coordinate s :circular-dna)
+    (= s "?") (unknown-coordinate)
+    :else (circular-dna-coordinate (intl/parse-long s))))
+
+(defmethod restore "circular-dna"
+  [m]
+  (circular-dna-coordinate (:position m)))
+
 ;;; RNA coordinate
 
 (defrecord RNACoordinate [position offset region]
@@ -406,6 +433,7 @@
     :mitochondrial parse-mitochondrial-coordinate
     :coding-dna parse-coding-dna-coordinate
     :non-coding-dna parse-non-coding-dna-coordinate
+    :circular-dna parse-circular-dna-coordinate
     :rna parse-rna-coordinate
     :protein parse-protein-coordinate))
 

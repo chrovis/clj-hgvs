@@ -18,7 +18,8 @@
     "NG_012232.1"
     "NM_004006.2"
     "NR_002196.1"
-    "NP_003997.1")
+    "NP_003997.1"
+    "J01749.1")
   (are [s] (not (s/valid? ::hgvs/transcript s))
     "LRG_199.1"
     "NT_000023.10"))
@@ -112,6 +113,20 @@
                                                       :alt "Trp"
                                                       :new-ter-site nil})}))
 
+(def hgvs12s "NC_012920.1:m.16563_13del")
+(def hgvs12m (hgvs/map->HGVS
+              {:transcript "NC_012920.1"
+               :kind :mitochondria
+               :mutation (mut/dna-deletion (coord/mitochondrial-coordinate 16563)
+                                           (coord/mitochondrial-coordinate 13))}))
+
+(def hgvs13s "J01749.1:o.4344_197dup")
+(def hgvs13m (hgvs/map->HGVS
+              {:transcript "J01749.1"
+               :kind :circular-dna
+               :mutation (mut/dna-duplication (coord/circular-dna-coordinate 4344)
+                                              (coord/circular-dna-coordinate 197))}))
+
 (deftest hgvs-test
   (testing "allows mutation records"
     (is (= (hgvs/hgvs "NM_005228.3" :coding-dna
@@ -149,7 +164,9 @@
       hgvs9s hgvs9m
       hgvs9ss hgvs9m
       hgvs10s hgvs10m
-      hgvs11s hgvs11m))
+      hgvs11s hgvs11m
+      hgvs12s hgvs12m
+      hgvs13s hgvs13m))
   (testing "throws Exception when an illegal HGVS is passed"
     (are [x] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse x))
       ":2361G>A"
@@ -172,7 +189,9 @@
       hgvs8m hgvs8s
       hgvs9m hgvs9s
       hgvs10m hgvs10s
-      hgvs11m hgvs11s)
+      hgvs11m hgvs11s
+      hgvs12m hgvs12s
+      hgvs13m hgvs13s)
     (is (= (hgvs/format hgvs4m {:show-bases? true}) hgvs4s))
     (is (= (hgvs/format hgvs9m {:amino-acid-format :short}) hgvs9ss))))
 

@@ -216,7 +216,8 @@
     :genome coord/parse-genomic-coordinate
     :mitochondria coord/parse-mitochondrial-coordinate
     :coding-dna coord/parse-coding-dna-coordinate
-    :non-coding-dna coord/parse-non-coding-dna-coordinate))
+    :non-coding-dna coord/parse-non-coding-dna-coordinate
+    :circular-dna coord/parse-circular-dna-coordinate))
 
 ;;; DNA - substitution
 ;;;
@@ -2036,10 +2037,10 @@
 
 (defn parse
   [s kind]
-  (let [parse* (cond
-                 (#{:genome :mitochondria :coding-dna :non-coding-dna} kind) #(parse-dna % kind)
-                 (= kind :rna) parse-rna
-                 (= kind :protein) parse-protein)]
+  (let [parse* (case kind
+                 (:genome :mitochondria :coding-dna :non-coding-dna :circular-dna) #(parse-dna % kind)
+                 :rna parse-rna
+                 :protein parse-protein)]
     (parse* s)))
 
 (defn- common-mutations?

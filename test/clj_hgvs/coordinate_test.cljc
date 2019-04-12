@@ -144,13 +144,6 @@
       "3"
       nil)))
 
-(deftest mitochondrial-compare-test
-  (testing "compares actual positions"
-    (are [c1 c2 e] (= (compare c1 c2) e)
-      (coord/mitochondrial-coordinate 2) (coord/mitochondrial-coordinate 2) 0
-      (coord/mitochondrial-coordinate 3) (coord/mitochondrial-coordinate 2) 1
-      (coord/mitochondrial-coordinate 2) (coord/mitochondrial-coordinate 3) -1)))
-
 (deftest parse-mitochondrial-coordinate-test
   (testing "parses input string, returning MitochondrialCoordinate"
     (is (= (coord/parse-mitochondrial-coordinate "3") (coord/mitochondrial-coordinate 3))))
@@ -288,6 +281,38 @@
   (testing "restores a plain map to NonCodingDNACoordinate"
     (is (= (coord/restore {:coordinate "non-coding-dna", :position 3})
            (coord/non-coding-dna-coordinate 3)))))
+
+;;; circular DNA coordinate
+
+(deftest circular-dna-coordinate-test
+  (testing "validates an input and returns CircularDNACoordinate"
+    (is (= (coord/circular-dna-coordinate 3) (coord/->CircularDNACoordinate 3))))
+  (testing "throws an error if an input is illegal"
+    (are [p] (thrown? #?(:clj Throwable, :cljs js/Error) (coord/circular-dna-coordinate p))
+      0
+      3.5
+      "3"
+      nil)))
+
+(deftest parse-circular-dna-coordinate-test
+  (testing "parses input string, returning CircularDNACoordinate"
+    (is (= (coord/parse-circular-dna-coordinate "3") (coord/circular-dna-coordinate 3))))
+  (testing "returns UnknownCoordinate if input is \"?\""
+    (is (= (coord/parse-circular-dna-coordinate "?") (coord/unknown-coordinate)))))
+
+(deftest format-circular-dna-coordinate-test
+  (testing "returns a string expression of CircularDNACoordinate"
+    (is (= (coord/format (coord/circular-dna-coordinate 3)) "3"))))
+
+(deftest plain-circular-dna-coordinate-test
+  (testing "returns a plain map representing CircularDNACoordinate"
+    (is (= (coord/plain (coord/circular-dna-coordinate 3))
+           {:coordinate "circular-dna", :position 3}))))
+
+(deftest restore-circular-dna-coordinate-test
+  (testing "restores a plain map to CircularDNACoordinate"
+    (is (= (coord/restore {:coordinate "circular-dna", :position 3})
+           (coord/circular-dna-coordinate 3)))))
 
 ;;; RNA coordinate
 

@@ -14,6 +14,7 @@
     "m" :mitochondria
     "c" :coding-dna
     "n" :non-coding-dna
+    "o" :circular-dna
     "r" :rna
     "p" :protein))
 
@@ -24,6 +25,7 @@
     :mitochondria "m"
     :coding-dna "c"
     :non-coding-dna "n"
+    :circular-dna "o"
     :rna "r"
     :protein "p"))
 
