@@ -16,6 +16,7 @@
 
 - Add a tagged literal.
 - Add custom print method.
+- Support circular DNA. [#1](https://github.com/chrovis/clj-hgvs/issues/1)
 
 ### Changed
 
