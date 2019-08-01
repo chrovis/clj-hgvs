@@ -10,26 +10,33 @@ Clojure(Script) library for handling [HGVS](http://varnomen.hgvs.org/).
 
 clj-hgvs provides:
 
-* Data structure of HGVS
-* Parser of HGVS text
-* Formatter to HGVS text
+* Data structure for HGVS
+* HGVS text parser
+* HGVS text formatter
 
 ## Installation
 
 Clojure CLI/deps.edn:
 
 ```clojure
-clj-hgvs {:mvn/version "0.3.1"}
+clj-hgvs {:mvn/version "0.4.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.3.1"]
+[clj-hgvs "0.4.0"]
 ```
 
 To use clj-hgvs with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+## Breaking Changes in 0.4.0
+
+- HGVS data structure changes from map to record (`clj-hgvs.core/HGVS`).
+- (n)cdna is renamed to (non-)coding-dna to avoid misunderstanding.
+
+See [CHANGELOG](CHANGELOG.md) for more information.
 
 ## Usage
 
@@ -42,24 +49,52 @@ To use clj-hgvs with Clojure 1.8, you must include a dependency on
 ```clojure
 (require '[clj-hgvs.core :as hgvs])
 
-;; `parse` parses HGVS text, returning HGVS map.
+;; `parse` parses a HGVS text, returning a HGVS record.
 (def hgvs1 (hgvs/parse "NM_005228.3:c.2573T>G"))
 
 hgvs1
-;;=> {:transcript "NM_005228.3"
-;;    :kind :cdna
+;;=> #clj_hgvs.core.HGVS
+;;   {:transcript "NM_005228.3"
+;;    :kind :coding-dna
 ;;    :mutation #clj_hgvs.mutation.DNASubstitution
-;;              {:coord #clj_hgvs.coordinate.CDNACoordinate {:position 2573
-;;                                                           :offset 0
-;;                                                           :region nil}
+;;              {:coord #clj_hgvs.coordinate.CodingDNACoordinate
+;;                      {:position 2573
+;;                       :offset 0
+;;                       :region nil}
 ;;               :ref "T"
 ;;               :type ">"
 ;;               :alt "G"}}
 
-;; `format` returns HGVS text.
+;; `format` returns a HGVS text.
 (hgvs/format hgvs1)
 ;;=> "NM_005228.3:c.2573T>G"
 ```
+
+### Tagged Literal
+
+`#clj-hgvs/hgvs` tagged literal is useful for easy and readable definition of a
+HGVS data.
+
+```clojure
+#clj-hgvs/hgvs "NM_005228.3:c.2573T>G"
+```
+
+### Formatter Styles
+
+`clj-hgvs.core/format` has various options for specifying HGVS styles.
+
+```clojure
+(hgvs/format #clj-hgvs/hgvs "NM_005228.3:c.2307_2308insGCCAGCGTG"
+             {:ins-format :count})
+;;=> "NM_005228.3:c.2307_2308ins(9)"
+
+(hgvs/format #clj-hgvs/hgvs "p.Leu858Arg"
+             {:amino-acid-format :short})
+;;=> "p.L858R"
+```
+
+See [API reference](https://chrovis.github.io/clj-hgvs/clj-hgvs.core.html#var-format)
+for all formatter options.
 
 ## License
 
