@@ -1,6 +1,5 @@
 (ns clj-hgvs.mutation-test
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest is are testing]])
+  (:require [clojure.test :refer [are deftest is testing]]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.mutation :as mut]
             clj-hgvs.test-common))

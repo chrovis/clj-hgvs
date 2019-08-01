@@ -1,8 +1,7 @@
 (ns clj-hgvs.core-test
   (:require #?(:clj [clojure.pprint :as pp])
             [clojure.spec.alpha :as s]
-            #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest is are testing]])
+            [clojure.test :refer [are deftest is testing]]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]

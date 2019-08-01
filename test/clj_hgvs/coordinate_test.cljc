@@ -1,6 +1,5 @@
 (ns clj-hgvs.coordinate-test
-  (:require #?(:clj [clojure.test :refer :all]
-               :cljs [cljs.test :refer-macros [deftest are is testing]])
+  (:require [clojure.test :refer [are deftest is testing]]
             [clj-hgvs.coordinate :as coord]
             clj-hgvs.test-common))
 
