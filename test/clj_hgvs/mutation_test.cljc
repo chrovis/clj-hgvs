@@ -1234,8 +1234,14 @@
                           :coord-end (coord/plain (coord/protein-coordinate 24))
                           :alts ["Arg" "Ser" "Gln"]})
 
-(def protein-insertion2s "Arg78_Gly79ins5")
-(def protein-insertion2 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
+(def protein-insertion2s "Lys23_Leu24insArgSerTer")
+(def protein-insertion2ss "K23_L24insRS*")
+(def protein-insertion2 (mut/protein-insertion "Lys" (coord/protein-coordinate 23)
+                                               "Leu" (coord/protein-coordinate 24)
+                                               ["Arg" "Ser" "Ter"]))
+
+(def protein-insertion3s "Arg78_Gly79ins5")
+(def protein-insertion3 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
                                                "Gly" (coord/protein-coordinate 79)
                                                ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
 
@@ -1244,14 +1250,18 @@
     (are [m o s] (= (mut/format m o) s)
       protein-insertion1 nil protein-insertion1s
       protein-insertion1 {:amino-acid-format :short} protein-insertion1ss
-      protein-insertion2 nil protein-insertion2s)))
+      protein-insertion2 nil protein-insertion2s
+      protein-insertion2 {:amino-acid-format :short} protein-insertion2ss
+      protein-insertion3 nil protein-insertion3s)))
 
 (deftest parse-protein-insertion-test
   (testing "returns a correct ProteinInsertion"
     (are [s m] (= (mut/parse-protein-insertion s) m)
       protein-insertion1s protein-insertion1
       protein-insertion1ss protein-insertion1
-      protein-insertion2s protein-insertion2)))
+      protein-insertion2s protein-insertion2
+      protein-insertion2ss protein-insertion2
+      protein-insertion3s protein-insertion3)))
 
 (deftest plain-protein-insertion-test
   (testing "returns a plain map representing ProteinInsertion"
@@ -1281,13 +1291,21 @@
                                        "Lys" (coord/protein-coordinate 29)
                                        ["Trp"]))
 
+(def protein-indel3s "Cys28_Lys29delinsTer")
+(def protein-indel3ss "C28_K29delins*")
+(def protein-indel3 (mut/protein-indel "Cys" (coord/protein-coordinate 28)
+                                       "Lys" (coord/protein-coordinate 29)
+                                       ["Ter"]))
+
 (deftest format-protein-indel-test
   (testing "returns a string expression of a protein indel"
     (are [m o s] (= (mut/format m o) s)
       protein-indel1 nil protein-indel1s
       protein-indel1 {:amino-acid-format :short} protein-indel1ss
       protein-indel2 nil protein-indel2s
-      protein-indel2 {:amino-acid-format :short} protein-indel2ss)))
+      protein-indel2 {:amino-acid-format :short} protein-indel2ss
+      protein-indel3 nil protein-indel3s
+      protein-indel3 {:amino-acid-format :short} protein-indel3ss)))
 
 (deftest parse-protein-indel-test
   (testing "returns a correct ProteinIndel"
@@ -1295,7 +1313,9 @@
       protein-indel1s protein-indel1
       protein-indel1ss protein-indel1
       protein-indel2s protein-indel2
-      protein-indel2ss protein-indel2)))
+      protein-indel2ss protein-indel2
+      protein-indel3s protein-indel3
+      protein-indel3ss protein-indel3)))
 
 (deftest plain-protein-indel-test
   (testing "returns a plain map representing ProteinIndel"

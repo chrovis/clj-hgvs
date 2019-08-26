@@ -1618,11 +1618,11 @@
 (defn- parse-protein-insertion-alts
   [s]
   (condp re-matches s
-    #"([A-Z]([a-z]{2})?)+" (mapv ->long-amino-acid (re-seq #"[A-Z](?:[a-z]{2})?" s))
+    #"([A-Z*]([a-z]{2})?)+" (mapv ->long-amino-acid (re-seq #"[A-Z*](?:[a-z]{2})?" s))
     #"\d+" (vec (repeat (intl/parse-long s) "Xaa"))))
 
 (def ^:private protein-insertion-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z]+)")
+  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*]+)")
 
 (defn parse-protein-insertion
   [s]
@@ -1681,7 +1681,7 @@
   (ProteinIndel. ref-start coord-start ref-end coord-end alts))
 
 (def ^:private protein-indel-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z][a-zA-Z]*)?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z*][a-zA-Z*]*)?")
 
 (defn parse-protein-indel
   [s]
@@ -1690,7 +1690,7 @@
                    (coord/parse-protein-coordinate coord-s)
                    (->long-amino-acid ref-e)
                    (some-> coord-e coord/parse-protein-coordinate)
-                   (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z](?:[a-z]{2})?"))))))
+                   (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z*](?:[a-z]{2})?"))))))
 
 (defmethod restore "protein-indel"
   [m]
