@@ -1444,7 +1444,7 @@
   (ProteinSubstitution. ref coord alt))
 
 (def ^:private protein-substitution-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)([A-Z\*=](?:[a-z]{2})?)")
+  #"([A-Z*](?:[a-z]{2})?)(\d+)([A-Z*=](?:[a-z]{2})?)")
 
 (defn parse-protein-substitution
   [s]

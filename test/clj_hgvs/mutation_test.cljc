@@ -1100,13 +1100,21 @@
                                                      (coord/protein-coordinate 123)
                                                      "Cys"))
 
+(def protein-substitution3s "Ter123=")
+(def protein-substitution3ss "*123=")
+(def protein-substitution3 (mut/protein-substitution "Ter"
+                                                     (coord/protein-coordinate 123)
+                                                     "Ter"))
+
 (deftest format-protein-substitution-test
   (testing "returns a string expression of a protein substitution"
     (are [m o s] (= (mut/format m o) s)
       protein-substitution1 nil protein-substitution1s
       protein-substitution1 {:amino-acid-format :short} protein-substitution1ss
       protein-substitution2 nil protein-substitution2s
-      protein-substitution2 {:amino-acid-format :short} protein-substitution2ss)))
+      protein-substitution2 {:amino-acid-format :short} protein-substitution2ss
+      protein-substitution3 nil protein-substitution3s
+      protein-substitution3 {:amino-acid-format :short} protein-substitution3ss)))
 
 (deftest parse-protein-substitution-test
   (testing "returns a correct ProteinSubstitution"
@@ -1114,7 +1122,9 @@
       protein-substitution1s protein-substitution1
       protein-substitution1ss protein-substitution1
       protein-substitution2s protein-substitution2
-      protein-substitution2ss protein-substitution2)))
+      protein-substitution2ss protein-substitution2
+      protein-substitution3s protein-substitution3
+      protein-substitution3ss protein-substitution3)))
 
 (deftest plain-protein-substitution-test
   (testing "returns a plain map representing ProteinSubstitution"
