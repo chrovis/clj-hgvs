@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- Fix ter substitution.
+- Fix ter insertion.
+
 ## [0.4.0] - 2019-08-01
 
 ### BREAKING
