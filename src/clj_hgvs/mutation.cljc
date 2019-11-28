@@ -306,7 +306,10 @@
   "Constructor of DNADeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(intl/valid? ::dna-deletion %)]}
+   {:pre [(or (nil? coord-end)
+              (not (coord/comparable-coordinates? coord-start coord-end))
+              (neg? (compare coord-start coord-end)))]
+    :post [(intl/valid? ::dna-deletion %)]}
    (DNADeletion. coord-start coord-end ref)))
 
 (def ^:private dna-deletion-re
@@ -362,7 +365,10 @@
   "Constructor of DNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (dna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(intl/valid? ::dna-duplication %)]}
+   {:pre [(or (nil? coord-end)
+              (not (coord/comparable-coordinates? coord-start coord-end))
+              (neg? (compare coord-start coord-end)))]
+    :post [(intl/valid? ::dna-duplication %)]}
    (DNADuplication. coord-start coord-end ref)))
 
 (def ^:private dna-duplication-re
@@ -429,7 +435,9 @@
 (defn dna-insertion
   "Constructor of DNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:post [(intl/valid? ::dna-insertion %)]}
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::dna-insertion %)]}
   (DNAInsertion. coord-start coord-end alt))
 
 (defn- parse-dna-insertion-alt
@@ -587,8 +595,9 @@
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (apply str (flatten [(coord/format coord-start)
-                         (if (or (not (coord/comparable-coordinates? coord-start coord-end))
-                                 (neg? (compare coord-start coord-end)))
+                         (if (and coord-end
+                                  (or (not (coord/comparable-coordinates? coord-start coord-end))
+                                      (neg? (compare coord-start coord-end))))
                            ["_" (coord/format coord-end)])
                          "del"
                          (if show-bases? ref)
@@ -611,7 +620,10 @@
 (defn dna-indel
   "Constructor of DNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
-  {:post [(intl/valid? ::dna-indel %)]}
+  {:pre [(or (nil? coord-end)
+             (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::dna-indel %)]}
   (DNAIndel. coord-start coord-end ref alt))
 
 (def ^:private dna-indel-re
@@ -699,8 +711,9 @@
     (into {:mutation "dna-repeated-seqs"} (plain-coords this)))
   SeparatelyFormat
   (format-common [this {:keys [range-format] :or {range-format :auto}}]
-    (let [should-show-end? (or (not (coord/comparable-coordinates? coord-start coord-end))
-                               (neg? (compare coord-start coord-end)))]
+    (let [should-show-end? (and (some? coord-end)
+                                (or (not (coord/comparable-coordinates? coord-start coord-end))
+                                    (neg? (compare coord-start coord-end))))]
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
@@ -728,7 +741,10 @@
 (defn dna-repeated-seqs
   "Constructor of DNARepeatedSeqs. Throws an exception if any input is illegal."
   [coord-start coord-end ref ncopy]
-  {:post [(intl/valid? ::dna-repeated-seqs %)]}
+  {:pre [(or (nil? coord-end)
+             (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::dna-repeated-seqs %)]}
   (DNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private dna-repeated-seqs-re
@@ -861,7 +877,10 @@
   "Constructor of DNAdeletion. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-deletion coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(intl/valid? ::rna-deletion %)]}
+   {:pre [(or (nil? coord-end)
+              (not (coord/comparable-coordinates? coord-start coord-end))
+              (neg? (compare coord-start coord-end)))]
+    :post [(intl/valid? ::rna-deletion %)]}
    (RNADeletion. coord-start coord-end ref)))
 
 (def ^:private rna-deletion-re
@@ -910,7 +929,10 @@
   "Constructor of RNADuplication. Throws an exception if any input is illegal."
   ([coord-start coord-end] (rna-duplication coord-start coord-end nil))
   ([coord-start coord-end ref]
-   {:post [(intl/valid? ::rna-duplication %)]}
+   {:pre [(or (nil? coord-end)
+              (not (coord/comparable-coordinates? coord-start coord-end))
+              (neg? (compare coord-start coord-end)))]
+    :post [(intl/valid? ::rna-duplication %)]}
    (RNADuplication. coord-start coord-end ref)))
 
 (def ^:private rna-duplication-re
@@ -962,7 +984,9 @@
 (defn rna-insertion
   "Constructor of RNAInsertion. Throws an exception if any input is illegal."
   [coord-start coord-end alt]
-  {:post [(intl/valid? ::rna-insertion %)]}
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::rna-insertion %)]}
   (RNAInsertion. coord-start coord-end alt))
 
 (defn- parse-rna-alt-n
@@ -1117,8 +1141,9 @@
   (format [this] (format this nil))
   (format [this {:keys [show-bases?] :or {show-bases? false}}]
     (str (coord/format coord-start)
-         (if (or (not (coord/comparable-coordinates? coord-start coord-end))
-                 (neg? (compare coord-start coord-end)))
+         (if (and coord-end
+                  (or (not (coord/comparable-coordinates? coord-start coord-end))
+                      (neg? (compare coord-start coord-end))))
            (str "_" (coord/format coord-end)))
          "del"
          (if show-bases? ref)
@@ -1141,7 +1166,10 @@
 (defn rna-indel
   "Constructor of RNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
-  {:post [(intl/valid? ::rna-indel %)]}
+  {:pre [(or (nil? coord-end)
+             (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::rna-indel %)]}
   (RNAIndel. coord-start coord-end ref alt))
 
 (def ^:private rna-indel-re
@@ -1227,8 +1255,9 @@
     (into {:mutation "rna-repeated-seqs"} (plain-coords this)))
   SeparatelyFormat
   (format-common [this {:keys [range-format] :or {range-format :auto}}]
-    (let [should-show-end? (or (not (coord/comparable-coordinates? coord-start coord-end))
-                               (neg? (compare coord-start coord-end)))]
+    (let [should-show-end? (and (some? coord-end)
+                                (or (not (coord/comparable-coordinates? coord-start coord-end))
+                                    (neg? (compare coord-start coord-end))))]
       (str (coord/format coord-start)
            (case range-format
              :auto (or ref (if should-show-end? (str "_" (coord/format coord-end))))
@@ -1256,7 +1285,10 @@
 (defn rna-repeated-seqs
   "Constructor of RNARepeatedSeqs. Throws an exception if any input is illegal."
   [coord-start coord-end ref ncopy]
-  {:post [(intl/valid? ::rna-repeated-seqs %)]}
+  {:pre [(or (nil? coord-end)
+             (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::rna-repeated-seqs %)]}
   (RNARepeatedSeqs. coord-start coord-end ref ncopy))
 
 (def ^:private rna-repeated-seqs-re
@@ -1498,7 +1530,10 @@
   "Constructor of ProteinDeletion. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-deletion ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
-   {:post [(intl/valid? ::protein-deletion %)]}
+   {:pre [(or (nil? coord-start)
+              (not (coord/comparable-coordinates? coord-start coord-end))
+              (neg? (compare coord-start coord-end)))]
+    :post [(intl/valid? ::protein-deletion %)]}
    (ProteinDeletion. ref-start coord-start ref-end coord-end)))
 
 (def ^:private protein-deletion-re
@@ -1553,7 +1588,10 @@
   "Constructor of ProteinDuplication. Throws an exception if any input is illegal."
   ([ref-start coord-start] (protein-duplication ref-start coord-start nil nil))
   ([ref-start coord-start ref-end coord-end]
-   {:post [(intl/valid? ::protein-duplication %)]}
+   {:pre [(or (nil? coord-end)
+              (not (coord/comparable-coordinates? coord-start coord-end))
+              (neg? (compare coord-start coord-end)))]
+    :post [(intl/valid? ::protein-duplication %)]}
    (ProteinDuplication. ref-start coord-start ref-end coord-end)))
 
 (def ^:private protein-duplication-re
@@ -1612,7 +1650,9 @@
 (defn protein-insertion
   "Constructor of ProteinInsertion. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
-  {:post [(intl/valid? ::protein-insertion %)]}
+  {:pre [(or (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::protein-insertion %)]}
   (ProteinInsertion. ref-start coord-start ref-end coord-end alts))
 
 (defn- parse-protein-insertion-alts
@@ -1677,7 +1717,10 @@
 (defn protein-indel
   "Constructor of ProteinIndel. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end alts]
-  {:post [(intl/valid? ::protein-indel %)]}
+  {:pre [(or (nil? coord-end)
+             (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::protein-indel %)]}
   (ProteinIndel. ref-start coord-start ref-end coord-end alts))
 
 (def ^:private protein-indel-re
@@ -1796,7 +1839,10 @@
 (defn protein-repeated-seqs
   "Constructor of ProteinRepeatedSeqs. Throws an exception if any input is illegal."
   [ref-start coord-start ref-end coord-end ncopy]
-  {:post [(intl/valid? ::protein-repeated-seqs %)]}
+  {:pre [(or (nil? coord-end)
+             (not (coord/comparable-coordinates? coord-start coord-end))
+             (neg? (compare coord-start coord-end)))]
+   :post [(intl/valid? ::protein-repeated-seqs %)]}
   (ProteinRepeatedSeqs. ref-start coord-start ref-end coord-end ncopy))
 
 (def ^:private protein-repeated-seqs-re

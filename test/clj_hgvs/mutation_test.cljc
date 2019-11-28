@@ -192,7 +192,11 @@
       dna-deletion4s dna-deletion4k dna-deletion4
       dna-deletion5s dna-deletion5k dna-deletion5
       dna-deletion6s dna-deletion6k dna-deletion6
-      dna-deletion7s dna-deletion7k dna-deletion7)))
+      dna-deletion7s dna-deletion7k dna-deletion7))
+  (testing "invalid DNA deletion"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-deletion s k))
+      "8_6del" :genome)))
 
 (deftest plain-dna-deletion-test
   (testing "returns a plain map representing DNADeletion"
@@ -277,7 +281,11 @@
       dna-duplication4s dna-duplication4k dna-duplication4
       dna-duplication5s dna-duplication5k dna-duplication5
       dna-duplication6s dna-duplication6k dna-duplication6
-      dna-duplication7s dna-duplication7k dna-duplication7)))
+      dna-duplication7s dna-duplication7k dna-duplication7))
+  (testing "invalid DNA duplication"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-duplication s k))
+      "8_6dup" :genome)))
 
 (deftest plain-dna-duplication-test
   (testing "returns a plain map representing DNADuplication"
@@ -363,7 +371,12 @@
       dna-insertion5s dna-insertion5k dna-insertion5
       dna-insertion6sb dna-insertion6k dna-insertion6
       dna-insertion6sc dna-insertion6k dna-insertion6
-      dna-insertion7s dna-insertion7k dna-insertion7)))
+      dna-insertion7s dna-insertion7k dna-insertion7))
+  (testing "invalid DNA insertion"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-insertion s k))
+      "5756insAGG" :genome
+      "5757_5756insAGG" :genome)))
 
 (deftest plain-dna-insertion-test
   (testing "returns a plain map representing DNAInsertion"
@@ -406,7 +419,12 @@
     (are [s k m] (= (mut/parse-dna-inversion s k) m)
       dna-inversion1s dna-inversion1k dna-inversion1
       dna-inversion2s dna-inversion2k dna-inversion2
-      dna-inversion3s dna-inversion3k dna-inversion3)))
+      dna-inversion3s dna-inversion3k dna-inversion3))
+  (testing "invalid DNA inversion"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-inversion s k))
+      "1077inv" :genome
+      "1080_1077inv" :genome)))
 
 ;;; DNA - conversion
 
@@ -456,7 +474,12 @@
     (are [s k m] (= (mut/parse-dna-conversion s k) m)
       dna-conversion1s dna-conversion1k dna-conversion1
       dna-conversion2s dna-conversion2k dna-conversion2
-      dna-conversion3s dna-conversion3k dna-conversion3)))
+      dna-conversion3s dna-conversion3k dna-conversion3))
+  (testing "invalid DNA conversion"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-conversion s k))
+      "333con1844_2101" :genome
+      "590_333con1844_2101" :genome)))
 
 (deftest plain-dna-conversion-test
   (testing "returns a plain map representing DNAConversion"
@@ -502,7 +525,11 @@
     (are [s k m] (= (mut/parse-dna-indel s k) m)
       dna-indel1s dna-indel1k dna-indel1
       dna-indel2s dna-indel2k dna-indel2
-      dna-indel3s dna-indel3k dna-indel3)))
+      dna-indel3s dna-indel3k dna-indel3))
+  (testing "invalid DNA indel"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-indel s k))
+      "147_145delinsTGG" :coding-dna)))
 
 (deftest plain-dna-indel-test
   (testing "returns a plain map representing DNAIndel"
@@ -606,7 +633,11 @@
     (are [s k m] (= (mut/parse-dna-repeated-seqs s k) m)
       dna-repeated-seqs1s-c dna-repeated-seqs1k dna-repeated-seqs1-c
       dna-repeated-seqs1s-b dna-repeated-seqs1k dna-repeated-seqs1-b
-      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2)))
+      dna-repeated-seqs2s dna-repeated-seqs2k dna-repeated-seqs2))
+  (testing "invalid DNA repeated sequences"
+    (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
+                        (mut/parse-dna-repeated-seqs s k))
+      "124_123[14]" :genome)))
 
 (deftest plain-dna-repeated-seqs-test
   (testing "returns a plain map representing DNARepeatedSeqs"
@@ -706,7 +737,11 @@
       rna-deletion2s rna-deletion2
       rna-deletion3s rna-deletion3
       ;; rna-deletion4s rna-deletion4 ; TODO
-      )))
+      ))
+  (testing "invalid RNA deletion"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-deletion s))
+      "8_6del")))
 
 (deftest plain-rna-deletion-test
   (testing "returns a plain map representing RNADeletion"
@@ -746,7 +781,11 @@
     (are [s m] (= (mut/parse-rna-duplication s) m)
       rna-duplication1s rna-duplication1
       rna-duplication2s rna-duplication2
-      rna-duplication3s rna-duplication3)))
+      rna-duplication3s rna-duplication3))
+  (testing "invalid RNA duplication"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-duplication s))
+      "8_6dup")))
 
 (deftest plain-rna-duplication-test
   (testing "returns a plain map representing RNADuplication"
@@ -791,7 +830,12 @@
     (are [s m] (= (mut/parse-rna-insertion s) m)
       rna-insertion1s rna-insertion1
       rna-insertion2s rna-insertion2
-      rna-insertion3s rna-insertion3)))
+      rna-insertion3s rna-insertion3))
+  (testing "invalid RNA insertion"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-insertion s))
+      "756insacu"
+      "757_756insacu")))
 
 (deftest plain-rna-insertion-test
   (testing "returns a plain map representing RNAInsertion"
@@ -818,7 +862,12 @@
 (deftest parse-rna-inversion-test
   (testing "returns a correct RNAInversion"
     (are [s m] (= (mut/parse-rna-inversion s) m)
-      rna-inversion1s rna-inversion1)))
+      rna-inversion1s rna-inversion1))
+  (testing "invalid RNA inversion"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-inversion s))
+      "177inv"
+      "180_177inv")))
 
 (deftest plain-rna-inversion-test
   (testing "returns a plain map representing RNAInversion"
@@ -860,7 +909,12 @@
   (testing "returns a correct RNAConversion"
     (are [s m] (= (mut/parse-rna-conversion s) m)
       rna-conversion1s rna-conversion1
-      rna-conversion2s rna-conversion2)))
+      rna-conversion2s rna-conversion2))
+  (testing "invalid RNA conversion"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-conversion s))
+      "123con888_1110"
+      "345_123con888_1110")))
 
 (deftest plain-rna-conversion-test
   (testing "returns a plain map representing RNAConversion"
@@ -903,7 +957,11 @@
     (are [s m] (= (mut/parse-rna-indel s) m)
       rna-indel1s rna-indel1
       rna-indel2s rna-indel2
-      rna-indel3s rna-indel3)))
+      rna-indel3s rna-indel3))
+  (testing "invalid RNA indel"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-indel s))
+      "777_775delinsc")))
 
 (deftest plain-rna-indel-test
   (testing "returns a plain map representing RNAIndel"
@@ -1005,7 +1063,11 @@
     (are [s m] (= (mut/parse-rna-repeated-seqs s) m)
       rna-repeated-seqs1s-c rna-repeated-seqs1-c
       rna-repeated-seqs1s-b rna-repeated-seqs1-b
-      rna-repeated-seqs2s rna-repeated-seqs2)))
+      rna-repeated-seqs2s rna-repeated-seqs2))
+  (testing "invalid RNA repeated-seqs"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-rna-repeated-seqs s))
+      "-123_-124[14]")))
 
 (deftest plain-rna-repeated-seqs-test
   (testing "returns a plain map representing RNARepeatedSeqs"
@@ -1154,11 +1216,7 @@
       protein-deletion1 nil protein-deletion1s
       protein-deletion1 {:amino-acid-format :short} protein-deletion1ss
       protein-deletion2 nil protein-deletion2s
-      protein-deletion2 {:amino-acid-format :short} protein-deletion2ss))
-  (testing "not show last amino acid if range size is 1."
-    (is (= (mut/format (mut/protein-deletion "Ala" (coord/protein-coordinate 3)
-                                             "Ala" (coord/protein-coordinate 3)))
-           "Ala3del"))))
+      protein-deletion2 {:amino-acid-format :short} protein-deletion2ss)))
 
 (deftest parse-protein-deletion-test
   (testing "returns a correct ProteinDeletion"
@@ -1166,7 +1224,11 @@
       protein-deletion1s protein-deletion1
       protein-deletion1ss protein-deletion1
       protein-deletion2s protein-deletion2
-      protein-deletion2ss protein-deletion2)))
+      protein-deletion2ss protein-deletion2))
+  (testing "invalid protein deletion"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-protein-deletion s))
+      "Glu79_Cys76del")))
 
 (deftest plain-protein-deletion-test
   (testing "returns a plain map representing ProteinDeletion"
@@ -1198,11 +1260,7 @@
       protein-duplication1 nil protein-duplication1s
       protein-duplication1 {:amino-acid-format :short} protein-duplication1ss
       protein-duplication2 nil protein-duplication2s
-      protein-duplication2 {:amino-acid-format :short} protein-duplication2ss))
-  (testing "not show last amino acid if range size is 1."
-    (is (= (mut/format (mut/protein-duplication "Ala" (coord/protein-coordinate 3)
-                                                "Ala" (coord/protein-coordinate 3)))
-           "Ala3dup"))))
+      protein-duplication2 {:amino-acid-format :short} protein-duplication2ss)))
 
 (deftest parse-protein-duplication-test
   (testing "returns a correct ProteinDuplication"
@@ -1210,7 +1268,11 @@
       protein-duplication1s protein-duplication1
       protein-duplication1ss protein-duplication1
       protein-duplication2s protein-duplication2
-      protein-duplication2ss protein-duplication2)))
+      protein-duplication2ss protein-duplication2))
+  (testing "invalid protein duplication"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-protein-duplication s))
+      "Ser5_Ala3dup")))
 
 (deftest plain-protein-duplication-test
   (testing "returns a plain map representing ProteinDuplication"
@@ -1261,7 +1323,12 @@
       protein-insertion1ss protein-insertion1
       protein-insertion2s protein-insertion2
       protein-insertion2ss protein-insertion2
-      protein-insertion3s protein-insertion3)))
+      protein-insertion3s protein-insertion3))
+  (testing "invalid protein insertion"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-protein-insertion s))
+      "Lys23insArgSerGln"
+      "Leu24_Lys23insArgSerGln")))
 
 (deftest plain-protein-insertion-test
   (testing "returns a plain map representing ProteinInsertion"
@@ -1315,7 +1382,11 @@
       protein-indel2s protein-indel2
       protein-indel2ss protein-indel2
       protein-indel3s protein-indel3
-      protein-indel3ss protein-indel3)))
+      protein-indel3ss protein-indel3))
+  (testing "invalid protein indel"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-protein-indel s))
+      "Lys29_Cys28delinsTrp")))
 
 (deftest plain-protein-indel-test
   (testing "returns a plain map representing ProteinIndel"
@@ -1409,7 +1480,11 @@
       protein-repeated-seqs1ss protein-repeated-seqs1
       protein-repeated-seqs2s protein-repeated-seqs2
       protein-repeated-seqs2ss protein-repeated-seqs2
-      protein-repeated-seqs3s protein-repeated-seqs3)))
+      protein-repeated-seqs3s protein-repeated-seqs3))
+  (testing "invalid protein repeated-seqs"
+    (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
+                      (mut/parse-protein-repeated-seqs s))
+      "Ser67_Arg65[12]")))
 
 (deftest plain-protein-repeated-seqs-test
   (testing "returns a plain map representing ProteinRepeatedSeqs"

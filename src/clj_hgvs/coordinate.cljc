@@ -444,6 +444,7 @@
 (defn comparable-coordinates?
   "Returns true if the two coordinates are comparable, else false."
   [coord1 coord2]
-  (not-any? (some-fn #(instance? UnknownCoordinate %)
-                     #(instance? UncertainCoordinate %))
-            [coord1 coord2]))
+  (every? #(and (satisfies? Coordinate %)
+                #?(:clj (instance? Comparable %)
+                   :cljs (satisfies? IComparable %)))
+          [coord1 coord2]))
