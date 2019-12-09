@@ -1,6 +1,10 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.1] - 2019-12-09
+
+### Changed
+
+- Make order of start and end strict.
 
 ### Fixed
 
@@ -82,7 +86,8 @@
 
 ## 0.1.0 - 2017-04-17
 
-[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.0...HEAD
+[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.1...HEAD
+[0.4.1]: https://github.com/chrovis/clj-hgvs/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/chrovis/clj-hgvs/compare/0.3.1...0.4.0
 [0.3.1]: https://github.com/chrovis/clj-hgvs/compare/0.3.0...0.3.1
 [0.3.0]: https://github.com/chrovis/clj-hgvs/compare/0.2.4...0.3.0
