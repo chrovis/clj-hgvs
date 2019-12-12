@@ -9,7 +9,7 @@
             [lein-cloverage "1.1.2"]
             [lein-codox "0.10.7"]
             [lein-doo "0.1.11"]]
-  :profiles {:dev {:dependencies [[org.clojure/test.check "0.9.0"]
+  :profiles {:dev {:dependencies [[org.clojure/test.check "0.10.0"]
                                   [codox-theme-rdash "0.1.2"]]}
              :1.8 {:dependencies [[org.clojure/clojure "1.8.0"]
                                   [clojure-future-spec "1.9.0"]]}
