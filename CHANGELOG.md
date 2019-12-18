@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add HGVS repair function.
+
 ## [0.4.1] - 2019-12-09
 
 ### Changed
