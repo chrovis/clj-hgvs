@@ -5,7 +5,8 @@
   (:require #?(:clj [clojure.pprint :as pp])
             [clojure.spec.alpha :as s]
             [clj-hgvs.internal :as intl]
-            [clj-hgvs.mutation :as mut]))
+            [clj-hgvs.mutation :as mut]
+            [clj-hgvs.repairer :as repairer]))
 
 (defmacro with-validation-disabled
   "Disables validation within a scope.
@@ -180,6 +181,45 @@
 
 (s/fdef clj-hgvs.core/normalize
   :args (s/cat :s string?)
+  :ret  string?)
+
+(defn repair-hgvs-str
+  "Attempts to repair an invalid HGVS string, returning a correct HGVS string.
+
+  The repair rules are based on frequent mistakes in popular public-domain
+  databases such as dbSNP and ClinVar. See clj-hgvs.repairer/built-in-repairers
+  for details of the built-in repair rules.
+
+  You may supply custom repair rules to the second argument:
+
+    (defn lower-case-ext
+      [s kind]
+      (if (= kind :protein)
+        (clojure.string/replace s #\"EXT\" \"ext\")
+        s))
+
+    (def my-repairers (conj clj-hgvs.repairer/built-in-repairers
+                            lower-case-ext))
+
+    (repair-hgvs-str \"p.*833EXT*?\" my-repairers)
+    => \"p.*833ext*?\""
+  ([s]
+   (repair-hgvs-str s repairer/built-in-repairers))
+  ([s repairers]
+   (reduce #(%2 %1 (repairer/infer-kind %1)) s repairers)))
+
+(s/fdef repair-hgvs-str
+  :args (s/cat :s         string?
+               :repairers (s/?
+                           (s/coll-of
+                            #?(:clj (s/fspec :args (s/cat :s    string?
+                                                          :kind ::kind)
+                                             :ret  string?)
+                               ;; NOTE: The above fspec is better than fn?, but
+                               ;;       it causes an error on clojurescript
+                               ;;       1.10.520.
+                               :cljs fn?)
+                            :kind vector?)))
   :ret  string?)
 
 #?(:clj (defmethod print-method HGVS [hgvs ^java.io.Writer w]

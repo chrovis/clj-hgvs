@@ -1,10 +1,12 @@
 (ns clj-hgvs.core-test
   (:require #?(:clj [clojure.pprint :as pp])
             [clojure.spec.alpha :as s]
+            [clojure.string :as string]
             [clojure.test :refer [are deftest is testing]]
             [clj-hgvs.coordinate :as coord]
             [clj-hgvs.core :as hgvs]
             [clj-hgvs.mutation :as mut]
+            [clj-hgvs.repairer :as repairer]
             clj-hgvs.test-common))
 
 (deftest transcript-spec-test
@@ -215,6 +217,146 @@
       "NM_005228.3:2361G>A"
       ""
       nil)))
+
+(deftest repair-hgvs-str-test
+  (are [s e] (let [s* (hgvs/repair-hgvs-str s)]
+               (and (= s* e) (some? (hgvs/parse s*))))
+    ;; remove-unnecessary-chars
+    "NM_00001.1:c.123_124 delinsCGT" "NM_00001.1:c.123_124delinsCGT"
+    "p.Asn3450Valfs*54\""            "p.Asn3450Valfs*54"
+
+    ;; dedupe-colons
+    "NM_00001.1::c.123T>G" "NM_00001.1:c.123T>G"
+
+    ;; remove-trailing-period
+    "c.123T>G." "c.123T>G"
+
+    ;; upper-case-ins
+    "c.673-43_673-33del11inscccagagc" "c.673-43_673-33delinsCCCAGAGC"
+
+    ;; remove-gene-symbol
+    "NM_000492.3(CFTR):c.1585-1G>A" "NM_000492.3:c.1585-1G>A"
+
+    ;; dedupe-kinds
+    "c.c.123T>G" "c.123T>G"
+
+    ;; deletion->del
+    "p.Leu128deletion" "p.Leu128del"
+
+    ;; indel->delins
+    "c.123_124indelCTGA" "c.123_124delinsCTGA"
+
+    ;; frameshift->fs
+    "p.Gln410frameshift" "p.Gln410fs"
+
+    ;; stop->ter
+    "p.Gln13Stop" "p.Gln13Ter"
+    "p.Tyr9stop"  "p.Tyr9Ter"
+
+    ;; substitution->delins
+    "c.123G>CCACGTG" "c.123delGinsCCACGTG"
+
+    ;; substitutions->delins
+    "c.123_124>T"    "c.123_124delinsT"
+    "c.123_124GC>AA" "c.123_124delGCinsAA"
+
+    ;; remove-assembly
+    "c.123_124delCT[hg19]" "c.123_124delCT"
+
+    ;; remove-affected-count
+    "c.123_234del14" "c.123_234del"
+    "c.123_125dup3" "c.123_125dup"
+    "c.123_125inv3" "c.123_125inv"
+
+    ;; remove-same-end
+    "c.123_123delA"       "c.123delA"
+    "c.123_123dupA"       "c.123dupA"
+    "c.123_123delAinsTAC" "c.123delAinsTAC"
+
+    ;; remove-alternative
+    "c.1902dup(1897_1898insA)"  "c.1902dup"
+    "c.1902dupA(1897_1898insA)" "c.1902dupA"
+
+    ;; remove-inv-bases
+    "c.123_124invTG" "c.123_124inv"
+
+    ;; remove-del-count-from-delins
+    "c.123_124del2insCTGA" "c.123_124delinsCTGA"
+
+    ;; replace-repeated-seqs-parens1
+    "c.112GAT(14)" "c.112GAT[14]"
+
+    ;; replace-repeated-seqs-parens2
+    "c.112GAT(14_16)" "c.112GAT[(14_16)]"
+
+    ;; remove-genomic-bases-from-protein
+    "p.G307S:GGC>AGC" "p.G307S"
+
+    ;; remove-same-amino-acid
+    "p.Phe269Phe="   "p.Phe269="
+    "p.Gly413Gly=fs" "p.Gly413=fs"
+
+    ;; replace-protein-no-change
+    "p.*189*" "p.*189="
+
+    ;; remove-extra-bases-from-protein-del
+    "p.Phe53delPhe" "p.Phe53del"
+
+    ;; protein-substitution->delins
+    "p.N771>KL" "p.N771delinsKL"
+
+    ;; protein-substitutions->delins
+    "p.E746_S752>V" "p.E746_S752delinsV"
+
+    ;; frameshift-x->ter
+    "p.G72AfsX13" "p.G72Afs*13"
+    "p.Q94Hfsx?"  "p.Q94Hfs*?"
+
+    ;; lower-case-fs
+    "p.S896KFS*7" "p.S896Kfs*7"
+
+    ;; remove-fs-greater
+    "p.R123fs*>51" "p.R123fs*51"
+
+    ;; protein-ter-substitution->ext
+    "p.*320L" "p.*320Lext*?"
+
+    ;; frameshift->ext
+    "p.*833fs?" "p.*833ext*?"
+    "p.*833fs"  "p.*833ext*?"
+
+    ;; ext-ter->downstream
+    "p.Ter397ThrextTer?" "p.Ter397Thrext*?")
+
+  (are [s] (let [s* (hgvs/repair-hgvs-str s)]
+             (and (= s* s) (some? (hgvs/parse s*))))
+    "NM_005228.3:c.2361G>A"
+    "c.2361G>A"
+    "g.[2376A>C;3103del]"
+    "NC_000022.11:g.28703511delA"
+    "NM_004380.2:c.86-1G>T"
+    "NM_000000.1:r.76a>c"
+    "r.673-43_673-33delinscccagagc"
+    "NM_004006.1:r.0"
+    "LRG_199t1:r.?"
+    "NP_005219.2:p.Leu858Arg"
+    "NP_005219.2:p.L858R"
+    "NP_001096.1:p.Arg258="
+    "NP_001005735.1:p.Leu344Trpfs"
+    "NC_012920.1:m.16563_13del"
+    "J01749.1:o.4344_197dup")
+
+  (let [lower-case-ext (fn [s kind]
+                         (if (= kind :protein)
+                           (string/replace s #"EXT" "ext")
+                           s))
+        my-repairers (conj repairer/built-in-repairers lower-case-ext)]
+    (is (= (hgvs/repair-hgvs-str "NP_000000.1:p.*833EXT*?.")
+           "NP_000000.1:p.*833EXT*?"))
+    (is (= (hgvs/repair-hgvs-str "NP_000000.1:p.*833EXT*?." my-repairers)
+           "NP_000000.1:p.*833ext*?")))
+
+  (is (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/repair-hgvs-str nil))))
 
 #?(:clj (deftest print-test
           (let [expect (str "#clj-hgvs/hgvs \"" hgvs1s "\"")]
