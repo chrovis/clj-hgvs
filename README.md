@@ -19,13 +19,13 @@ clj-hgvs provides:
 Clojure CLI/deps.edn:
 
 ```clojure
-clj-hgvs {:mvn/version "0.4.1"}
+clj-hgvs {:mvn/version "0.4.2"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.4.1"]
+[clj-hgvs "0.4.2"]
 ```
 
 To use clj-hgvs with Clojure 1.8, you must include a dependency on
@@ -95,6 +95,37 @@ HGVS data.
 
 See [API reference](https://chrovis.github.io/clj-hgvs/clj-hgvs.core.html#var-format)
 for all formatter options.
+
+### HGVS Repair
+
+`repair-hgvs-str` attempts to repair an invalid HGVS text.
+
+```clojure
+(hgvs/repair-hgvs-str "c.123_124GC>AA")
+;;=> "c.123_124delGCinsAA"
+```
+
+The repair rules are based on frequent mistakes in popular public-domain
+databases such as dbSNP and ClinVar.
+
+You may supply custom repair rules to the second argument:
+
+```clojure
+(require '[clojure.string :as string]
+         '[clj-hgvs.repairer :as repairer])
+
+(defn lower-case-ext
+  [s kind]
+  (if (= kind :protein)
+    (string/replace s #"EXT" "ext")
+    s))
+
+(def my-repairers (conj repairer/built-in-repairers
+                        lower-case-ext))
+
+(hgvs/repair-hgvs-str "p.*833EXT*?" my-repairers)
+;;=> "p.*833ext*?"
+```
 
 ## License
 
