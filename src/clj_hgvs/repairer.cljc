@@ -202,6 +202,16 @@
     (string/replace s #"([0-9A-Za-z]+_[0-9A-Za-z]+)>([A-Za-z]+)" "$1delins$2")
     s))
 
+;; p.348_349SerPro[4] -> p.Ser348_Pro349[4]
+;; p.68_70AAP[1] -> p.A68_P70[1]
+(defn ^:no-doc fix-protein-repeated-seqs-pos
+  [s kind]
+  (if (= kind :protein)
+    (string/replace s
+                    #"(\d+)_(\d+)([A-Z](?:[a-z]{2})?)(?:[A-Z](?:[a-z]{2})?)*([A-Z](?:[a-z]{2})?)(\[[\d()_]+\])"
+                    "$3$1_$4$2$5")
+    s))
+
 ;; p.G72AfsX13 -> p.G72Afs*13
 ;; p.Q94Hfsx? -> p.Q94Hfs*?
 (defn ^:no-doc frameshift-x->ter
@@ -288,6 +298,7 @@
    remove-extra-bases-from-protein-del
    protein-substitution->delins
    protein-substitutions->delins
+   fix-protein-repeated-seqs-pos
    frameshift-x->ter
    lower-case-fs
    remove-fs-greater

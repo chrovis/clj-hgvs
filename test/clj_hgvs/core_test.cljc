@@ -308,6 +308,10 @@
     ;; protein-substitutions->delins
     "p.E746_S752>V" "p.E746_S752delinsV"
 
+    ;; fix-protein-repeated-seqs-pos
+    "p.348_349SerPro[4]" "p.Ser348_Pro349[4]"
+    "p.68_70AAP[1]"      "p.A68_P70[1]"
+
     ;; frameshift-x->ter
     "p.G72AfsX13" "p.G72Afs*13"
     "p.Q94Hfsx?"  "p.Q94Hfs*?"
