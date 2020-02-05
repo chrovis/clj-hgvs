@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add "fix-protein-repeated-seqs-pos" repairer.
+
 ## [0.4.2] - 2019-12-27
 
 ### Added
