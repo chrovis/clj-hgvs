@@ -60,6 +60,16 @@
                                   (coord/unknown-coordinate))
       "5154+?")))
 
+(deftest uncertain-coordinate-calc-test
+  (is (thrown? #?(:clj IllegalArgumentException, :cljs js/Error)
+               (coord/plus (coord/uncertain-coordinate (coord/genomic-coordinate 2)
+                                                       (coord/genomic-coordinate 7))
+                           2)))
+  (is (thrown? #?(:clj IllegalArgumentException, :cljs js/Error)
+               (coord/minus (coord/uncertain-coordinate (coord/genomic-coordinate 2)
+                                                        (coord/genomic-coordinate 7))
+                            2))))
+
 (deftest plain-uncertain-coordinate-test
   (testing "returns a plain map representing UncertainCoordinate"
     (is (= (coord/plain (coord/uncertain-coordinate (coord/unknown-coordinate)
@@ -83,6 +93,12 @@
 (deftest format-unknown-coordinate-test
   (testing "returns a string expression of UnknownCoordinate"
     (is (= (coord/format (coord/unknown-coordinate)) "?"))))
+
+(deftest unknown-coordinate-calc-test
+  (is (thrown? #?(:clj IllegalArgumentException, :cljs js/Error)
+               (coord/plus (coord/unknown-coordinate) 2)))
+  (is (thrown? #?(:clj IllegalArgumentException, :cljs js/Error)
+               (coord/minus (coord/unknown-coordinate) 2))))
 
 (deftest plain-unknown-coordinate-test
   (testing "returns a plain map representing UnknownCoordinate"
@@ -121,6 +137,20 @@
   (testing "returns a string expression of GenomicCoordinate"
     (is (= (coord/format (coord/genomic-coordinate 3)) "3"))))
 
+(deftest genomic-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/genomic-coordinate 2) 1  (coord/genomic-coordinate 3)
+    (coord/genomic-coordinate 2) -1 (coord/genomic-coordinate 1)
+    (coord/genomic-coordinate 2) 0  (coord/genomic-coordinate 2))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/genomic-coordinate 2) -2
+    (coord/genomic-coordinate 2) -3)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/genomic-coordinate 2) 2
+    (coord/genomic-coordinate 2) 3))
+
 (deftest plain-genomic-coordinate-test
   (testing "returns a plain map representing GenomicCoordinate"
     (is (= (coord/plain (coord/genomic-coordinate 3))
@@ -152,6 +182,20 @@
 (deftest format-mitochondrial-coordinate-test
   (testing "returns a string expression of MitochondrialCoordinate"
     (is (= (coord/format (coord/mitochondrial-coordinate 3)) "3"))))
+
+(deftest mitochondrial-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/mitochondrial-coordinate 2) 1  (coord/mitochondrial-coordinate 3)
+    (coord/mitochondrial-coordinate 2) -1 (coord/mitochondrial-coordinate 1)
+    (coord/mitochondrial-coordinate 2) 0  (coord/mitochondrial-coordinate 2))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/mitochondrial-coordinate 2) -2
+    (coord/mitochondrial-coordinate 2) -3)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/mitochondrial-coordinate 2) 2
+    (coord/mitochondrial-coordinate 2) 3))
 
 (deftest plain-mitochondrial-coordinate-test
   (testing "returns a plain map representing MitochondrialCoordinate"
@@ -232,6 +276,61 @@
     (is (true? (coord/in-exon? (coord/coding-dna-coordinate 3 0 nil))))
     (is (false? (coord/in-exon? (coord/coding-dna-coordinate 87 3 nil))))))
 
+(deftest coding-dna-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/coding-dna-coordinate 3 0 nil) 0  (coord/coding-dna-coordinate 3 0 nil)
+    (coord/coding-dna-coordinate 3 0 nil) 2  (coord/coding-dna-coordinate 5 0 nil)
+    (coord/coding-dna-coordinate 3 0 nil) -2 (coord/coding-dna-coordinate 1 0 nil)
+    (coord/coding-dna-coordinate 3 0 nil) -3 (coord/coding-dna-coordinate 1 0 :upstream)
+    (coord/coding-dna-coordinate 3 0 nil) -5 (coord/coding-dna-coordinate 3 0 :upstream)
+    ;; upstream
+    (coord/coding-dna-coordinate 3 0 :upstream) 0  (coord/coding-dna-coordinate 3 0 :upstream)
+    (coord/coding-dna-coordinate 3 0 :upstream) 2  (coord/coding-dna-coordinate 1 0 :upstream)
+    (coord/coding-dna-coordinate 3 0 :upstream) -2 (coord/coding-dna-coordinate 5 0 :upstream)
+    (coord/coding-dna-coordinate 3 0 :upstream) 3  (coord/coding-dna-coordinate 1 0 nil)
+    (coord/coding-dna-coordinate 3 0 :upstream) 5  (coord/coding-dna-coordinate 3 0 nil)
+    ;; downstream
+    (coord/coding-dna-coordinate 3 0 :downstream) 0  (coord/coding-dna-coordinate 3 0 :downstream)
+    (coord/coding-dna-coordinate 3 0 :downstream) 2  (coord/coding-dna-coordinate 5 0 :downstream)
+    (coord/coding-dna-coordinate 3 0 :downstream) -2 (coord/coding-dna-coordinate 1 0 :downstream)
+    ;; positive offset
+    (coord/coding-dna-coordinate 3 2 nil) 0  (coord/coding-dna-coordinate 3 2 nil)
+    (coord/coding-dna-coordinate 3 2 nil) 1  (coord/coding-dna-coordinate 3 3 nil)
+    (coord/coding-dna-coordinate 3 2 nil) -1 (coord/coding-dna-coordinate 3 1 nil)
+    (coord/coding-dna-coordinate 3 2 nil) -2 (coord/coding-dna-coordinate 3 0 nil)
+    (coord/coding-dna-coordinate 3 2 nil) -4 (coord/coding-dna-coordinate 1 0 nil)
+    (coord/coding-dna-coordinate 3 2 nil) -5 (coord/coding-dna-coordinate 1 0 :upstream)
+    ;; positive offset and upstream
+    (coord/coding-dna-coordinate 3 2 :upstream) 2  (coord/coding-dna-coordinate 3 4 :upstream)
+    (coord/coding-dna-coordinate 3 2 :upstream) -2 (coord/coding-dna-coordinate 3 0 :upstream)
+    (coord/coding-dna-coordinate 3 2 :upstream) -4 (coord/coding-dna-coordinate 5 0 :upstream)
+    ;; positive offset and downstream
+    (coord/coding-dna-coordinate 3 2 :downstream) 2  (coord/coding-dna-coordinate 3 4 :downstream)
+    (coord/coding-dna-coordinate 3 2 :downstream) -2 (coord/coding-dna-coordinate 3 0 :downstream)
+    (coord/coding-dna-coordinate 3 2 :downstream) -4 (coord/coding-dna-coordinate 1 0 :downstream)
+    ;; negative offset
+    (coord/coding-dna-coordinate 3 -2 nil) 0  (coord/coding-dna-coordinate 3 -2 nil)
+    (coord/coding-dna-coordinate 3 -2 nil) 1  (coord/coding-dna-coordinate 3 -1 nil)
+    (coord/coding-dna-coordinate 3 -2 nil) -1 (coord/coding-dna-coordinate 3 -3 nil)
+    (coord/coding-dna-coordinate 3 -2 nil) 2  (coord/coding-dna-coordinate 3 0 nil)
+    (coord/coding-dna-coordinate 3 -2 nil) 4  (coord/coding-dna-coordinate 5 0 nil)
+    ;; negative offset and upstream
+    (coord/coding-dna-coordinate 3 -2 :upstream) 2  (coord/coding-dna-coordinate 3 0 :upstream)
+    (coord/coding-dna-coordinate 3 -2 :upstream) -2 (coord/coding-dna-coordinate 3 -4 :upstream)
+    (coord/coding-dna-coordinate 3 -2 :upstream) 4  (coord/coding-dna-coordinate 1 0 :upstream)
+    ;; negative offset and downstream
+    (coord/coding-dna-coordinate 3 -2 :downstream) 2  (coord/coding-dna-coordinate 3 0 :downstream)
+    (coord/coding-dna-coordinate 3 -2 :downstream) -2 (coord/coding-dna-coordinate 3 -4 :downstream)
+    (coord/coding-dna-coordinate 3 -2 :downstream) 4  (coord/coding-dna-coordinate 5 0 :downstream))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/coding-dna-coordinate 3 0 :downstream) -3
+    (coord/coding-dna-coordinate 3 0 :downstream) -5)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/coding-dna-coordinate 3 0 :downstream) 3
+    (coord/coding-dna-coordinate 3 0 :downstream) 5))
+
 (deftest plain-coding-dna-coordinate-test
   (testing "returns a plain map representing CodingDNACoordinate"
     (is (= (coord/plain (coord/coding-dna-coordinate 3 0 nil))
@@ -271,6 +370,20 @@
   (testing "returns a string expression of NonCodingDNACoordinate"
     (is (= (coord/format (coord/non-coding-dna-coordinate 3)) "3"))))
 
+(deftest non-coding-dna-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/non-coding-dna-coordinate 2) 1  (coord/non-coding-dna-coordinate 3)
+    (coord/non-coding-dna-coordinate 2) -1 (coord/non-coding-dna-coordinate 1)
+    (coord/non-coding-dna-coordinate 2) 0  (coord/non-coding-dna-coordinate 2))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/non-coding-dna-coordinate 2) -2
+    (coord/non-coding-dna-coordinate 2) -3)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/non-coding-dna-coordinate 2) 2
+    (coord/non-coding-dna-coordinate 2) 3))
+
 (deftest plain-non-coding-dna-coordinate-test
   (testing "returns a plain map representing NonCodingDNACoordinate"
     (is (= (coord/plain (coord/non-coding-dna-coordinate 3))
@@ -302,6 +415,20 @@
 (deftest format-circular-dna-coordinate-test
   (testing "returns a string expression of CircularDNACoordinate"
     (is (= (coord/format (coord/circular-dna-coordinate 3)) "3"))))
+
+(deftest circular-dna-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/circular-dna-coordinate 2) 1  (coord/circular-dna-coordinate 3)
+    (coord/circular-dna-coordinate 2) -1 (coord/circular-dna-coordinate 1)
+    (coord/circular-dna-coordinate 2) 0  (coord/circular-dna-coordinate 2))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/circular-dna-coordinate 2) -2
+    (coord/circular-dna-coordinate 2) -3)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/circular-dna-coordinate 2) 2
+    (coord/circular-dna-coordinate 2) 3))
 
 (deftest plain-circular-dna-coordinate-test
   (testing "returns a plain map representing CircularDNACoordinate"
@@ -383,6 +510,61 @@
     (is (true? (coord/in-exon? (coord/rna-coordinate 3 nil nil))))
     (is (false? (coord/in-exon? (coord/rna-coordinate 87 3 nil))))))
 
+(deftest rna-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/rna-coordinate 3 0 nil) 0  (coord/rna-coordinate 3 0 nil)
+    (coord/rna-coordinate 3 0 nil) 2  (coord/rna-coordinate 5 0 nil)
+    (coord/rna-coordinate 3 0 nil) -2 (coord/rna-coordinate 1 0 nil)
+    (coord/rna-coordinate 3 0 nil) -3 (coord/rna-coordinate 1 0 :upstream)
+    (coord/rna-coordinate 3 0 nil) -5 (coord/rna-coordinate 3 0 :upstream)
+    ;; upstream
+    (coord/rna-coordinate 3 0 :upstream) 0  (coord/rna-coordinate 3 0 :upstream)
+    (coord/rna-coordinate 3 0 :upstream) 2  (coord/rna-coordinate 1 0 :upstream)
+    (coord/rna-coordinate 3 0 :upstream) -2 (coord/rna-coordinate 5 0 :upstream)
+    (coord/rna-coordinate 3 0 :upstream) 3  (coord/rna-coordinate 1 0 nil)
+    (coord/rna-coordinate 3 0 :upstream) 5  (coord/rna-coordinate 3 0 nil)
+    ;; downstream
+    (coord/rna-coordinate 3 0 :downstream) 0  (coord/rna-coordinate 3 0 :downstream)
+    (coord/rna-coordinate 3 0 :downstream) 2  (coord/rna-coordinate 5 0 :downstream)
+    (coord/rna-coordinate 3 0 :downstream) -2 (coord/rna-coordinate 1 0 :downstream)
+    ;; positive offset
+    (coord/rna-coordinate 3 2 nil) 0  (coord/rna-coordinate 3 2 nil)
+    (coord/rna-coordinate 3 2 nil) 1  (coord/rna-coordinate 3 3 nil)
+    (coord/rna-coordinate 3 2 nil) -1 (coord/rna-coordinate 3 1 nil)
+    (coord/rna-coordinate 3 2 nil) -2 (coord/rna-coordinate 3 0 nil)
+    (coord/rna-coordinate 3 2 nil) -4 (coord/rna-coordinate 1 0 nil)
+    (coord/rna-coordinate 3 2 nil) -5 (coord/rna-coordinate 1 0 :upstream)
+    ;; positive offset and upstream
+    (coord/rna-coordinate 3 2 :upstream) 2  (coord/rna-coordinate 3 4 :upstream)
+    (coord/rna-coordinate 3 2 :upstream) -2 (coord/rna-coordinate 3 0 :upstream)
+    (coord/rna-coordinate 3 2 :upstream) -4 (coord/rna-coordinate 5 0 :upstream)
+    ;; positive offset and downstream
+    (coord/rna-coordinate 3 2 :downstream) 2  (coord/rna-coordinate 3 4 :downstream)
+    (coord/rna-coordinate 3 2 :downstream) -2 (coord/rna-coordinate 3 0 :downstream)
+    (coord/rna-coordinate 3 2 :downstream) -4 (coord/rna-coordinate 1 0 :downstream)
+    ;; negative offset
+    (coord/rna-coordinate 3 -2 nil) 0  (coord/rna-coordinate 3 -2 nil)
+    (coord/rna-coordinate 3 -2 nil) 1  (coord/rna-coordinate 3 -1 nil)
+    (coord/rna-coordinate 3 -2 nil) -1 (coord/rna-coordinate 3 -3 nil)
+    (coord/rna-coordinate 3 -2 nil) 2  (coord/rna-coordinate 3 0 nil)
+    (coord/rna-coordinate 3 -2 nil) 4  (coord/rna-coordinate 5 0 nil)
+    ;; negative offset and upstream
+    (coord/rna-coordinate 3 -2 :upstream) 2  (coord/rna-coordinate 3 0 :upstream)
+    (coord/rna-coordinate 3 -2 :upstream) -2 (coord/rna-coordinate 3 -4 :upstream)
+    (coord/rna-coordinate 3 -2 :upstream) 4  (coord/rna-coordinate 1 0 :upstream)
+    ;; negative offset and downstream
+    (coord/rna-coordinate 3 -2 :downstream) 2  (coord/rna-coordinate 3 0 :downstream)
+    (coord/rna-coordinate 3 -2 :downstream) -2 (coord/rna-coordinate 3 -4 :downstream)
+    (coord/rna-coordinate 3 -2 :downstream) 4  (coord/rna-coordinate 5 0 :downstream))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/rna-coordinate 3 0 :downstream) -3
+    (coord/rna-coordinate 3 0 :downstream) -5)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/rna-coordinate 3 0 :downstream) 3
+    (coord/rna-coordinate 3 0 :downstream) 5))
+
 (deftest plain-rna-coordinate-test
   (testing "returns a plain map representing RNACoordinate"
     (is (= (coord/plain (coord/rna-coordinate 3 0 nil))
@@ -421,6 +603,20 @@
 (deftest format-protein-coordinate-test
   (testing "returns a string expression of ProteinCoordinate"
     (is (= (coord/format (coord/protein-coordinate 3)) "3"))))
+
+(deftest protein-coordinate-calc-test
+  (are [c n e] (= (coord/plus c n) (coord/minus c (- n)) e)
+    (coord/protein-coordinate 2) 1  (coord/protein-coordinate 3)
+    (coord/protein-coordinate 2) -1 (coord/protein-coordinate 1)
+    (coord/protein-coordinate 2) 0  (coord/protein-coordinate 2))
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/plus c n))
+    (coord/protein-coordinate 2) -2
+    (coord/protein-coordinate 2) -3)
+  (are [c n] (thrown? #?(:clj ArithmeticException, :cljs js/RangeError)
+                      (coord/minus c n))
+    (coord/protein-coordinate 2) 2
+    (coord/protein-coordinate 2) 3))
 
 (deftest plain-protein-coordinate-test
   (testing "returns a plain map representing ProteinCoordinate"

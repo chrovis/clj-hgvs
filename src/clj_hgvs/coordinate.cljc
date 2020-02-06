@@ -39,6 +39,10 @@
     :downstream "*"
     nil ""))
 
+(defprotocol Calculable
+  (plus [this n] "Adds n to the given coordinate and returns the new coordinate.")
+  (minus [this n] "Subtracts n from the given coordinate and returns the new coordinate."))
+
 ;;; unknown coordinate
 
 (defrecord UnknownCoordinate []
@@ -144,9 +148,20 @@
   #?(:clj Comparable, :cljs IComparable)
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
+
   Coordinate
   (format [_] (str position))
-  (plain [this] (into {:coordinate "genomic"} this)))
+  (plain [this] (into {:coordinate "genomic"} this))
+
+  Calculable
+  (plus [this n]
+    (let [new-pos (+ position n)]
+      (if (pos? new-pos)
+        (assoc this :position new-pos)
+        (throw (#?(:clj ArithmeticException.
+                   :cljs js/RangeError.) "Position must be positive")))))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::genomic-coordinate
   (s/and ::coordinate (s/keys :req-un [::position])))
@@ -176,7 +191,17 @@
 (defrecord MitochondrialCoordinate [position]
   Coordinate
   (format [_] (str position))
-  (plain [this] (into {:coordinate "mitochondrial"} this)))
+  (plain [this] (into {:coordinate "mitochondrial"} this))
+
+  Calculable
+  (plus [this n]
+    (let [new-pos (+ position n)]
+      (if (pos? new-pos)
+        (assoc this :position new-pos)
+        (throw (#?(:clj ArithmeticException.
+                   :cljs js/RangeError.) "Position must be positive")))))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::mitochondrial-coordinate
   (s/and ::coordinate (s/keys :req-un [::position])))
@@ -225,6 +250,7 @@
             (compare position o-position)))
         (compare (get {:upstream -1, :downstream 1} region 0)
                  (get {:upstream -1, :downstream 1} o-region 0)))))
+
   Coordinate
   (format [_]
     (str (->region-str region)
@@ -233,9 +259,48 @@
            (str (if (pos? offset) "+") offset))))
   (plain [this]
     (into {:coordinate "coding-dna"} (update this :region #(some-> % name))))
+
   ICodingDNACoordinate
   (in-exon? [this]
-    (or (nil? offset) (zero? offset))))
+    (or (nil? offset) (zero? offset)))
+
+  Calculable
+  (plus [this n]
+    (let [plus-pos (fn [pos n region]
+                     (if (= region :upstream)
+                       (- pos n)
+                       (+ pos n)))
+          zero-offset? (or (nil? offset) (zero? offset))
+          new-offset (if zero-offset?
+                       offset
+                       (+ offset n))
+          [new-position new-offset] (cond
+                                      zero-offset?
+                                      [(plus-pos position n region) offset]
+
+                                      (pos? (* offset new-offset))
+                                      [position new-offset]
+
+                                      :else
+                                      [(plus-pos position new-offset region) 0])
+          [new-position new-region] (cond
+                                      (pos? new-position)
+                                      [new-position region]
+
+                                      (= region :downstream)
+                                      (throw (#?(:clj ArithmeticException.
+                                                 :cljs js/RangeError.)
+                                              "Could not calculate a new coordinate"))
+
+                                      :else
+                                      [(inc (- new-position)) (when (nil? region)
+                                                                :upstream)])]
+      (assoc this
+             :position new-position
+             :offset new-offset
+             :region new-region)))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::coding-dna-coordinate
   (s/and ::coordinate (s/keys :req-un [::position ::offset ::region])))
@@ -275,9 +340,20 @@
   #?(:clj Comparable, :cljs IComparable)
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
+
   Coordinate
   (format [_] (str position))
-  (plain [this] (into {:coordinate "non-coding-dna"} this)))
+  (plain [this] (into {:coordinate "non-coding-dna"} this))
+
+  Calculable
+  (plus [this n]
+    (let [new-pos (+ position n)]
+      (if (pos? new-pos)
+        (assoc this :position new-pos)
+        (throw (#?(:clj ArithmeticException.
+                   :cljs js/RangeError.) "Position must be positive")))))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::non-coding-dna-coordinate
   (s/and ::coordinate (s/keys :req-un [::position])))
@@ -307,7 +383,17 @@
 (defrecord CircularDNACoordinate [position]
   Coordinate
   (format [_] (str position))
-  (plain [this] (into {:coordinate "circular-dna"} this)))
+  (plain [this] (into {:coordinate "circular-dna"} this))
+
+  Calculable
+  (plus [this n]
+    (let [new-pos (+ position n)]
+      (if (pos? new-pos)
+        (assoc this :position new-pos)
+        (throw (#?(:clj ArithmeticException.
+                   :cljs js/RangeError.) "Could not calculate a new position")))))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::circular-dna-coordinate
   (s/and ::coordinate (s/keys :req-un [::position])))
@@ -348,6 +434,7 @@
             (compare position o-position)))
         (compare (get {:upstream -1, :downstream 1} region 0)
                  (get {:upstream -1, :downstream 1} o-region 0)))))
+
   Coordinate
   (format [_]
     (str (->region-str region)
@@ -356,9 +443,48 @@
            (str (if (pos? offset) "+") offset))))
   (plain [this]
     (into {:coordinate "rna"} (update this :region #(some-> % name))))
+
   ICodingDNACoordinate
   (in-exon? [this]
-    (or (nil? offset) (zero? offset))))
+    (or (nil? offset) (zero? offset)))
+
+  Calculable
+  (plus [this n]
+    (let [plus-pos (fn [pos n region]
+                     (if (= region :upstream)
+                       (- pos n)
+                       (+ pos n)))
+          zero-offset? (or (nil? offset) (zero? offset))
+          new-offset (if zero-offset?
+                       offset
+                       (+ offset n))
+          [new-position new-offset] (cond
+                                      zero-offset?
+                                      [(plus-pos position n region) offset]
+
+                                      (pos? (* offset new-offset))
+                                      [position new-offset]
+
+                                      :else
+                                      [(plus-pos position new-offset region) 0])
+          [new-position new-region] (cond
+                                      (pos? new-position)
+                                      [new-position region]
+
+                                      (= region :downstream)
+                                      (throw (#?(:clj ArithmeticException.
+                                                 :cljs js/RangeError.)
+                                              "Could not calculate a new coordinate"))
+
+                                      :else
+                                      [(inc (- new-position)) (when (nil? region)
+                                                                :upstream)])]
+      (assoc this
+             :position new-position
+             :offset new-offset
+             :region new-region)))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::rna-coordinate
   (s/and ::coordinate (s/keys :req-un [::position ::offset ::region])))
@@ -398,9 +524,20 @@
   #?(:clj Comparable, :cljs IComparable)
   (#?(:clj compareTo, :cljs -compare) [this o]
     (compare position (:position o)))
+
   Coordinate
   (format [_] (str position))
-  (plain [this] (into {:coordinate "protein"} this)))
+  (plain [this] (into {:coordinate "protein"} this))
+
+  Calculable
+  (plus [this n]
+    (let [new-pos (+ position n)]
+      (if (pos? new-pos)
+        (assoc this :position new-pos)
+        (throw (#?(:clj ArithmeticException.
+                   :cljs js/RangeError.) "Position must be positive")))))
+  (minus [this n]
+    (plus this (- n))))
 
 (s/def ::protein-coordinate
   (s/and ::coordinate (s/keys :req-un [::position])))
