@@ -1648,3 +1648,138 @@
     "?"                       clj_hgvs.mutation.ProteinUnknownMutation
     "Met1?"                   clj_hgvs.mutation.ProteinUnknownMutation
     "="                       clj_hgvs.mutation.ProteinNoEffect))
+
+;;; others
+
+(deftest equiv-test
+  (testing "General"
+    (are [mut1 mut2] (true? (mut/equiv mut1 mut2))
+      (mut/parse-dna "2361G>A" :coding-dna) (mut/parse-dna "2361G>A" :coding-dna))
+    (are [mut1 mut2] (false? (mut/equiv mut1 mut2))
+      (mut/parse-dna "2361G>A" :coding-dna) (mut/parse-dna "2371G>A" :coding-dna)
+      (mut/parse-dna "2361G>A" :coding-dna) (mut/parse-dna "2361del" :coding-dna)))
+
+  (testing "DNA - deletion"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-dna-deletion s1 :genome)
+                                   (mut/parse-dna-deletion s2 :genome)))
+      "6_8del"    "6_8del"
+      "6_8delTGC" "6_8delTGC"
+      "6_8delTGC" "6_8del")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-dna-deletion s1 :genome)
+                                    (mut/parse-dna-deletion s2 :genome)))
+      "6_8del"    "6_9del"
+      "6_8delTGC" "6_8delTGA"))
+
+  (testing "DNA - duplication"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-dna-duplication s1 :genome)
+                                   (mut/parse-dna-duplication s2 :genome)))
+      "6_8dup"    "6_8dup"
+      "6_8dupTGC" "6_8dupTGC"
+      "6_8dupTGC" "6_8dup")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-dna-duplication s1 :genome)
+                                    (mut/parse-dna-duplication s2 :genome)))
+      "6_8dup"    "6_9dup"
+      "6_8dupTGC" "6_8dupTGA"))
+
+  (testing "DNA - indel"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-dna-indel s1 :genome)
+                                   (mut/parse-dna-indel s2 :genome)))
+      "6775delinsGA"  "6775delinsGA"
+      "6775delTinsGA" "6775delTinsGA"
+      "6775delTinsGA" "6775delinsGA")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-dna-indel s1 :genome)
+                                    (mut/parse-dna-indel s2 :genome)))
+      "6775delinsGA"  "6776delinsGA"
+      "6775delTinsGA" "6775delCinsGA"))
+
+  (testing "DNA - repeated sequences"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-dna-repeated-seqs s1 :genome)
+                                   (mut/parse-dna-repeated-seqs s2 :genome)))
+      "123_124[14]" "123_124[14]"
+      "123TG[14]"   "123TG[14]"
+      "123_124[14]" "123TG[14]"
+      "123TG[14]"   "123_124[14]")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-dna-repeated-seqs s1 :genome)
+                                    (mut/parse-dna-repeated-seqs s2 :genome)))
+      "123_124[14]" "123_125[14]"
+      "123TG[14]"   "123TC[14]"
+      "123_124[14]" "123_124[15]"
+      "123_124[14]" "123TGC[14]"
+      "123TGC[14]"  "123_124[14]"))
+
+  (testing "RNA - deletion"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-rna-deletion s1)
+                                   (mut/parse-rna-deletion s2)))
+      "6_8del"    "6_8del"
+      "6_8delugc" "6_8delugc"
+      "6_8delugc" "6_8del")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-rna-deletion s1)
+                                    (mut/parse-rna-deletion s2)))
+      "6_8del"    "6_9del"
+      "6_8delugc" "6_8deluga"))
+
+  (testing "RNA - duplication"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-rna-duplication s1)
+                                   (mut/parse-rna-duplication s2)))
+      "6_8dup"    "6_8dup"
+      "6_8dupugc" "6_8dupugc"
+      "6_8dupugc" "6_8dup")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-rna-duplication s1)
+                                    (mut/parse-rna-duplication s2)))
+      "6_8dup"    "6_9dup"
+      "6_8dupugc" "6_8dupuga"))
+
+  (testing "RNA - indel"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-rna-indel s1)
+                                   (mut/parse-rna-indel s2)))
+      "6775delinsga"  "6775delinsga"
+      "6775deluinsga" "6775deluinsga"
+      "6775deluinsga" "6775delinsga")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-rna-indel s1)
+                                    (mut/parse-rna-indel s2)))
+      "6775delinsga"  "6776delinsga"
+      "6775deluinsga" "6775delcinsga"))
+
+  (testing "RNA - repeated sequences"
+    (are [s1 s2] (true? (mut/equiv (mut/parse-rna-repeated-seqs s1)
+                                   (mut/parse-rna-repeated-seqs s2)))
+      "-124_-123[14]" "-124_-123[14]"
+      "-124ug[14]"    "-124ug[14]"
+      "-124_-123[14]" "-124ug[14]"
+      "-124ug[14]"    "-124_-123[14]")
+    (are [s1 s2] (false? (mut/equiv (mut/parse-rna-repeated-seqs s1)
+                                    (mut/parse-rna-repeated-seqs s2)))
+      "-124_-123[14]" "-124_-122[14]"
+      "-124ug[14]"    "-124uc[14]"
+      "-124_-123[14]" "-124_-123[15]"
+      "-124_-123[14]" "-124ugc[14]"
+      "-124ugc[14]"   "-124_-123[14]"))
+
+  (testing "Protein - frame shift"
+    (are [mut1 mut2] (true? (mut/equiv mut1 mut2))
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K53Afs*9")
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K53fs*9")
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K53Afs")
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K53fs"))
+    (are [mut1 mut2] (false? (mut/equiv mut1 mut2))
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K63Afs*9")
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K53Vfs*9")
+      (mut/parse-protein "K53Afs*9") (mut/parse-protein "K53Afs*8")))
+
+  (testing "Protein - extension"
+    (are [mut1 mut2] (true? (mut/equiv mut1 mut2))
+      (mut/parse-protein "Ter110Glnext*17") (mut/parse-protein "Ter110Glnext*17")
+      (mut/parse-protein "Ter110Glnext*17") (mut/parse-protein "Ter110ext*17")
+      (mut/parse-protein "Ter110Glnext*17") (mut/parse-protein "Ter110Glnext*?"))
+    (are [mut1 mut2] (false? (mut/equiv mut1 mut2))
+      (mut/parse-protein "Ter110Glnext*17") (mut/parse-protein "Ter120Glnext*17")
+      (mut/parse-protein "Ter110Glnext*17") (mut/parse-protein "Ter110Gluext*17")
+      (mut/parse-protein "Ter110Glnext*17") (mut/parse-protein "Ter110Glnext*18")))
+
+  (testing "Uncertain mutation"
+    (are [mut1 mut2] (true? (mut/equiv mut1 mut2))
+      (mut/parse-rna "(?)") (mut/parse-rna "(?)")
+      (mut/parse-protein "(K53Afs*9)") (mut/parse-protein "(K53fs)"))
+    (are [mut1 mut2] (false? (mut/equiv mut1 mut2))
+      (mut/parse-rna "(?)") (mut/parse-rna "(306g>u)")
+      (mut/parse-protein "(K53Afs*9)") (mut/parse-protein "(K53Afs*8)"))))

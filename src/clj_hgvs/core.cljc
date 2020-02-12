@@ -1,9 +1,10 @@
 (ns clj-hgvs.core
   "Main functions for handling HGVS. See http://varnomen.hgvs.org/ for the
   detail HGVS nomenclature."
-  #?(:clj (:refer-clojure :exclude [format]))
+  (:refer-clojure :exclude [== #?(:clj format)])
   (:require #?(:clj [clojure.pprint :as pp])
             [clojure.spec.alpha :as s]
+            [clojure.string :as string]
             [clj-hgvs.internal :as intl]
             [clj-hgvs.mutation :as mut]
             [clj-hgvs.repairer :as repairer]))
@@ -131,6 +132,31 @@
   :args (s/cat :hgvs ::hgvs
                :opts (s/? (s/nilable ::format-options)))
   :ret  string?)
+
+(defn- transcript-equiv
+  [s1 s2]
+  (letfn [(trimver [s]
+            (when s
+              (string/replace s #"([^.pt]+)[.pt]\d+" "$1")))]
+    (= (trimver s1) (trimver s2))))
+
+(defn ==
+  "Returns true if hgvs1 is equivalent to hgvs2, false otherwise.
+
+  This function compares the fundamental equivalence of the given HGVS, ignoring
+  the difference of the transcript version, the short/long amino acid style, and
+  the description of the same mutation."
+  ([hgvs] true)
+  ([hgvs1 hgvs2]
+   (and (transcript-equiv (:transcript hgvs1) (:transcript hgvs2))
+        (= (:kind hgvs1) (:kind hgvs2))
+        (mut/equiv (:mutation hgvs1) (:mutation hgvs2))))
+  ([hgvs1 hgvs2 & more]
+   (if (== hgvs1 hgvs2)
+     (if (next more)
+       (recur hgvs2 (first more) (next more))
+       (== hgvs2 (first more)))
+     false)))
 
 (defn plain
   "Returns a plain map representing the given HGVS. This function is useful for

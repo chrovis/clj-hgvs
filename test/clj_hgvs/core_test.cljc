@@ -196,6 +196,36 @@
     (is (= (hgvs/format hgvs4m {:show-bases? true}) hgvs4s))
     (is (= (hgvs/format hgvs9m {:amino-acid-format :short}) hgvs9ss))))
 
+(deftest equiv-test
+  (testing "one arg"
+    (is (true? (hgvs/== (hgvs/parse "NM_005228:c.2361G>A"))))
+    (is (true? (hgvs/== nil))))
+
+  (testing "two args"
+    (are [s1 s2] (true? (hgvs/== (hgvs/parse s1) (hgvs/parse s2)))
+      "NM_005228:c.2361G>A"   "NM_005228:c.2361G>A"
+      "NM_005228:c.2361G>A"   "NM_005228.3:c.2361G>A"
+      "NM_005228.3:c.2361G>A" "NM_005228.4:c.2361G>A"
+      "c.2361G>A"             "c.2361G>A"
+      "p.L858R"               "p.Leu858Arg"
+      "p.K53Afs*9"            "p.K53Afs")
+    (is (true? (hgvs/== nil nil)))
+    (are [s1 s2] (false? (hgvs/== (hgvs/parse s1) (hgvs/parse s2)))
+      "NM_005228:c.2361G>A" "NM_001346898:c.2361G>A"
+      "NM_005228:c.2361G>A" "NM_005228:c.2361G>C"
+      "NM_005228:c.2361G>A" "c.2361G>A"
+      "p.L858R"             "p.L858M")
+    (is (false? (hgvs/== (hgvs/parse "NM_005228:c.2361G>A") nil)))
+    (is (false? (hgvs/== nil (hgvs/parse "NM_005228:c.2361G>A")))))
+
+  (testing "more args"
+    (is (true? (hgvs/== (hgvs/parse "NM_005228:c.2361G>A")
+                        (hgvs/parse "NM_005228.3:c.2361G>A")
+                        (hgvs/parse "NM_005228.4:c.2361G>A"))))
+    (is (false? (hgvs/== (hgvs/parse "NM_005228:c.2361G>A")
+                         (hgvs/parse "NM_005228.3:c.2361G>A")
+                         (hgvs/parse "NM_005228.4:c.2361G>C"))))))
+
 (deftest plain-test
   (testing "returns a plain map representing HGVS"
     (is (= (hgvs/plain hgvs1m) hgvs1pm))))

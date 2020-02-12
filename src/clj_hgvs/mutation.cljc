@@ -166,6 +166,15 @@
   (format-common [this opts])
   (format-unique [this opts]))
 
+(defprotocol Equivalence
+  (equiv* [this o]))
+
+(defn equiv
+  [mutation1 mutation2]
+  (if (satisfies? Equivalence mutation1)
+    (equiv* mutation1 mutation2)
+    (= mutation1 mutation2)))
+
 ;;; Uncertain mutation
 ;;;
 ;;; e.g. r.(?)
@@ -179,7 +188,13 @@
     (str "(" (format mutation) ")"))
   (plain [this]
     {:mutation "uncertain-mutation"
-     :content-mutation (plain mutation)}))
+     :content-mutation (plain mutation)})
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? UncertainMutation o)
+      (equiv mutation (:mutation o))
+      false)))
 
 (s/def ::uncertain-mutation
   (s/and ::mutation (s/keys :req-un [::mutation])))
@@ -291,7 +306,17 @@
                          "del"
                          (if show-bases? ref)])))
   (plain [this]
-    (into {:mutation "dna-deletion"} (plain-coords this))))
+    (into {:mutation "dna-deletion"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? DNADeletion o)
+      (and (= coord-start (:coord-start o))
+           (= coord-end (:coord-end o))
+           (if (and ref (:ref o))
+             (= ref (:ref o))
+             true))
+      false)))
 
 (s/def :clj-hgvs.mutation.dna-deletion/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.dna-deletion/coord-end (s/nilable ::coord/coordinate))
@@ -350,7 +375,17 @@
                          "dup"
                          (if show-bases? ref)])))
   (plain [this]
-    (into {:mutation "dna-duplication"} (plain-coords this))))
+    (into {:mutation "dna-duplication"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? DNADuplication o)
+      (and (= coord-start (:coord-start o))
+           (= coord-end (:coord-end o))
+           (if (and ref (:ref o))
+             (= ref (:ref o))
+             true))
+      false)))
 
 (s/def :clj-hgvs.mutation.dna-duplication/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.dna-duplication/coord-end (s/nilable ::coord/coordinate))
@@ -604,7 +639,18 @@
                          "ins"
                          alt])))
   (plain [this]
-    (into {:mutation "dna-indel"} (plain-coords this))))
+    (into {:mutation "dna-indel"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? DNAIndel o)
+      (and (= coord-start (:coord-start o))
+           (= coord-end (:coord-end o))
+           (if (and ref (:ref o))
+             (= ref (:ref o))
+             true)
+           (= alt (:alt o)))
+      false)))
 
 (s/def :clj-hgvs.mutation.dna-indel/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.dna-indel/coord-end (s/nilable ::coord/coordinate))
@@ -724,7 +770,24 @@
                                  :cljs js/Error.) "coord-end missing"))
                       (if should-show-end? (str "_" (coord/format coord-end))))))))
   (format-unique [this _]
-    (format-ncopy ncopy)))
+    (format-ncopy ncopy))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? DNARepeatedSeqs o)
+      (and (= coord-start (:coord-start o))
+           (cond
+             (and ref (:ref o)) (= ref (:ref o))
+             (and coord-end (:coord-end o)) (= coord-end (:coord-end o))
+             (and coord-end (:ref o)) (= coord-end
+                                         (coord/plus (:coord-start o)
+                                                     (dec (count (:ref o)))))
+             (and ref (:coord-end o)) (= (coord/plus coord-start
+                                                     (dec (count ref)))
+                                         (:coord-end o))
+             :else true)
+           (= ncopy (:ncopy o)))
+      false)))
 
 (s/def :clj-hgvs.mutation.dna-repeated-seqs/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.dna-repeated-seqs/coord-end (s/nilable ::coord/coordinate))
@@ -862,7 +925,17 @@
          "del"
          (if show-bases? ref)))
   (plain [this]
-    (into {:mutation "rna-deletion"} (plain-coords this))))
+    (into {:mutation "rna-deletion"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? RNADeletion o)
+      (and (= coord-start (:coord-start o))
+           (= coord-end (:coord-end o))
+           (if (and ref (:ref o))
+             (= ref (:ref o))
+             true))
+      false)))
 
 (s/def :clj-hgvs.mutation.rna-deletion/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.rna-deletion/coord-end (s/nilable ::coord/coordinate))
@@ -914,7 +987,17 @@
          "dup"
          (if show-bases? ref)))
   (plain [this]
-    (into {:mutation "rna-duplication"} (plain-coords this))))
+    (into {:mutation "rna-duplication"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? RNADuplication o)
+      (and (= coord-start (:coord-start o))
+           (= coord-end (:coord-end o))
+           (if (and ref (:ref o))
+             (= ref (:ref o))
+             true))
+      false)))
 
 (s/def :clj-hgvs.mutation.rna-duplication/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.rna-duplication/coord-end (s/nilable ::coord/coordinate))
@@ -1150,7 +1233,18 @@
          "ins"
          alt))
   (plain [this]
-    (into {:mutation "rna-indel"} (plain-coords this))))
+    (into {:mutation "rna-indel"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? RNAIndel o)
+      (and (= coord-start (:coord-start o))
+           (= coord-end (:coord-end o))
+           (if (and ref (:ref o))
+             (= ref (:ref o))
+             true)
+           (= alt (:alt o)))
+      false)))
 
 (s/def :clj-hgvs.mutation.rna-indel/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.rna-indel/coord-end (s/nilable ::coord/coordinate))
@@ -1268,7 +1362,24 @@
                                  :cljs js/Error.) "coord-end missing"))
                       (if should-show-end? (str "_" (coord/format coord-end))))))))
   (format-unique [this _]
-    (format-ncopy ncopy)))
+    (format-ncopy ncopy))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? RNARepeatedSeqs o)
+      (and (= coord-start (:coord-start o))
+           (cond
+             (and ref (:ref o)) (= ref (:ref o))
+             (and coord-end (:coord-end o)) (= coord-end (:coord-end o))
+             (and coord-end (:ref o)) (= coord-end
+                                         (coord/plus (:coord-start o)
+                                                     (dec (count (:ref o)))))
+             (and ref (:coord-end o)) (= (coord/plus coord-start
+                                                     (dec (count ref)))
+                                         (:coord-end o))
+             :else true)
+           (= ncopy (:ncopy o)))
+      false)))
 
 (s/def :clj-hgvs.mutation.rna-repeated-seqs/coord-start ::coord/coordinate)
 (s/def :clj-hgvs.mutation.rna-repeated-seqs/coord-end (s/nilable ::coord/coordinate))
@@ -1888,7 +1999,21 @@
                   (= ter-format :short) ->short-amino-acid)
                 (coord/format new-ter-site)))))
   (plain [this]
-    (into {:mutation "protein-frame-shift"} (plain-coords this))))
+    (into {:mutation "protein-frame-shift"} (plain-coords this)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? ProteinFrameShift o)
+      (and (= ref (:ref o))
+           (= coord (:coord o))
+           (if (and alt (:alt o))
+             (= alt (:alt o))
+             true)
+           (if (and (instance? clj_hgvs.coordinate.ProteinCoordinate new-ter-site)
+                    (instance? clj_hgvs.coordinate.ProteinCoordinate (:new-ter-site o)))
+             (= new-ter-site (:new-ter-site o))
+             true))
+      false)))
 
 (s/def :clj-hgvs.mutation.protein-frame-shift/ref ::amino-acid)
 (s/def :clj-hgvs.mutation.protein-frame-shift/coord ::coord/coordinate)
@@ -1947,7 +2072,22 @@
          (coord/format new-site)))
   (plain [this]
     (into {:mutation "protein-extension"}
-          (update (plain-coords this) :region name))))
+          (update (plain-coords this) :region name)))
+
+  Equivalence
+  (equiv* [this o]
+    (if (instance? ProteinExtension o)
+      (and (= ref (:ref o))
+           (= coord (:coord o))
+           (if (and alt (:alt o))
+             (= alt (:alt o))
+             true)
+           (= region (:region o))
+           (if (and (instance? clj_hgvs.coordinate.ProteinCoordinate new-site)
+                    (instance? clj_hgvs.coordinate.ProteinCoordinate (:new-site o)))
+             (= new-site (:new-site o))
+             true))
+      false)))
 
 (s/def :clj-hgvs.mutation.protein-extension/ref ::amino-acid)
 (s/def :clj-hgvs.mutation.protein-extension/coord ::coord/coordinate)
