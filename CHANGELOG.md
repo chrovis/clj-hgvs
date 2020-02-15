@@ -5,6 +5,8 @@
 ### Added
 
 - Add "fix-protein-repeated-seqs-pos" repairer.
+- Make coordinates calculable.
+- Add equiv fn.
 
 ## [0.4.2] - 2019-12-27
 
