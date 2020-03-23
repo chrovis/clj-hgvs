@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.4.3] - 2020-03-23
 
 ### Added
 
@@ -100,7 +100,8 @@
 
 ## 0.1.0 - 2017-04-17
 
-[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.2...HEAD
+[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.3...HEAD
+[0.4.3]: https://github.com/chrovis/clj-hgvs/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/chrovis/clj-hgvs/compare/0.4.1...0.4.2
 [0.4.1]: https://github.com/chrovis/clj-hgvs/compare/0.4.0...0.4.1
 [0.4.0]: https://github.com/chrovis/clj-hgvs/compare/0.3.1...0.4.0

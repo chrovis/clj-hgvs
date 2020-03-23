@@ -19,13 +19,13 @@ clj-hgvs provides:
 Clojure CLI/deps.edn:
 
 ```clojure
-clj-hgvs {:mvn/version "0.4.2"}
+clj-hgvs {:mvn/version "0.4.3"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.4.2"]
+[clj-hgvs "0.4.3"]
 ```
 
 To use clj-hgvs with Clojure 1.8, you must include a dependency on
@@ -96,6 +96,24 @@ HGVS data.
 See [API reference](https://chrovis.github.io/clj-hgvs/clj-hgvs.core.html#var-format)
 for all formatter options.
 
+### Equivalence
+
+`clj-hgvs.core/==` tests the fundamental equivalence of the given HGVS.
+
+```clojure
+(hgvs/== #clj-hgvs/hgvs "NM_005228:c.2361G>A"
+         #clj-hgvs/hgvs "NM_005228.4:c.2361G>A")
+;;=> true
+
+(hgvs/== #clj-hgvs/hgvs "p.K53Afs*9"
+         #clj-hgvs/hgvs "p.Lys53Alafs")
+;;=> true
+
+(hgvs/== #clj-hgvs/hgvs "p.L858R"
+         #clj-hgvs/hgvs "p.L858M")
+;;=> false
+```
+
 ### HGVS Repair
 
 `repair-hgvs-str` attempts to repair an invalid HGVS text.
@@ -129,6 +147,6 @@ You may supply custom repair rules to the second argument:
 
 ## License
 
-Copyright 2017-2019 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2020 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
