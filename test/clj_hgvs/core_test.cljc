@@ -302,6 +302,7 @@
     "c.123_123delA"       "c.123delA"
     "c.123_123dupA"       "c.123dupA"
     "c.123_123delAinsTAC" "c.123delAinsTAC"
+    "g.123_123[14]"       "g.123[14]"
 
     ;; remove-alternative
     "c.1902dup(1897_1898insA)"  "c.1902dup"

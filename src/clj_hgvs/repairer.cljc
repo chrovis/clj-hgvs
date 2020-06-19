@@ -103,12 +103,13 @@
     s))
 
 ;; c.123_123delAinsTAC -> c.123delAinsTAC
+;; g.123_123[14] -> g.123[14]
 (defn ^:no-doc remove-same-end
   [s kind]
   (if (#{:genome :mitochondria :coding-dna :non-coding-dna :circular-dna :rna}
        kind)
     (string/replace s
-                    #"([-\d+*]+)_([-\d+*]+)(del|dup)"
+                    #"([-\d+*]+)_([-\d+*]+)(del|dup|\[([\d\(\)_]+)\]$)"
                     (fn [[s start end mut]]
                       (if (= start end)
                         (str start mut)
