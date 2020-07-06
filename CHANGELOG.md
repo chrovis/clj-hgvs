@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Repair repeated sequences which have the same end.
+
 ## [0.4.3] - 2020-03-23
 
 ### Added
