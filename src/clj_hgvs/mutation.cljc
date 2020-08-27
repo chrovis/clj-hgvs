@@ -338,7 +338,7 @@
    (DNADeletion. coord-start coord-end ref)))
 
 (def ^:private dna-deletion-re
-  #"([\(\)\*\-\+\d\?_]+)del([A-Z]+)?")
+  #"([\(\)\*\-\+\d\?_]+)del([A-Z0-9]+)?")
 
 (defn parse-dna-deletion
   [s kind]
