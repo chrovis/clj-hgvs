@@ -112,13 +112,13 @@
 (defn ^:no-doc basis->inv
   [s kind]
   (let [base-pairs {\A \T \T \A \C \G \G \C}
-        [_ region b a] (re-find #"c\.(\d+_\d+)([A-Z]+)>([A-Z]+)" s)]
+        [_ region b a] (re-find #"(\d+_\d+)([A-Z]+)>([A-Z]+)" s)]
     (if (= a
            (->> b
                 (map base-pairs)
                 reverse
                 (apply str)))
-      (str region "inv")
+      (str "c." region "inv")
       s)))
 
 ;; c.123_123delAinsTAC -> c.123delAinsTAC
