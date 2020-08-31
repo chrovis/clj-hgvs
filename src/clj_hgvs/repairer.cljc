@@ -118,7 +118,6 @@
                           (str coords "inv")
                           s))))))
 
-
 ;; c.123_123delAinsTAC -> c.123delAinsTAC
 ;; g.123_123[14] -> g.123[14]
 (defn ^:no-doc remove-same-end
