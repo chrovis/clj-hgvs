@@ -113,10 +113,11 @@
                    (apply str)))]
       (string/replace s
                       #"([-\d+*]+_[-\d+*]+)([A-Z]{2,})>([A-Z]{2,})"
-                      (fn [[s coords del ins]]
+                      (fn [[s* coords del ins]]
                         (if (= del (revcomp ins))
                           (str coords "inv")
-                          s))))))
+                          s*))))
+    s))
 
 ;; c.123_123delAinsTAC -> c.123delAinsTAC
 ;; g.123_123[14] -> g.123[14]
