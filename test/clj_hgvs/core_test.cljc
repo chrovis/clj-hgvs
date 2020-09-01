@@ -283,6 +283,9 @@
     "p.Gln13Stop" "p.Gln13Ter"
     "p.Tyr9stop"  "p.Tyr9Ter"
 
+    ;; substitutions->inv
+    "c.1234_1235CA>TG"	"c.1234_1235inv"
+
     ;; substitution->delins
     "c.123G>CCACGTG" "c.123delGinsCCACGTG"
 
