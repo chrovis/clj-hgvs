@@ -102,6 +102,23 @@
     (string/replace s #"(del|dup|inv)\d+$" "$1")
     s))
 
+;; c.2210_2211CA>TG	-> c.2210_2211inv
+(defn ^:no-doc substitutions->inv
+  [s kind]
+  (if (#{:genome :mitochondria :coding-dna :non-coding-dna :circular-dna :rna}
+       kind)
+    (letfn [(revcomp [s]
+              (->> (reverse s)
+                   (map {\A \T \T \A \C \G \G \C})
+                   (apply str)))]
+      (string/replace s
+                      #"([-\d+*]+_[-\d+*]+)([A-Z]{2,})>([A-Z]{2,})"
+                      (fn [[s* coords del ins]]
+                        (if (= del (revcomp ins))
+                          (str coords "inv")
+                          s*))))
+    s))
+
 ;; c.123_123delAinsTAC -> c.123delAinsTAC
 ;; g.123_123[14] -> g.123[14]
 (defn ^:no-doc remove-same-end
@@ -283,6 +300,7 @@
    indel->delins
    frameshift->fs
    stop->ter
+   substitutions->inv
    substitution->delins
    substitutions->delins
    remove-assembly
