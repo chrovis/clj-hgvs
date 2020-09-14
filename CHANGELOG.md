@@ -5,6 +5,7 @@
 ### Added
 
 - Repair repeated sequences which have the same end.
+- Repair illegal substitutions to an inversion. [#3](https://github.com/chrovis/clj-hgvs/pull/3)
 
 ## [0.4.3] - 2020-03-23
 
