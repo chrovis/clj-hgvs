@@ -19,13 +19,13 @@ clj-hgvs provides:
 Clojure CLI/deps.edn:
 
 ```clojure
-clj-hgvs {:mvn/version "0.4.3"}
+clj-hgvs {:mvn/version "0.4.4"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.4.3"]
+[clj-hgvs "0.4.4"]
 ```
 
 To use clj-hgvs with Clojure 1.8, you must include a dependency on
