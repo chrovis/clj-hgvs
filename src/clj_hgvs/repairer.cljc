@@ -276,6 +276,15 @@
     (string/replace s #"extTer(\?|\d+)$" "ext*$1")
     s))
 
+;; p.S733_*734insS -> p.*734Sext*?
+(defn ^:no-doc ins->ext
+  [s kind]
+  (if (= kind :protein)
+    (string/replace s
+                    #"[A-Z](\d+_\*)(\d+)ins([A-Z]+[a-z]*)"
+                    "*$2$3ext*?")
+    s))
+
 (def built-in-repairers
   "The built-in repair functions.
 
@@ -323,4 +332,5 @@
    remove-fs-greater
    protein-ter-substitution->ext
    frameshift->ext
-   ext-ter->downstream])
+   ext-ter->downstream
+   ins->ext])
