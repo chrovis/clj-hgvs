@@ -364,7 +364,10 @@
     "p.*833fs"  "p.*833ext*?"
 
     ;; ext-ter->downstream
-    "p.Ter397ThrextTer?" "p.Ter397Thrext*?")
+    "p.Ter397ThrextTer?" "p.Ter397Thrext*?"
+
+    ;; ext->ins
+    "p.S733_*734insS" "p.*734Sext*?")
 
   (are [s] (let [s* (hgvs/repair-hgvs-str s)]
              (and (= s* s) (some? (hgvs/parse s*))))
