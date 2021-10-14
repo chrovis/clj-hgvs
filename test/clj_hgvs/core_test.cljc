@@ -20,10 +20,14 @@
     "NM_004006.2"
     "NR_002196.1"
     "NP_003997.1"
-    "J01749.1")
+    "J01749.1"
+    "ENST0001.1"
+    "ENSP0001.11")
   (are [s] (not (s/valid? ::hgvs/transcript s))
     "LRG_199.1"
-    "NT_000023.10"))
+    "NT_000023.10"
+    "ENST0001"
+    "ENSG0001.1"))
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m (hgvs/map->HGVS
@@ -128,6 +132,14 @@
                :mutation (mut/dna-duplication (coord/circular-dna-coordinate 4344)
                                               (coord/circular-dna-coordinate 197))}))
 
+(def hgvs14s "ENST00000331920.11:c.*1+68G>A")
+(def hgvs14m (hgvs/map->HGVS
+              {:transcript "ENST00000331920.11"
+               :kind :coding-dna
+               :mutation (mut/map->DNASubstitution {:coord (coord/coding-dna-coordinate 1 68 :downstream)
+                                                    :ref "G"
+                                                    :type ">"
+                                                    :alt "A"})}))
 (deftest hgvs-test
   (testing "allows mutation records"
     (is (= (hgvs/hgvs "NM_005228.3" :coding-dna
@@ -167,7 +179,8 @@
       hgvs10s hgvs10m
       hgvs11s hgvs11m
       hgvs12s hgvs12m
-      hgvs13s hgvs13m))
+      hgvs13s hgvs13m
+      hgvs14s hgvs14m))
   (testing "throws Exception when an illegal HGVS is passed"
     (are [x] (thrown? #?(:clj Exception, :cljs js/Error) (hgvs/parse x))
       ":2361G>A"
@@ -201,6 +214,7 @@
     (is (true? (hgvs/== (hgvs/parse "NM_005228:c.2361G>A"))))
     (is (true? (hgvs/== nil))))
 
+  ;; TODO: is it ok accession.version == accession?
   (testing "two args"
     (are [s1 s2] (true? (hgvs/== (hgvs/parse s1) (hgvs/parse s2)))
       "NM_005228:c.2361G>A"   "NM_005228:c.2361G>A"
@@ -385,7 +399,8 @@
     "NP_001096.1:p.Arg258="
     "NP_001005735.1:p.Leu344Trpfs"
     "NC_012920.1:m.16563_13del"
-    "J01749.1:o.4344_197dup")
+    "J01749.1:o.4344_197dup"
+    "ENST00000331920.11:c.34G>A")
 
   (let [lower-case-ext (fn [s kind]
                          (if (= kind :protein)

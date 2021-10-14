@@ -24,7 +24,8 @@
 (s/def ::transcript
   (s/and string? (s/or :N*_  #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
                        :LRG_ #(re-matches #"LRG_\d+((t|p)\d+)?" %)
-                       :J*   #(re-matches #"J\d+(\.\d+)?" %))))
+                       :J*   #(re-matches #"J\d+(\.\d+)?" %)
+                       :ENS* #(re-matches #"ENS(P|T)\d+\.\d+" %))))
 
 (s/def ::kind #{:genome
                 :mitochondria
@@ -35,6 +36,7 @@
                 :protein})
 
 (s/def :clj-hgvs.hgvs/transcript (s/nilable ::transcript))
+
 (s/def ::hgvs (s/keys :req-un [:clj-hgvs.hgvs/transcript
                                ::kind
                                ::mut/mutation]))
