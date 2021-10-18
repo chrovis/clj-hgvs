@@ -21,13 +21,15 @@
     "NR_002196.1"
     "NP_003997.1"
     "J01749.1"
-    "ENST0001.1"
-    "ENSP0001.11")
+    "ENST00000000001.1"
+    "ENSP00000000001.11"
+    "MGP_CBAJ_G00000000002.1")
   (are [s] (not (s/valid? ::hgvs/transcript s))
     "LRG_199.1"
     "NT_000023.10"
     "ENST0001"
-    "ENSG0001.1"))
+    "ENSF00000000001.1"
+    "MGP_CBAJ_P0000000002.1"))
 
 (def hgvs1s "NM_005228.3:c.2361G>A")
 (def hgvs1m (hgvs/map->HGVS
@@ -214,7 +216,6 @@
     (is (true? (hgvs/== (hgvs/parse "NM_005228:c.2361G>A"))))
     (is (true? (hgvs/== nil))))
 
-  ;; TODO: is it ok accession.version == accession?
   (testing "two args"
     (are [s1 s2] (true? (hgvs/== (hgvs/parse s1) (hgvs/parse s2)))
       "NM_005228:c.2361G>A"   "NM_005228:c.2361G>A"
