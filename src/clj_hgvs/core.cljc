@@ -24,7 +24,9 @@
 (s/def ::transcript
   (s/and string? (s/or :N*_  #(re-matches #"N(C|G|M|R|P)_\d+(\.\d+)?" %)
                        :LRG_ #(re-matches #"LRG_\d+((t|p)\d+)?" %)
-                       :J*   #(re-matches #"J\d+(\.\d+)?" %))))
+                       :J*   #(re-matches #"J\d+(\.\d+)?" %)
+                       :MGP_* #(re-matches #"MGP_[a-zA-Z0-9]+_(G|T|P)\d{7}(\.\d+)?" %)
+                       :ENS* #(re-matches #"ENS([A-Z]{3})?(G|T|P)\d{11}(\.\d+)?" %))))
 
 (s/def ::kind #{:genome
                 :mitochondria
