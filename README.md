@@ -114,6 +114,29 @@ for all formatter options.
 ;;=> false
 ```
 
+### Plain Map Representation
+
+`plain` converts HGVS data to a plain map, and `restore` converts the map back
+to the HGVS data. These functions are useful for sending HGVS data through
+another codec.
+
+```clojure
+(hgvs/plain #clj-hgvs/hgvs "NM_005228.3:c.2573T>G")
+;;=> {:transcript "NM_005228.3"
+;;    :kind "coding-dna"
+;;    :mutation {:mutation "dna-substitution"
+;;               :coord {:coordinate "coding-dna"
+;;                       :position 2573
+;;                       :offset 0
+;;                       :region nil}
+;;               :ref "T"
+;;               :type ">"
+;;               :alt "G"}}
+
+(hgvs/restore *1)
+;;=> #clj-hgvs/hgvs "NM_005228.3:c.2573T>G"
+```
+
 ### HGVS Repair
 
 `repair-hgvs-str` attempts to repair an invalid HGVS text.
@@ -147,6 +170,6 @@ You may supply custom repair rules to the second argument:
 
 ## License
 
-Copyright 2017-2020 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2021 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
