@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- Add a repairer for protein insertion to extension. [#4](https://github.com/chrovis/clj-hgvs/pull/4)
+- Parse HGVS with Ensembl stable ID. [#5](https://github.com/chrovis/clj-hgvs/pull/5)
+
 ## [0.4.4] - 2020-09-28
 
 ### Added
