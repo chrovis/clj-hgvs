@@ -23,7 +23,8 @@
                               :compiler {:output-to "target/testable.js"
                                          :output-dir "target"
                                          :main clj-hgvs.runner
-                                         :optimizations :none}}}}
+                                         :optimizations :none
+                                         :target :nodejs}}}}
   :codox {:project {:name "clj-hgvs"}
           :themes [:rdash]
           :namespaces [#"^clj-hgvs\.(?!internal)"]

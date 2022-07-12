@@ -28,7 +28,7 @@ jobs:
     - name: Run tests
       run: lein with-profile +${{ matrix.clojure }} test
     - name: Run cljs tests
-      run: lein with-profile +${{ matrix.clojure }} doo phantom test once
+      run: lein with-profile +${{ matrix.clojure }} doo node test once
 
   coverage:
     needs: [test]
