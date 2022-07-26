@@ -1,5 +1,6 @@
 (ns clj-hgvs.internal
   "Common functions used only inside this project."
+  (:refer-clojure :exclude [parse-long])
   (:require [clojure.spec.alpha :as s]))
 
 (defn parse-long
