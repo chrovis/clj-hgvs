@@ -1,4 +1,4 @@
-(defproject clj-hgvs "0.4.6-SNAPSHOT"
+(defproject clj-hgvs "0.4.6"
   :description "Clojure(Script) library for handling HGVS"
   :url "https://github.com/chrovis/clj-hgvs"
   :license {:name "Apache License, Version 2.0"
