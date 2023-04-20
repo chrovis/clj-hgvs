@@ -39,17 +39,29 @@
 (def uncertain-mutation2 (mut/uncertain-mutation
                           (mut/rna-substitution (coord/rna-coordinate 306 nil nil) "g" "u")))
 
+(def uncertain-mutation3s "(Cys123Gly)")
+(def uncertain-mutation3ss "(C123G)")
+(def uncertain-mutation3k :protein)
+(def uncertain-mutation3 (mut/uncertain-mutation
+                          (mut/protein-substitution "Cys"
+                                                    (coord/protein-coordinate 123)
+                                                    "Gly")))
+
 (deftest format-uncertain-mutation-test
   (testing "returns a string expression of an uncertain mutation"
-    (are [m s] (= (mut/format m nil) s)
-      uncertain-mutation1 uncertain-mutation1s
-      uncertain-mutation2 uncertain-mutation2s)))
+    (are [m o s] (= (mut/format m o) s)
+      uncertain-mutation1 nil uncertain-mutation1s
+      uncertain-mutation2 nil uncertain-mutation2s
+      uncertain-mutation3 nil uncertain-mutation3s
+      uncertain-mutation3 {:amino-acid-format :short} uncertain-mutation3ss)))
 
 (deftest parse-uncertain-mutation-test
   (testing "returns a correct UncertainMutation"
     (are [s k m] (= (mut/parse-uncertain-mutation s k) m)
       uncertain-mutation1s uncertain-mutation1k uncertain-mutation1
-      uncertain-mutation2s uncertain-mutation2k uncertain-mutation2)))
+      uncertain-mutation2s uncertain-mutation2k uncertain-mutation2
+      uncertain-mutation3s uncertain-mutation3k uncertain-mutation3
+      uncertain-mutation3ss uncertain-mutation3k uncertain-mutation3)))
 
 (deftest plain-uncertain-mutation-test
   (testing "returns a plain map representing UncertainMutation"

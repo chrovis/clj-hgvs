@@ -184,8 +184,8 @@
 (defrecord UncertainMutation [mutation]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
-    (str "(" (format mutation) ")"))
+  (format [this opts]
+    (str "(" (format mutation opts) ")"))
   (plain [this]
     {:mutation "uncertain-mutation"
      :content-mutation (plain mutation)})
