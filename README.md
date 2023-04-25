@@ -19,13 +19,13 @@ clj-hgvs provides:
 Clojure CLI/deps.edn:
 
 ```clojure
-clj-hgvs {:mvn/version "0.4.6"}
+clj-hgvs {:mvn/version "0.4.7"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.4.6"]
+[clj-hgvs "0.4.7"]
 ```
 
 To use clj-hgvs with Clojure 1.8, you must include a dependency on
@@ -170,6 +170,6 @@ You may supply custom repair rules to the second argument:
 
 ## License
 
-Copyright 2017-2022 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2023 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
