@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.7] - TBD
+
+### Fixed
+
+- Fix format of uncertain protein mutation. [#8](https://github.com/chrovis/clj-hgvs/pull/8)
+
 ## [0.4.6] - 2022-07-27
 
 ### Changed
@@ -120,7 +126,8 @@
 
 ## 0.1.0 - 2017-04-17
 
-[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.6...HEAD
+[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.7...HEAD
+[0.4.7]: https://github.com/chrovis/clj-hgvs/compare/0.4.6...0.4.7
 [0.4.6]: https://github.com/chrovis/clj-hgvs/compare/0.4.5...0.4.6
 [0.4.5]: https://github.com/chrovis/clj-hgvs/compare/0.4.4...0.4.5
 [0.4.4]: https://github.com/chrovis/clj-hgvs/compare/0.4.3...0.4.4

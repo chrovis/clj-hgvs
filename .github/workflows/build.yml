@@ -63,11 +63,13 @@ jobs:
     - name: Get version
       id: get-version
       run: |
-        echo ::set-output \
-          name=version::$(head -n 1 project.clj | sed -e 's/^(defproject.*"\(.*\)"$/\1/')
+        echo "version=$(head -n 1 project.clj | sed -e 's/^(defproject.*\"\(.*\)\"$/\1/')" \
+        >> "$GITHUB_OUTPUT"
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: ${{ github.event_name == 'push' &&
+            github.ref == 'refs/heads/master' &&
+            endsWith(needs.get-version.outputs.version, '-SNAPSHOT') }}
     needs: [test, get-version]
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +80,6 @@ jobs:
         distribution: 'adopt'
         java-version: '17'
     - name: Deploy
-      if: endsWith(needs.get-version.outputs.version, '-SNAPSHOT')
       env:
         CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
         CLOJARS_PASSWORD: ${{ secrets.CLOJARS_PASSWORD }}
