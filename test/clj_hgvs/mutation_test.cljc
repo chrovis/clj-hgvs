@@ -831,7 +831,7 @@
                       :coord-end (coord/plain (coord/rna-coordinate 757 nil nil))
                       :alt "acu"})
 
-(def rna-insertion2s "431_432ins(5)")
+(def rna-insertion2s "431_432insn[5]")
 (def rna-insertion2 (mut/rna-insertion (coord/rna-coordinate 431 nil nil)
                                        (coord/rna-coordinate 432 nil nil)
                                        "nnnnn"))

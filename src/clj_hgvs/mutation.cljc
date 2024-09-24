@@ -1056,7 +1056,7 @@
 ;;; RNA - insertion
 ;;;
 ;;; e.g. r.756_757insacu
-;;;      r.431_432ins(5)
+;;;      r.431_432insn[5]
 ;;;      r.123_124insL37425.1:23_361
 
 (defrecord RNAInsertion [coord-start coord-end alt]
@@ -1069,7 +1069,7 @@
          "ins"
          (cond
            (map? alt) (str (:genbank alt) ":" (:coord-start alt) "_" (:coord-end alt))
-           (re-matches #"n{2,}" alt) (str "(" (count alt) ")")
+           (re-matches #"n{2,}" alt) (str "n[" (count alt) "]")
            :else alt)))
   (plain [this]
     (into {:mutation "rna-insertion"} (plain-coords this))))
@@ -1094,9 +1094,9 @@
 
 (defn- parse-rna-alt-n
   [s]
-  (if-let [n (some-> (re-find #"\((\d)\)" s)
-                     second
-                     intl/parse-long)]
+  (when-let [n (some-> (re-find #"n\[(\d+)\]" s)
+                       second
+                       intl/parse-long)]
     (apply str (repeat n "n"))))
 
 (def ^:private genbank-re
@@ -1118,8 +1118,8 @@
     (rna-insertion (coord/parse-rna-coordinate coord-s)
                    (some-> coord-e coord/parse-rna-coordinate)
                    (cond
+                     (re-find #"n\[\d+\]" alt) (parse-rna-alt-n alt)
                      (re-find #"[a-z]+" alt) alt
-                     (re-find #"\(\d\)" alt) (parse-rna-alt-n alt)
                      :else (parse-rna-alt-genbank alt)))))
 
 (defmethod restore "rna-insertion"
