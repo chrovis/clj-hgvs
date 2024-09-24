@@ -342,7 +342,7 @@
                                        "N"))
 
 (def dna-insertion6sb "1134_1135insNNNNNNNNNN")
-(def dna-insertion6sc "1134_1135ins(10)")
+(def dna-insertion6sc "1134_1135insN[10]")
 (def dna-insertion6k :genome)
 (def dna-insertion6 (mut/dna-insertion (coord/genomic-coordinate 1134)
                                        (coord/genomic-coordinate 1135)
@@ -524,20 +524,33 @@
                                nil
                                "TGG"))
 
+(def dna-indel4sb "1134_1138delinsNNNNNNNNNN")
+(def dna-indel4sc "1134_1138delinsN[10]")
+(def dna-indel4k :genome)
+(def dna-indel4 (mut/dna-indel (coord/genomic-coordinate 1134)
+                               (coord/genomic-coordinate 1138)
+                               nil
+                               "NNNNNNNNNN"))
+
 (deftest format-dna-indel-test
   (testing "returns a string expression of a DNA indel"
     (are [m o s] (= (mut/format m o) s)
       dna-indel1 nil dna-indel1s
       dna-indel2 nil dna-indel2ss
       dna-indel2 {:show-bases? true} dna-indel2s
-      dna-indel3 nil dna-indel3s)))
+      dna-indel3 nil dna-indel3s
+      dna-indel4 {:ins-format :auto} dna-indel4sc
+      dna-indel4 {:ins-format :bases} dna-indel4sb
+      dna-indel4 {:ins-format :count} dna-indel4sc)))
 
 (deftest parse-dna-indel-test
   (testing "returns a correct DNAIndel"
     (are [s k m] (= (mut/parse-dna-indel s k) m)
       dna-indel1s dna-indel1k dna-indel1
       dna-indel2s dna-indel2k dna-indel2
-      dna-indel3s dna-indel3k dna-indel3))
+      dna-indel3s dna-indel3k dna-indel3
+      dna-indel4sb dna-indel4k dna-indel4
+      dna-indel4sc dna-indel4k dna-indel4))
   (testing "invalid DNA indel"
     (are [s k] (thrown? #?(:clj Throwable, :cljs js/Error)
                         (mut/parse-dna-indel s k))
