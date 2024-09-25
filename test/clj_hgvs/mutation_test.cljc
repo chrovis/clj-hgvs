@@ -1327,7 +1327,7 @@
                                                "Leu" (coord/protein-coordinate 24)
                                                ["Arg" "Ser" "Ter"]))
 
-(def protein-insertion3s "Arg78_Gly79ins5")
+(def protein-insertion3s "Arg78_Gly79insX[5]")
 (def protein-insertion3 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
                                                "Gly" (coord/protein-coordinate 79)
                                                ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))

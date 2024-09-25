@@ -1744,7 +1744,7 @@
 ;;; Protein - insertion
 ;;;
 ;;; e.g. Lys23_Leu24insArgSerGln
-;;;      Arg78_Gly79ins23
+;;;      Arg78_Gly79insX[23]
 
 (defrecord ProteinInsertion [ref-start coord-start ref-end coord-end alts]
   Mutation
@@ -1759,7 +1759,7 @@
                          (coord/format coord-end)
                          "ins"
                          (if (every? #(= % "Xaa") alts)
-                           (count alts)
+                           (str "X[" (count alts) "]")
                            (cond->> alts
                              (= amino-acid-format :short) (map ->short-amino-acid)))])))
   (plain [this]
@@ -1790,10 +1790,14 @@
   [s]
   (condp re-matches s
     #"([A-Z*]([a-z]{2})?)+" (mapv ->long-amino-acid (re-seq #"[A-Z*](?:[a-z]{2})?" s))
-    #"\d+" (vec (repeat (intl/parse-long s) "Xaa"))))
+    #"X\[\d+\]" (-> (re-find #"X\[(\d+)\]" s)
+                    second
+                    intl/parse-long
+                    (repeat "Xaa")
+                    vec)))
 
 (def ^:private protein-insertion-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*]+)")
+  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*\[\]]+)")
 
 (defn parse-protein-insertion
   [s]
