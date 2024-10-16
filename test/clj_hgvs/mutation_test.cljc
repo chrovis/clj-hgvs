@@ -831,13 +831,19 @@
                       :coord-end (coord/plain (coord/rna-coordinate 757 nil nil))
                       :alt "acu"})
 
-(def rna-insertion2s "431_432insn[5]")
+(def rna-insertion2sb "431_432insnnnnn")
+(def rna-insertion2sc "431_432insn[5]")
 (def rna-insertion2 (mut/rna-insertion (coord/rna-coordinate 431 nil nil)
                                        (coord/rna-coordinate 432 nil nil)
                                        "nnnnn"))
 
-(def rna-insertion3s "123_124insL37425.1:23_361")
-(def rna-insertion3 (mut/rna-insertion (coord/rna-coordinate 123 nil nil)
+(def rna-insertion3sc "431_432insn[10]")
+(def rna-insertion3 (mut/rna-insertion (coord/rna-coordinate 431 nil nil)
+                                       (coord/rna-coordinate 432 nil nil)
+                                       "nnnnnnnnnn"))
+
+(def rna-insertion4s "123_124insL37425.1:23_361")
+(def rna-insertion4 (mut/rna-insertion (coord/rna-coordinate 123 nil nil)
                                        (coord/rna-coordinate 124 nil nil)
                                        {:genbank "L37425.1"
                                         :coord-start 23
@@ -845,17 +851,22 @@
 
 (deftest format-rna-insertion-test
   (testing "returns a string expression of a RNA insertion"
-    (are [m s] (= (mut/format m nil) s)
-      rna-insertion1 rna-insertion1s
-      rna-insertion2 rna-insertion2s
-      rna-insertion3 rna-insertion3s)))
+    (are [m o s] (= (mut/format m o) s)
+      rna-insertion1 nil rna-insertion1s
+      rna-insertion2 {:ins-format :auto} rna-insertion2sb
+      rna-insertion2 {:ins-format :bases} rna-insertion2sb
+      rna-insertion2 {:ins-format :count} rna-insertion2sc
+      rna-insertion3 {:ins-format :auto} rna-insertion3sc
+      rna-insertion4 nil rna-insertion4s)))
 
 (deftest parse-rna-insertion-test
   (testing "returns a correct RNAInsertion"
     (are [s m] (= (mut/parse-rna-insertion s) m)
       rna-insertion1s rna-insertion1
-      rna-insertion2s rna-insertion2
-      rna-insertion3s rna-insertion3))
+      rna-insertion2sb rna-insertion2
+      rna-insertion2sc rna-insertion2
+      rna-insertion3sc rna-insertion3
+      rna-insertion4s rna-insertion4))
   (testing "invalid RNA insertion"
     (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
                       (mut/parse-rna-insertion s))
@@ -969,20 +980,40 @@
                                nil
                                "c"))
 
+(def rna-indel4sb "775_777delinsnnnnn")
+(def rna-indel4sc "775_777delinsn[5]")
+(def rna-indel4 (mut/rna-indel (coord/rna-coordinate 775 nil nil)
+                               (coord/rna-coordinate 777 nil nil)
+                               nil
+                               "nnnnn"))
+
+(def rna-indel5sc "775_777delinsn[10]")
+(def rna-indel5 (mut/rna-indel (coord/rna-coordinate 775 nil nil)
+                               (coord/rna-coordinate 777 nil nil)
+                               nil
+                               "nnnnnnnnnn"))
+
 (deftest format-rna-indel-test
   (testing "returns a string expression of a RNA indel"
     (are [m o s] (= (mut/format m o) s)
       rna-indel1 nil rna-indel1s
       rna-indel2 nil rna-indel2ss
       rna-indel2 {:show-bases? true} rna-indel2s
-      rna-indel3 nil rna-indel3s)))
+      rna-indel3 nil rna-indel3s
+      rna-indel4 {:ins-format :auto} rna-indel4sb
+      rna-indel4 {:ins-format :bases} rna-indel4sb
+      rna-indel4 {:ins-format :count} rna-indel4sc
+      rna-indel5 {:ins-format :auto} rna-indel5sc)))
 
 (deftest parse-rna-indel-test
   (testing "returns a correct RNAIndel"
     (are [s m] (= (mut/parse-rna-indel s) m)
       rna-indel1s rna-indel1
       rna-indel2s rna-indel2
-      rna-indel3s rna-indel3))
+      rna-indel3s rna-indel3
+      rna-indel4sb rna-indel4
+      rna-indel4sc rna-indel4
+      rna-indel5sc rna-indel5))
   (testing "invalid RNA indel"
     (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
                       (mut/parse-rna-indel s))
@@ -1327,10 +1358,19 @@
                                                "Leu" (coord/protein-coordinate 24)
                                                ["Arg" "Ser" "Ter"]))
 
-(def protein-insertion3s "Arg78_Gly79insX[5]")
+(def protein-insertion3sal "Arg78_Gly79insXaaXaaXaaXaaXaa")
+(def protein-insertion3sas "R78_G79insXXXXX")
+(def protein-insertion3sc "Arg78_Gly79insX[5]")
+(def protein-insertion3scs "R78_G79insX[5]")
 (def protein-insertion3 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
                                                "Gly" (coord/protein-coordinate 79)
                                                ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
+
+(def protein-insertion4sc "Arg78_Gly79insX[10]")
+(def protein-insertion4scs "R78_G79insX[10]")
+(def protein-insertion4 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
+                                               "Gly" (coord/protein-coordinate 79)
+                                               ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
 
 (deftest format-protein-insertion-test
   (testing "returns a string expression of a protein insertion"
@@ -1339,7 +1379,14 @@
       protein-insertion1 {:amino-acid-format :short} protein-insertion1ss
       protein-insertion2 nil protein-insertion2s
       protein-insertion2 {:amino-acid-format :short} protein-insertion2ss
-      protein-insertion3 nil protein-insertion3s)))
+      protein-insertion3 {:ins-format :auto} protein-insertion3sal
+      protein-insertion3 {:amino-acid-format :short :ins-format :auto} protein-insertion3sas
+      protein-insertion3 {:ins-format :amino-acids} protein-insertion3sal
+      protein-insertion3 {:amino-acid-format :short :ins-format :amino-acids} protein-insertion3sas
+      protein-insertion3 {:ins-format :count} protein-insertion3sc
+      protein-insertion3 {:amino-acid-format :short :ins-format :count} protein-insertion3scs
+      protein-insertion4 {:ins-format :auto} protein-insertion4sc
+      protein-insertion4 {:amino-acid-format :short :ins-format :auto} protein-insertion4scs)))
 
 (deftest parse-protein-insertion-test
   (testing "returns a correct ProteinInsertion"
@@ -1348,7 +1395,12 @@
       protein-insertion1ss protein-insertion1
       protein-insertion2s protein-insertion2
       protein-insertion2ss protein-insertion2
-      protein-insertion3s protein-insertion3))
+      protein-insertion3sal protein-insertion3
+      protein-insertion3sas protein-insertion3
+      protein-insertion3sc protein-insertion3
+      protein-insertion3scs protein-insertion3
+      protein-insertion4sc protein-insertion4
+      protein-insertion4scs protein-insertion4))
   (testing "invalid protein insertion"
     (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
                       (mut/parse-protein-insertion s))
@@ -1389,6 +1441,20 @@
                                        "Lys" (coord/protein-coordinate 29)
                                        ["Ter"]))
 
+(def protein-indel4sal "Cys28_Lys29delinsXaaXaaXaaXaaXaa")
+(def protein-indel4sas "C28_K29delinsXXXXX")
+(def protein-indel4sc "Cys28_Lys29delinsX[5]")
+(def protein-indel4scs "C28_K29delinsX[5]")
+(def protein-indel4 (mut/protein-indel "Cys" (coord/protein-coordinate 28)
+                                       "Lys" (coord/protein-coordinate 29)
+                                       ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
+
+(def protein-indel5sc "Cys28_Lys29delinsX[10]")
+(def protein-indel5scs "C28_K29delinsX[10]")
+(def protein-indel5 (mut/protein-indel "Cys" (coord/protein-coordinate 28)
+                                       "Lys" (coord/protein-coordinate 29)
+                                       ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
+
 (deftest format-protein-indel-test
   (testing "returns a string expression of a protein indel"
     (are [m o s] (= (mut/format m o) s)
@@ -1397,7 +1463,15 @@
       protein-indel2 nil protein-indel2s
       protein-indel2 {:amino-acid-format :short} protein-indel2ss
       protein-indel3 nil protein-indel3s
-      protein-indel3 {:amino-acid-format :short} protein-indel3ss)))
+      protein-indel3 {:amino-acid-format :short} protein-indel3ss
+      protein-indel4 {:ins-format :auto} protein-indel4sal
+      protein-indel4 {:amino-acid-format :short :ins-format :auto} protein-indel4sas
+      protein-indel4 {:ins-format :amino-acids} protein-indel4sal
+      protein-indel4 {:amino-acid-format :short :ins-format :amino-acids} protein-indel4sas
+      protein-indel4 {:ins-format :count} protein-indel4sc
+      protein-indel4 {:amino-acid-format :short :ins-format :count} protein-indel4scs
+      protein-indel5 {:ins-format :auto} protein-indel5sc
+      protein-indel5 {:amino-acid-format :short :ins-format :auto} protein-indel5scs)))
 
 (deftest parse-protein-indel-test
   (testing "returns a correct ProteinIndel"
@@ -1407,7 +1481,13 @@
       protein-indel2s protein-indel2
       protein-indel2ss protein-indel2
       protein-indel3s protein-indel3
-      protein-indel3ss protein-indel3))
+      protein-indel3ss protein-indel3
+      protein-indel4sal protein-indel4
+      protein-indel4sas protein-indel4
+      protein-indel4sc protein-indel4
+      protein-indel4scs protein-indel4
+      protein-indel5sc protein-indel5
+      protein-indel5scs protein-indel5))
   (testing "invalid protein indel"
     (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
                       (mut/parse-protein-indel s))
