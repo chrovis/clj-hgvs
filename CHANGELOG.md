@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0] - TBD
+
+### BREAKING
+
+- Fix uncertain bases and amino acids format of ins and delins because HGVS nomenclature was updated.
+  - DNA: `ins(10)` -> `insN[10]`
+  - RNA: `ins(10)` -> `insn[10]`
+  - Protein: `ins10` -> `insX[10]`
+
+### Fixed
+
+- Fix uncertain insertion. [#10](https://github.com/chrovis/clj-hgvs/pull/10)
+
 ## [0.4.7] - 2023-04-25
 
 ### Fixed
@@ -126,7 +139,8 @@
 
 ## 0.1.0 - 2017-04-17
 
-[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.4.7...HEAD
+[Unreleased]: https://github.com/chrovis/clj-hgvs/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/chrovis/clj-hgvs/compare/0.4.7...0.5.0
 [0.4.7]: https://github.com/chrovis/clj-hgvs/compare/0.4.6...0.4.7
 [0.4.6]: https://github.com/chrovis/clj-hgvs/compare/0.4.5...0.4.6
 [0.4.5]: https://github.com/chrovis/clj-hgvs/compare/0.4.4...0.4.5

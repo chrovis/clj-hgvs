@@ -19,17 +19,24 @@ clj-hgvs provides:
 Clojure CLI/deps.edn:
 
 ```clojure
-clj-hgvs {:mvn/version "0.4.7"}
+clj-hgvs {:mvn/version "0.5.0"}
 ```
 
 Leiningen/Boot:
 
 ```clojure
-[clj-hgvs "0.4.7"]
+[clj-hgvs "0.5.0"]
 ```
 
 To use clj-hgvs with Clojure 1.8, you must include a dependency on
 [clojure-future-spec](https://github.com/tonsky/clojure-future-spec).
+
+## Breaking Changes in 0.5.0
+
+- Fix uncertain bases and amino acids format of ins and delins because HGVS nomenclature was updated.
+  - DNA: `ins(10)` -> `insN[10]`
+  - RNA: `ins(10)` -> `insn[10]`
+  - Protein: `ins10` -> `insX[10]`
 
 ## Breaking Changes in 0.4.0
 
@@ -170,6 +177,6 @@ You may supply custom repair rules to the second argument:
 
 ## License
 
-Copyright 2017-2023 [Xcoo, Inc.](https://xcoo.jp/)
+Copyright 2017-2024 [Xcoo, Inc.](https://xcoo.jp/)
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
