@@ -1,5 +1,5 @@
 (ns clj-hgvs.core
-  "Main functions for handling HGVS. See http://varnomen.hgvs.org/ for the
+  "Main functions for handling HGVS. See https://hgvs-nomenclature.org/ for the
   detail HGVS nomenclature."
   (:refer-clojure :exclude [== #?(:clj format)])
   (:require #?(:clj [clojure.pprint :as pp])

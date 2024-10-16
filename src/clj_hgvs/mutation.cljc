@@ -221,7 +221,7 @@
 
 ;;; DNA mutations
 
-;; See http://varnomen.hgvs.org/bg-material/standards#dna
+;; See https://hgvs-nomenclature.org/stable/background/standards/#dna
 (s/def ::dna-bases
   (s/and string? #(re-matches #"[ACGTBDHKMNRSVWY]+" %)))
 
@@ -879,7 +879,7 @@
 
 ;;; RNA mutations
 
-;; See http://varnomen.hgvs.org/bg-material/standards#rna
+;; See https://hgvs-nomenclature.org/stable/background/standards/#rna
 (s/def ::rna-bases
   (s/and string? #(re-matches #"[acgubdhkmnrsvwy]+" %)))
 

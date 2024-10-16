@@ -4,7 +4,7 @@
 [![build](https://github.com/chrovis/clj-hgvs/actions/workflows/build.yml/badge.svg)](https://github.com/chrovis/clj-hgvs/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/chrovis/clj-hgvs/branch/master/graph/badge.svg)](https://codecov.io/gh/chrovis/clj-hgvs)
 
-Clojure(Script) library for handling [HGVS](http://varnomen.hgvs.org/).
+Clojure(Script) library for handling [HGVS](https://hgvs-nomenclature.org/).
 
 ## Features
 
