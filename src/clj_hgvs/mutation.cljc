@@ -430,7 +430,7 @@
 ;;;      g.122_123ins123_234inv (TODO)
 ;;;      g.122_123ins213_234invinsAins123_211inv (TODO)
 ;;;      g.549_550insN
-;;;      g.1134_1135ins(100)
+;;;      g.1134_1135insN[100]
 ;;;      g.?_?insNC_000023.10:(12345_23456)_(34567_45678)
 
 (defrecord DNAInsertion [coord-start coord-end alt]
@@ -445,10 +445,10 @@
                            (string? alt) (case ins-format
                                            :auto (if (and (every? #(= % \N) alt)
                                                           (>= (count alt) 10))
-                                                   (str "(" (count alt) ")")
+                                                   (str "N[" (count alt) "]")
                                                    alt)
                                            :bases alt
-                                           :count (str "(" (count alt) ")"))
+                                           :count (str "N[" (count alt) "]"))
                            (map? alt) [(:transcript alt)
                                        ":"
                                        (coord/format (:coord-start alt))
@@ -478,7 +478,7 @@
 (defn- parse-dna-insertion-alt
   [s kind]
   (or (re-matches #"[A-Z]+" s)
-      (some-> (re-matches #"\((\d+)\)" s)
+      (some-> (re-matches #"N\[(\d+)\]" s)
               (second)
               (intl/parse-long)
               (repeat "N")
@@ -624,20 +624,28 @@
 ;;; e.g. g.6775delinsGA
 ;;;      g.6775delTinsGA
 ;;;      c.145_147delinsTGG
+;;;      c.145_147delinsN[10]
 
 (defrecord DNAIndel [coord-start coord-end ref alt]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [show-bases?] :or {show-bases? false}}]
+  (format [this {:keys [show-bases? ins-format] :or {show-bases? false ins-format :auto}}]
     (apply str (flatten [(coord/format coord-start)
-                         (if (and coord-end
-                                  (or (not (coord/comparable-coordinates? coord-start coord-end))
-                                      (neg? (compare coord-start coord-end))))
+                         (when (and coord-end
+                                    (or (not (coord/comparable-coordinates? coord-start coord-end))
+                                        (neg? (compare coord-start coord-end))))
                            ["_" (coord/format coord-end)])
                          "del"
-                         (if show-bases? ref)
+                         (when show-bases? ref)
                          "ins"
-                         alt])))
+                         (when (string? alt)
+                           (case ins-format
+                             :auto (if (and (every? #(= % \N) alt)
+                                            (>= (count alt) 10))
+                                     (str "N[" (count alt) "]")
+                                     alt)
+                             :bases alt
+                             :count (str "N[" (count alt) "]")))])))
   (plain [this]
     (into {:mutation "dna-indel"} (plain-coords this)))
 
@@ -663,6 +671,15 @@
                           :clj-hgvs.mutation.dna-indel/ref
                           :clj-hgvs.mutation.dna-indel/alt])))
 
+(defn- parse-dna-indel-alt
+  [s]
+  (or (re-matches #"[A-Z]+" s)
+      (some-> (re-matches #"N\[(\d+)\]" s)
+              (second)
+              (intl/parse-long)
+              (repeat "N")
+              (#(apply str %)))))
+
 (defn dna-indel
   "Constructor of DNAIndel. Throws an exception if any input is illegal."
   [coord-start coord-end ref alt]
@@ -673,13 +690,16 @@
   (DNAIndel. coord-start coord-end ref alt))
 
 (def ^:private dna-indel-re
-  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?ins([A-Z]+)")
+  #"([\d\-\+\*\?]+)(?:_([\d\-\+\*\?]+))?del([A-Z]+)?ins(N\[\d+\]|[A-Z]+)")
 
 (defn parse-dna-indel
   [s kind]
   (let [[_ coord-s coord-e ref alt] (re-matches dna-indel-re s)
         parse-coord (coord-parser kind)]
-    (dna-indel (parse-coord coord-s) (some-> coord-e parse-coord) ref alt)))
+    (dna-indel (parse-coord coord-s)
+               (some-> coord-e parse-coord)
+               ref
+               (parse-dna-indel-alt alt))))
 
 (defmethod restore "dna-indel"
   [m]
@@ -1036,20 +1056,25 @@
 ;;; RNA - insertion
 ;;;
 ;;; e.g. r.756_757insacu
-;;;      r.431_432ins(5)
+;;;      r.431_432insn[5]
 ;;;      r.123_124insL37425.1:23_361
 
 (defrecord RNAInsertion [coord-start coord-end alt]
   Mutation
   (format [this] (format this nil))
-  (format [this _]
+  (format [this {:keys [ins-format] :or {ins-format :auto}}]
     (str (coord/format coord-start)
          "_"
          (coord/format coord-end)
          "ins"
          (cond
            (map? alt) (str (:genbank alt) ":" (:coord-start alt) "_" (:coord-end alt))
-           (re-matches #"n{2,}" alt) (str "(" (count alt) ")")
+           (re-matches #"n{2,}" alt) (case ins-format
+                                       :auto (if (>= (count alt) 10)
+                                               (str "n[" (count alt) "]")
+                                               alt)
+                                       :bases alt
+                                       :count (str "n[" (count alt) "]"))
            :else alt)))
   (plain [this]
     (into {:mutation "rna-insertion"} (plain-coords this))))
@@ -1074,9 +1099,9 @@
 
 (defn- parse-rna-alt-n
   [s]
-  (if-let [n (some-> (re-find #"\((\d)\)" s)
-                     second
-                     intl/parse-long)]
+  (when-let [n (some-> (re-find #"n\[(\d+)\]" s)
+                       second
+                       intl/parse-long)]
     (apply str (repeat n "n"))))
 
 (def ^:private genbank-re
@@ -1098,8 +1123,8 @@
     (rna-insertion (coord/parse-rna-coordinate coord-s)
                    (some-> coord-e coord/parse-rna-coordinate)
                    (cond
+                     (re-find #"n\[\d+\]" alt) (parse-rna-alt-n alt)
                      (re-find #"[a-z]+" alt) alt
-                     (re-find #"\(\d\)" alt) (parse-rna-alt-n alt)
                      :else (parse-rna-alt-genbank alt)))))
 
 (defmethod restore "rna-insertion"
@@ -1218,20 +1243,28 @@
 ;;; e.g. r.775delinsga
 ;;;      r.775deluinsga
 ;;;      r.775_777delinsc
+;;;      r.775_777delinsn[10]
 
 (defrecord RNAIndel [coord-start coord-end ref alt]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [show-bases?] :or {show-bases? false}}]
+  (format [this {:keys [show-bases? ins-format] :or {show-bases? false ins-format :auto}}]
     (str (coord/format coord-start)
-         (if (and coord-end
-                  (or (not (coord/comparable-coordinates? coord-start coord-end))
-                      (neg? (compare coord-start coord-end))))
+         (when (and coord-end
+                    (or (not (coord/comparable-coordinates? coord-start coord-end))
+                        (neg? (compare coord-start coord-end))))
            (str "_" (coord/format coord-end)))
          "del"
-         (if show-bases? ref)
+         (when show-bases? ref)
          "ins"
-         alt))
+         (if (re-matches #"n{2,}" alt)
+           (case ins-format
+             :auto (if (>= (count alt) 10)
+                     (str "n[" (count alt) "]")
+                     alt)
+             :bases alt
+             :count (str "n[" (count alt) "]"))
+           alt)))
   (plain [this]
     (into {:mutation "rna-indel"} (plain-coords this)))
 
@@ -1267,7 +1300,7 @@
   (RNAIndel. coord-start coord-end ref alt))
 
 (def ^:private rna-indel-re
-  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?ins([a-z]+)")
+  #"([\d\-\+\*]+)(?:_([\d\-\+\*]+))?del([a-z]+)?ins([a-z\d\[\]]+)")
 
 (defn parse-rna-indel
   [s]
@@ -1275,7 +1308,9 @@
     (rna-indel (coord/parse-rna-coordinate coord-s)
                (some-> coord-e coord/parse-rna-coordinate)
                ref
-               alt)))
+               (if (re-find #"n\[\d+\]" alt)
+                 (parse-rna-alt-n alt)
+                 alt))))
 
 (defmethod restore "rna-indel"
   [m]
@@ -1724,12 +1759,12 @@
 ;;; Protein - insertion
 ;;;
 ;;; e.g. Lys23_Leu24insArgSerGln
-;;;      Arg78_Gly79ins23
+;;;      Arg78_Gly79insX[23]
 
 (defrecord ProteinInsertion [ref-start coord-start ref-end coord-end alts]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this {:keys [amino-acid-format ins-format] :or {amino-acid-format :long ins-format :auto}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
@@ -1739,7 +1774,14 @@
                          (coord/format coord-end)
                          "ins"
                          (if (every? #(= % "Xaa") alts)
-                           (count alts)
+                           (let [alts (cond->> alts
+                                        (= amino-acid-format :short) (map ->short-amino-acid))]
+                             (case ins-format
+                               :auto (if (>= (count alts) 10)
+                                       (str "X[" (count alts) "]")
+                                       alts)
+                               :amino-acids alts
+                               :count (str "X[" (count alts) "]")))
                            (cond->> alts
                              (= amino-acid-format :short) (map ->short-amino-acid)))])))
   (plain [this]
@@ -1770,10 +1812,14 @@
   [s]
   (condp re-matches s
     #"([A-Z*]([a-z]{2})?)+" (mapv ->long-amino-acid (re-seq #"[A-Z*](?:[a-z]{2})?" s))
-    #"\d+" (vec (repeat (intl/parse-long s) "Xaa"))))
+    #"X\[\d+\]" (-> (re-find #"X\[(\d+)\]" s)
+                    second
+                    intl/parse-long
+                    (repeat "Xaa")
+                    vec)))
 
 (def ^:private protein-insertion-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*]+)")
+  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*\[\]]+)")
 
 (defn parse-protein-insertion
   [s]
@@ -1793,22 +1839,32 @@
 ;;;
 ;;; e.g. Cys28delinsTrpVal
 ;;;      Cys28_Lys29delinsTrp
+;;;      Cys28_Lys29delinsX[10]
 
 (defrecord ProteinIndel [ref-start coord-start ref-end coord-end alts]
   Mutation
   (format [this] (format this nil))
-  (format [this {:keys [amino-acid-format] :or {amino-acid-format :long}}]
+  (format [this {:keys [amino-acid-format ins-format] :or {amino-acid-format :long ins-format :auto}}]
     (apply str (flatten [(cond-> ref-start
                            (= amino-acid-format :short) ->short-amino-acid)
                          (coord/format coord-start)
-                         (if (should-show-end? ref-start coord-start ref-end coord-end)
+                         (when (should-show-end? ref-start coord-start ref-end coord-end)
                            ["_"
                             (cond-> ref-end
                               (= amino-acid-format :short) ->short-amino-acid)
                             (coord/format coord-end)])
                          "delins"
-                         (cond->> alts
-                           (= amino-acid-format :short) (map ->short-amino-acid))])))
+                         (if (every? #(= % "Xaa") alts)
+                           (let [alts (cond->> alts
+                                        (= amino-acid-format :short) (map ->short-amino-acid))]
+                             (case ins-format
+                               :auto (if (>= (count alts) 10)
+                                       (str "X[" (count alts) "]")
+                                       alts)
+                               :amino-acids alts
+                               :count (str "X[" (count alts) "]")))
+                           (cond->> alts
+                             (= amino-acid-format :short) (map ->short-amino-acid)))])))
   (plain [this]
     (into {:mutation "protein-indel"} (plain-coords this))))
 
@@ -1835,7 +1891,7 @@
   (ProteinIndel. ref-start coord-start ref-end coord-end alts))
 
 (def ^:private protein-indel-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z*][a-zA-Z*]*)?")
+  #"([A-Z](?:[a-z]{2})?)(\d+)(?:_([A-Z](?:[a-z]{2})?)(\d+))?delins([A-Z*][a-zA-Z*\[\]\d]*)?")
 
 (defn parse-protein-indel
   [s]
@@ -1844,7 +1900,7 @@
                    (coord/parse-protein-coordinate coord-s)
                    (->long-amino-acid ref-e)
                    (some-> coord-e coord/parse-protein-coordinate)
-                   (mapv ->long-amino-acid (some->> alts (re-seq #"[A-Z*](?:[a-z]{2})?"))))))
+                   (mapv ->long-amino-acid (some->> alts parse-protein-insertion-alts)))))
 
 (defmethod restore "protein-indel"
   [m]

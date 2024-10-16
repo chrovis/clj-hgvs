@@ -332,6 +332,11 @@
     ;; remove-del-count-from-delins
     "c.123_124del2insCTGA" "c.123_124delinsCTGA"
 
+    ;; replace-uncertain-bases
+    "g.1134_1135ins(100)" "g.1134_1135insN[100]"
+    "r.431_432ins(5)"     "r.431_432insn[5]"
+    "p.R78_G79ins23"      "p.R78_G79insX[23]"
+
     ;; replace-repeated-seqs-parens1
     "c.112GAT(14)" "c.112GAT[14]"
 

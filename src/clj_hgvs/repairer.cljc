@@ -156,6 +156,20 @@
     (string/replace s #"del\d+ins" "delins")
     s))
 
+;; g.1134_1135ins(100) -> g.1134_1135insN[100]
+;; r.431_432ins(5) -> r.431_432insn[5]
+;; p.R78_G79ins23 -> p.R78_G79insX[23]
+(defn ^:no-doc replace-uncertain-bases
+  [s kind]
+  (case kind
+    (:genome :mitochondria :coding-dna :non-coding-dna :circular-dna)
+    (string/replace s #"ins\((\d+)\)$" "insN[$1]")
+    (:rna)
+    (string/replace s #"ins\((\d+)\)$" "insn[$1]")
+    (:protein)
+    (string/replace s #"ins(\d+)$" "insX[$1]")
+    s))
+
 ;; c.112GAT(14) -> c.112GAT[14]
 (defn ^:no-doc replace-repeated-seqs-parens1
   [s kind]
@@ -318,6 +332,7 @@
    remove-alternative
    remove-inv-bases
    remove-del-count-from-delins
+   replace-uncertain-bases
    replace-repeated-seqs-parens1
    replace-repeated-seqs-parens2
    remove-genomic-bases-from-protein
