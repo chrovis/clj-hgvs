@@ -1371,6 +1371,11 @@
 (def protein-insertion4 (mut/protein-insertion "Arg" (coord/protein-coordinate 78)
                                                "Gly" (coord/protein-coordinate 79)
                                                ["Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa" "Xaa"]))
+(def protein-insertion5s "Thr89_Ter90insSerProIle")
+(def protein-insertion5ss "T89_*90insSPI")
+(def protein-insertion5 (mut/protein-insertion "Thr" (coord/protein-coordinate 89)
+                                               "Ter" (coord/protein-coordinate 90)
+                                               ["Ser" "Pro" "Ile"]))
 
 (deftest format-protein-insertion-test
   (testing "returns a string expression of a protein insertion"
@@ -1386,7 +1391,9 @@
       protein-insertion3 {:ins-format :count} protein-insertion3sc
       protein-insertion3 {:amino-acid-format :short :ins-format :count} protein-insertion3scs
       protein-insertion4 {:ins-format :auto} protein-insertion4sc
-      protein-insertion4 {:amino-acid-format :short :ins-format :auto} protein-insertion4scs)))
+      protein-insertion4 {:amino-acid-format :short :ins-format :auto} protein-insertion4scs
+      protein-insertion5 nil protein-insertion5s
+      protein-insertion5 {:amino-acid-format :short} protein-insertion5ss)))
 
 (deftest parse-protein-insertion-test
   (testing "returns a correct ProteinInsertion"
@@ -1400,7 +1407,9 @@
       protein-insertion3sc protein-insertion3
       protein-insertion3scs protein-insertion3
       protein-insertion4sc protein-insertion4
-      protein-insertion4scs protein-insertion4))
+      protein-insertion4scs protein-insertion4
+      protein-insertion5s protein-insertion5
+      protein-insertion5ss protein-insertion5))
   (testing "invalid protein insertion"
     (are [s] (thrown? #?(:clj Throwable, :cljs js/Error)
                       (mut/parse-protein-insertion s))
