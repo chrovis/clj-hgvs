@@ -1760,6 +1760,7 @@
 ;;;
 ;;; e.g. Lys23_Leu24insArgSerGln
 ;;;      Arg78_Gly79insX[23]
+;;;      Thr89_Ter90insSerProIle (T89_*90insSPI)
 
 (defrecord ProteinInsertion [ref-start coord-start ref-end coord-end alts]
   Mutation
@@ -1819,7 +1820,7 @@
                     vec)))
 
 (def ^:private protein-insertion-re
-  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*\[\]]+)")
+  #"([A-Z](?:[a-z]{2})?)(\d+)_([A-Z*](?:[a-z]{2})?)(\d+)ins([\da-zA-Z*\[\]]+)")
 
 (defn parse-protein-insertion
   [s]
