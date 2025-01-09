@@ -23,6 +23,10 @@ jobs:
       with:
         distribution: 'adopt'
         java-version: ${{ matrix.java }}
+    - name: Setup Clojure
+      uses: DeLaGuardo/setup-clojure@13.1
+      with:
+        lein: latest
     - name: Install dependencies
       run: lein deps
     - name: Run tests
@@ -46,6 +50,10 @@ jobs:
       with:
         distribution: 'adopt'
         java-version: '17'
+    - name: Setup Clojure
+      uses: DeLaGuardo/setup-clojure@13.1
+      with:
+        lein: latest
     - name: Install dependencies
       run: lein deps
     - name: Generate code coverage
@@ -79,6 +87,10 @@ jobs:
       with:
         distribution: 'adopt'
         java-version: '17'
+    - name: Setup Clojure
+      uses: DeLaGuardo/setup-clojure@13.1
+      with:
+        lein: latest
     - name: Deploy
       env:
         CLOJARS_USERNAME: ${{ secrets.CLOJARS_USERNAME }}
